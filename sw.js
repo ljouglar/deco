@@ -1,6 +1,6 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v1";
+const CACHE = "deco-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png"];
 
@@ -16,7 +16,7 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.hostname.endsWith("open-meteo.com")) return; // toujours le réseau
+  if (e.request.method !== "GET" || url.hostname.endsWith("open-meteo.com") || url.hostname.endsWith("pioupiou.fr")) return; // toujours le réseau
 
   // Polices Google : servies depuis le cache, rafraîchies en arrière-plan
   if (url.hostname.includes("fonts.g")) {

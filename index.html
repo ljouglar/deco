@@ -70,9 +70,11 @@ button { cursor: pointer; }
 .dial .card { fill: var(--muted); font: 600 9px var(--sans); text-anchor: middle; dominant-baseline: central; }
 .dial .w10 { stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
 .dial .w850 { stroke: var(--action); stroke-width: 2; stroke-dasharray: 4 3; stroke-linecap: round; }
+.dial .wlive { stroke: var(--wing); stroke-width: 3; stroke-linecap: round; }
 .dial-legend { font-size: .75rem; color: var(--muted); text-align: center; margin-top: 2px; }
 .dial-legend i { display: inline-block; width: 14px; height: 0; border-top: 3px solid var(--ink); vertical-align: middle; margin-right: 3px; }
 .dial-legend i.alt { border-top: 2px dashed var(--action); margin-left: 6px; }
+.dial-legend i.bal { border-top: 3px solid var(--wing); margin-left: 6px; }
 
 /* Hour detail */
 .detail { margin: 12px 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
@@ -86,6 +88,20 @@ button { cursor: pointer; }
 .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; transform: translateY(-1px); }
 .dot.l0 { background: var(--go); } .dot.l1 { background: var(--warn); } .dot.l2 { background: var(--stop); }
 .site-note { margin: 10px 0 0; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* Balise temps réel */
+.live { margin: 12px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.live h2 { margin: 0; font: 700 1.2rem var(--cond); display: flex; align-items: baseline; gap: 8px; }
+.live h2 .age { margin-left: auto; font: 400 .78rem/1.2 var(--sans); color: var(--muted); white-space: nowrap; }
+.live .bname { display: block; margin: 2px 0 10px; font-size: .8rem; color: var(--muted); }
+.live .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.live .col { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; }
+.live .col .lbl { display: block; font-size: .75rem; color: var(--muted); }
+.live .col .val { display: flex; align-items: center; gap: 6px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.live .col .val svg { width: 18px; height: 18px; flex: none; }
+.live .col small { display: block; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.live .col.meas .val svg { color: var(--wing); }
+.live .stale { margin: 10px 0 0; font-size: .85rem; color: var(--muted); }
 
 /* Hourly table */
 .hours-head, .hour { display: grid; grid-template-columns: 44px 1.35fr 1fr 1fr 18px; align-items: center; gap: 6px; }
@@ -186,6 +202,9 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
       <div><label for="sf-max">à (°)</label><input id="sf-max" name="secMax" type="number" min="0" max="359" required></div>
     </div>
     <p class="hint">Direction d'où vient le vent, sens horaire : 270 = ouest. Un déco ouest se règle par exemple de 225 à 315.</p>
+    <label for="sf-piou">Balise Pioupiou (numéro, facultatif)</label>
+    <input id="sf-piou" name="piou" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 1446">
+    <p class="hint">Numéro de la station sur <a href="https://www.openwindmap.org/" target="_blank" rel="noopener">openwindmap.org</a> : il apparaît dans l'adresse de la balise (PIOU_1446).</p>
     <label for="sf-note">Note (règles du site, plafond…)</label>
     <input id="sf-note" name="note">
     <div class="actions">
@@ -200,8 +219,14 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 
 // ---------- Configuration ----------
 const DEFAULT_SITES = [{
-  id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315,
+  id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315, piou: 1446,
   note: "Déco ouest. Approche de Chambéry-Aix : ne pas monter à plus de 300 m au-dessus du déco. Vent d'est = déco sous le vent."
+}, {
+  id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, piou: 1333,
+  note: "Déco est au-dessus de Lumbin. Deux décos : le Nord (tapis, confortable) peut se retrouver sous le vent de la brise, le Sud (herbe) prend mieux la brise de face. Atterro officiel à Lumbin."
+}, {
+  id: "aiguebelette", name: "Aiguebelette", lat: 45.6016, lon: 5.8073, alt: 1120, secMin: 200, secMax: 315, piou: 1722,
+  note: "Déco des Provinces (l'Épine), face ouest sur le lac. La brise monte souvent après 13 h : la balise mesure surtout cette brise, pas le vent météo."
 }];
 
 const DEFAULT_LIMITS = {
@@ -248,12 +273,27 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 
+// Les sites livrés avec l'appli rejoignent ceux déjà enregistrés, sans écraser tes réglages.
+function withDefaults(saved) {
+  if (!Array.isArray(saved) || !saved.length) return DEFAULT_SITES.map((d) => ({ ...d }));
+  const out = saved.map((s) => ({ ...s }));
+  for (const d of DEFAULT_SITES) {
+    const cur = out.find((s) => s.id === d.id);
+    if (!cur) out.push({ ...d });
+    else if (cur.piou === undefined) cur.piou = d.piou; // on ajoute la balise manquante, rien d'autre
+  }
+  return out;
+}
+
 const state = {
-  sites: store.get("sites", DEFAULT_SITES),
+  sites: withDefaults(store.get("sites", null)),
   limits: { ...DEFAULT_LIMITS, ...store.get("limits", {}) },
   siteId: store.get("siteId", "sapenay"),
-  dayIdx: 1, hourSel: null, days: [], fetchedAt: null, fromCache: false, error: null, loading: false
+  dayIdx: 1, hourSel: null, days: [], fetchedAt: null, fromCache: false, error: null, loading: false,
+  live: null
 };
+
+store.set("sites", state.sites);
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -265,10 +305,27 @@ const site = () => state.sites.find((s) => s.id === state.siteId) || state.sites
 const CARD = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
 const cardinal = (d) => (d == null ? "–" : CARD[Math.round(((d % 360) + 360) % 360 / 22.5) % 16]);
 const inSector = (d, a, b) => (a <= b ? d >= a && d <= b : d >= a || d <= b);
+const angleGap = (x, y) => { const t = Math.abs(x - y) % 360; return t > 180 ? 360 - t : t; };
 function sectorGap(d, a, b) {
   if (inSector(d, a, b)) return 0;
-  const diff = (x, y) => { const t = Math.abs(x - y) % 360; return t > 180 ? 360 - t : t; };
-  return Math.min(diff(d, a), diff(d, b));
+  return Math.min(angleGap(d, a), angleGap(d, b));
+}
+
+// Date et heure locales (Europe/Paris) d'un instant, pour retrouver l'heure de prévision correspondante
+function parisParts(ts) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false
+  }).formatToParts(new Date(ts));
+  const g = (t) => parts.find((x) => x.type === t).value;
+  return { date: `${g("year")}-${g("month")}-${g("day")}`, hour: +g("hour") % 24 };
+}
+
+function ago(ms) {
+  const m = Math.round(ms / 60000);
+  if (m < 1) return "à l'instant";
+  if (m < 60) return `il y a ${m} min`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `il y a ${h} h` : `il y a ${Math.round(h / 24)} j`;
 }
 
 // ---------- Evaluation ----------
@@ -362,8 +419,14 @@ function dayVerdict(day, L) {
 async function load(force = false) {
   const s = site();
   if (!s) return;
+  state.loading = true; state.error = null; state.live = null; renderChrome();
+  await Promise.all([loadForecast(s, force), loadLive(s, force)]);
+  state.loading = false;
+  render();
+}
+
+async function loadForecast(s, force) {
   const key = `fc:${s.id}:${state.limits.model}`;
-  state.loading = true; state.error = null; renderChrome();
   try {
     const url = new URL("https://api.open-meteo.com/v1/forecast");
     url.search = new URLSearchParams({
@@ -380,10 +443,78 @@ async function load(force = false) {
     const cached = store.get(key, null);
     state.error = navigator.onLine ? `Prévisions indisponibles : ${e.message}` : "Hors ligne.";
     if (cached) ingest(cached.json, cached.at, true);
-  } finally {
-    state.loading = false;
-    render();
   }
+}
+
+// ---------- Balise Pioupiou / OpenWindMap ----------
+const PIOU_TTL = 3 * 60 * 1000;    // on ne redemande pas plus souvent (la balise émet toutes les ~4 min)
+const PIOU_STALE = 45 * 60 * 1000; // au-delà, la mesure ne reflète plus les conditions du moment
+
+async function loadLive(s, force = false) {
+  state.live = null;
+  if (!s || !s.piou) return;
+  const key = `piou:${s.piou}`;
+  const cached = store.get(key, null);
+  if (cached && !force && Date.now() - cached.at < PIOU_TTL) { state.live = cached; return; }
+  try {
+    const res = await fetch(`https://api.pioupiou.fr/v1/live/${encodeURIComponent(s.piou)}`, { cache: "no-store" });
+    const json = await res.json();
+    const d = json && json.data;
+    if (!res.ok || !d || !d.measurements) throw new Error("balise injoignable");
+    const m = d.measurements;
+    const live = {
+      at: Date.now(), id: d.id, name: (d.meta && d.meta.name) || `Balise ${d.id}`,
+      date: m.date ? Date.parse(m.date) : null,
+      ws: m.wind_speed_avg, wg: m.wind_speed_max, wmin: m.wind_speed_min, wd: m.wind_heading,
+      on: !d.status || d.status.state === "on"
+    };
+    store.set(key, live);
+    state.live = live;
+  } catch {
+    // Hors ligne ou balise injoignable : on montre la dernière mesure connue, son âge fait foi
+    state.live = cached ? { ...cached, offline: true } : { id: s.piou, failed: true };
+  }
+}
+
+async function refreshLive(force = false) {
+  const s = site();
+  if (!s || !s.piou) return;
+  await loadLive(s, force);
+  render();
+}
+
+// Heure de prévision correspondant à un instant donné (null la nuit, hors 7 h – 20 h)
+function forecastAt(ts) {
+  const { date, hour } = parisParts(ts);
+  const d = state.days.find((x) => x.date === date);
+  return d ? d.hours.find((h) => h.hour === hour) || null : null;
+}
+
+// Ce que la mesure dit, et ce qu'elle dit du modèle
+function liveNotes(lv, fc, s, L) {
+  const out = [];
+  if (lv.wd != null && lv.ws >= 3) {
+    const gap = sectorGap(lv.wd, s.secMin, s.secMax);
+    if (gap === 0) out.push({ l: 0, msg: `Vent ${cardinal(lv.wd)} dans l'axe du déco` });
+    else if (gap <= 30) out.push({ l: 1, msg: `Vent ${cardinal(lv.wd)} travers au déco` });
+    else out.push({ l: 2, msg: `Vent ${cardinal(lv.wd)} hors secteur : déco sous le vent` });
+  } else {
+    out.push({ l: 0, msg: "Vent nul ou très faible à la balise" });
+  }
+  if (lv.wg != null && lv.wg > L.maxGust) out.push({ l: 2, msg: `Rafales ${r0(lv.wg)} km/h, au-dessus de ta limite` });
+  else if (lv.ws != null && lv.ws > L.maxWind) out.push({ l: 2, msg: `Vent moyen ${r0(lv.ws)} km/h, au-dessus de ta limite` });
+  else if (lv.ws != null && lv.wg != null && lv.wg - lv.ws > L.maxGustDelta) out.push({ l: 1, msg: `Vent irrégulier : ${r0(lv.ws)} à ${r0(lv.wg)} km/h` });
+
+  if (fc && fc.ws != null && lv.ws != null) {
+    const d = lv.ws - fc.ws;
+    if (Math.abs(d) < 5) out.push({ l: 0, msg: `Le modèle colle à la mesure à cette heure` });
+    else out.push({ l: 1, msg: `Le modèle ${d > 0 ? "sous-estime" : "surestime"} le vent de ${r0(Math.abs(d))} km/h à cette heure` });
+    if (lv.wd != null && fc.wd != null && lv.ws >= 3) {
+      const dd = angleGap(lv.wd, fc.wd);
+      if (dd > 45) out.push({ l: 1, msg: `Direction décalée de ${r0(dd)}° par rapport au modèle` });
+    }
+  }
+  return out;
 }
 
 function ingest(json, at, fromCache) {
@@ -424,7 +555,7 @@ function arrowSvg(deg) {
   return `<svg viewBox="-10 -10 20 20" aria-hidden="true"><g transform="rotate(${deg ?? 0})"><path d="M0 -8 V6 M-4.5 2 L0 7 L4.5 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
 }
 
-function dialSvg(s, h) {
+function dialSvg(s, h, lv) {
   const p = (deg, r) => { const a = deg * Math.PI / 180; return [r * Math.sin(a), -r * Math.cos(a)].map((v) => v.toFixed(2)).join(" "); };
   const span = (s.secMax - s.secMin + 360) % 360;
   const sector = `M0 0 L${p(s.secMin, 50)} A50 50 0 ${span > 180 ? 1 : 0} 1 ${p(s.secMax, 50)} Z`;
@@ -436,6 +567,7 @@ function dialSvg(s, h) {
     ${["N", "E", "S", "O"].map((c, i) => `<text class="card" x="${p(i * 90, 57).split(" ")[0]}" y="${p(i * 90, 57).split(" ")[1]}">${c}</text>`).join("")}
     ${h ? arrow(h.d850, "w850", 34) : ""}
     ${h ? arrow(h.wd, "w10", 42) : ""}
+    ${lv ? arrow(lv.wd, "wlive", 50) : ""}
   </svg>`;
 }
 
@@ -446,6 +578,42 @@ function skyText(h) {
   if (tot >= 70) return "Couvert";
   if (tot >= 30) return "Nuageux";
   return "Dégagé";
+}
+
+function liveCard() {
+  const s = site(), L = state.limits, lv = state.live;
+  if (!s || !s.piou) return "";
+  if (!lv || lv.failed) {
+    return `<section class="live"><h2>Balise<span class="age">injoignable</span></h2>
+      <p class="stale">Pas de mesure récupérée pour la balise n° ${esc(s.piou)}. Vérifie ta connexion, ou le numéro dans « Mes sites ».</p></section>`;
+  }
+  const age = Date.now() - (lv.date || lv.at);
+  const fresh = age <= PIOU_STALE;
+  const fc = fresh ? forecastAt(lv.date || lv.at) : null;
+  const head = `<h2>Balise<span class="age">${esc(ago(age))}${lv.offline ? " · hors ligne" : ""}</span></h2>
+    <span class="bname">${esc(lv.name || `n° ${lv.id}`)}</span>`;
+
+  if (!fresh) {
+    return `<section class="live">${head}
+      <p class="stale">Dernière mesure ${esc(ago(age))} : trop ancienne pour être comparée à la prévision.${lv.on === false ? " La balise est signalée hors service." : ""}</p></section>`;
+  }
+
+  // Sous 3 km/h la girouette tourne au hasard : on n'affiche ni flèche ni direction
+  const dirKnown = lv.wd != null && lv.ws >= 3;
+  const meas = `<div class="col meas"><span class="lbl">Mesuré</span>
+      <span class="val">${dirKnown ? arrowSvg(lv.wd) : ""}<span>${r0(lv.ws)} km/h${dirKnown ? ` ${cardinal(lv.wd)}` : ""}</span></span>
+      <small>rafales ${r0(lv.wg)} km/h</small></div>`;
+  const pred = fc
+    ? `<div class="col"><span class="lbl">Prévu ${fc.hour} h</span>
+         <span class="val">${arrowSvg(fc.wd)}<span>${r0(fc.ws)} km/h ${cardinal(fc.wd)}</span></span>
+         <small>rafales ${r0(fc.wg)} km/h</small></div>`
+    : `<div class="col"><span class="lbl">Prévu</span><span class="val">–</span><small>hors plage horaire</small></div>`;
+
+  const notes = liveNotes(lv, fc, s, L).sort((a, b) => b.l - a.l);
+  return `<section class="live">${head}
+    <div class="cmp">${meas}${pred}</div>
+    <ul class="reasons" style="margin-top:10px">${notes.map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
+  </section>`;
 }
 
 function renderChrome() {
@@ -486,6 +654,11 @@ function render() {
 
   const ev = sel.ev;
   const baseTxt = ev.base != null ? `${Math.round(ev.base / 50) * 50} m` : "–";
+  // La flèche « balise » n'a de sens qu'en regard d'aujourd'hui, et seulement si la mesure est fraîche
+  const lv = state.live;
+  const dialLive = lv && !lv.failed && lv.wd != null && lv.ws >= 3
+    && Date.now() - (lv.date || lv.at) <= PIOU_STALE
+    && day.date === parisParts(Date.now()).date ? lv : null;
   const blhTxt = sel.blh != null ? `${Math.round((s.alt + sel.blh) / 100) * 100} m` : "–";
 
   $("main").innerHTML = `
@@ -495,8 +668,10 @@ function render() {
         <p class="window">${winTxt}</p>
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
       </div>
-      <div>${dialSvg(s, sel)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m</div></div>
+      <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
     </section>
+
+    ${liveCard()}
 
     <section class="detail">
       <h2>${sel.hour} h</h2>
@@ -530,6 +705,7 @@ function renderStatus() {
   const t = state.fetchedAt ? new Date(state.fetchedAt).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : null;
   $("status").innerHTML = `
     <p>Données <a href="https://open-meteo.com/" style="color:inherit">Open-Meteo</a>, modèle ${esc(MODELS[state.limits.model] || state.limits.model)}${t ? `, mises à jour ${t}` : ""}. Vent en km/h, flèches dans le sens où souffle le vent.</p>
+    ${site() && site().piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(site().piou)}" style="color:inherit">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : ""}
     <p>Aide à la préparation : la décision se prend au déco, avec la balise et la manche à air sous les yeux.</p>`;
 }
 
@@ -570,7 +746,7 @@ function openSites() { renderSitesList(); resetSiteForm(); $("sitesDlg").showMod
 function renderSitesList() {
   $("sitesList").innerHTML = state.sites.map((s) => `
     <div class="site-row">
-      <div class="info"><b>${esc(s.name)}</b><small>${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}</small></div>
+      <div class="info"><b>${esc(s.name)}</b><small>${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}</small></div>
       ${s.id === state.siteId ? `<small>Affiché</small>` : `<button class="btn" data-use="${esc(s.id)}">Afficher</button>`}
       <button class="btn" data-edit="${esc(s.id)}">Modifier</button>
       ${state.sites.length > 1 ? `<button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>` : ""}
@@ -581,7 +757,7 @@ function resetSiteForm(s) {
   const f = $("siteForm");
   f.reset();
   el(f, "id").value = s ? s.id : "";
-  if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
+  if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
   $("siteFormTitle").textContent = s ? `Modifier ${s.name}` : "Ajouter un site";
   $("siteSubmit").textContent = s ? "Enregistrer le site" : "Ajouter le site";
 }
@@ -607,6 +783,7 @@ $("siteForm").addEventListener("submit", (e) => {
     id: el(f, "id").value || `s${Date.now()}`, name: el(f, "name").value.trim(),
     lat: +el(f, "lat").value, lon: +el(f, "lon").value, alt: Math.round(+el(f, "alt").value),
     secMin: ((+el(f, "secMin").value % 360) + 360) % 360, secMax: ((+el(f, "secMax").value % 360) + 360) % 360,
+    piou: el(f, "piou").value.trim() ? Math.round(+el(f, "piou").value) : null,
     note: el(f, "note").value.trim()
   };
   const i = state.sites.findIndex((x) => x.id === s.id);
@@ -652,8 +829,13 @@ $("siteBtn").addEventListener("click", openSites);
 $("sitesBtn").addEventListener("click", openSites);
 $("limitsBtn").addEventListener("click", openLimits);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && state.fetchedAt && Date.now() - state.fetchedAt > 30 * 60 * 1000) load();
+  if (document.visibilityState !== "visible") return;
+  if (state.fetchedAt && Date.now() - state.fetchedAt > 30 * 60 * 1000) load();
+  else refreshLive();
 });
+
+// La balise émet toutes les ~4 min : on la resuit en continu, sans retoucher aux prévisions
+setInterval(() => { if (document.visibilityState === "visible") refreshLive(); }, 4 * 60 * 1000);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
