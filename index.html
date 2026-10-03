@@ -89,11 +89,14 @@ button { cursor: pointer; }
 .dot.l0 { background: var(--go); } .dot.l1 { background: var(--warn); } .dot.l2 { background: var(--stop); }
 .site-note { margin: 10px 0 0; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
 
-/* Balise temps réel */
-.live { margin: 12px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
-.live h2 { margin: 0; font: 700 1.2rem var(--cond); display: flex; align-items: baseline; gap: 8px; }
-.live h2 .age { margin-left: auto; font: 400 .78rem/1.2 var(--sans); color: var(--muted); white-space: nowrap; }
-.live .bname { display: block; margin: 2px 0 10px; font-size: .8rem; color: var(--muted); }
+/* Balise : mesure en temps réel */
+.live { margin: 6px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 13px 16px 14px; }
+.live h2 { margin: 0; font: 700 1.2rem/1 var(--cond); display: flex; align-items: center; gap: 7px; letter-spacing: .02em; text-transform: uppercase; }
+.live h2 .age { margin-left: auto; font: 400 .78rem/1.2 var(--sans); color: var(--muted); white-space: nowrap; text-transform: none; letter-spacing: 0; }
+.live h2 .pulse { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--wing); animation: pulse 2.4s ease-out infinite; }
+.live h2 .pulse.off { background: var(--muted); animation: none; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(240, 180, 41, .55); } 70%, 100% { box-shadow: 0 0 0 8px rgba(240, 180, 41, 0); } }
+.live .bname { display: block; margin: 4px 0 10px; font-size: .8rem; color: var(--muted); }
 .live .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .live .col { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; }
 .live .col .lbl { display: block; font-size: .75rem; color: var(--muted); }
@@ -149,7 +152,7 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
 
-@media (prefers-reduced-motion: reduce) { .icon-btn.spin svg { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .icon-btn.spin svg, .live h2 .pulse { animation: none; } }
 </style>
 </head>
 <body>
@@ -163,6 +166,8 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
     </button>
   </header>
+
+  <div id="live"></div>
 
   <nav class="days" id="days" role="tablist" aria-label="Jour"></nav>
   <div id="banner"></div>
@@ -584,33 +589,33 @@ function liveCard() {
   const s = site(), L = state.limits, lv = state.live;
   if (!s || !s.piou) return "";
   if (!lv || lv.failed) {
-    return `<section class="live"><h2>Balise<span class="age">injoignable</span></h2>
-      <p class="stale">Pas de mesure récupérée pour la balise n° ${esc(s.piou)}. Vérifie ta connexion, ou le numéro dans « Mes sites ».</p></section>`;
+    return `<section class="live"><h2><span class="pulse off"></span>En direct au déco<span class="age">balise injoignable</span></h2>
+      <p class="stale">Aucune mesure reçue de la balise n° ${esc(s.piou)}. Vérifie ta connexion, ou le numéro dans « Mes sites ».</p></section>`;
   }
   const age = Date.now() - (lv.date || lv.at);
   const fresh = age <= PIOU_STALE;
   const fc = fresh ? forecastAt(lv.date || lv.at) : null;
-  const head = `<h2>Balise<span class="age">${esc(ago(age))}${lv.offline ? " · hors ligne" : ""}</span></h2>
-    <span class="bname">${esc(lv.name || `n° ${lv.id}`)}</span>`;
+  const head = (stale) => `<h2><span class="pulse${stale ? " off" : ""}"></span>En direct au déco<span class="age">mesure ${esc(ago(age))}${lv.offline ? " · hors ligne" : ""}</span></h2>
+    <span class="bname">Balise ${esc(lv.name || `n° ${lv.id}`)}</span>`;
 
   if (!fresh) {
-    return `<section class="live">${head}
-      <p class="stale">Dernière mesure ${esc(ago(age))} : trop ancienne pour être comparée à la prévision.${lv.on === false ? " La balise est signalée hors service." : ""}</p></section>`;
+    return `<section class="live">${head(true)}
+      <p class="stale">La balise n'a rien envoyé depuis ${esc(ago(age).replace(/^il y a /, ""))} : pas de comparaison possible avec la prévision.${lv.on === false ? " Elle est signalée hors service." : ""}</p></section>`;
   }
 
   // Sous 3 km/h la girouette tourne au hasard : on n'affiche ni flèche ni direction
   const dirKnown = lv.wd != null && lv.ws >= 3;
-  const meas = `<div class="col meas"><span class="lbl">Mesuré</span>
+  const meas = `<div class="col meas"><span class="lbl">Mesuré maintenant</span>
       <span class="val">${dirKnown ? arrowSvg(lv.wd) : ""}<span>${r0(lv.ws)} km/h${dirKnown ? ` ${cardinal(lv.wd)}` : ""}</span></span>
       <small>rafales ${r0(lv.wg)} km/h</small></div>`;
   const pred = fc
-    ? `<div class="col"><span class="lbl">Prévu ${fc.hour} h</span>
+    ? `<div class="col"><span class="lbl">Prévu pour ${fc.hour} h</span>
          <span class="val">${arrowSvg(fc.wd)}<span>${r0(fc.ws)} km/h ${cardinal(fc.wd)}</span></span>
          <small>rafales ${r0(fc.wg)} km/h</small></div>`
-    : `<div class="col"><span class="lbl">Prévu</span><span class="val">–</span><small>hors plage horaire</small></div>`;
+    : `<div class="col"><span class="lbl">Prévu</span><span class="val">–</span><small>${state.days.length ? "hors plage horaire" : "pas de prévision"}</small></div>`;
 
   const notes = liveNotes(lv, fc, s, L).sort((a, b) => b.l - a.l);
-  return `<section class="live">${head}
+  return `<section class="live">${head(false)}
     <div class="cmp">${meas}${pred}</div>
     <ul class="reasons" style="margin-top:10px">${notes.map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
   </section>`;
@@ -635,6 +640,8 @@ function render() {
       <span class="pip" style="background:${LEVEL_COLOR[d.verdict.level]}"></span>
       <span class="d1">${i < 2 ? DAY_NAMES[i] : cap(dt.toLocaleDateString("fr-FR", { weekday: "long" }))}</span><span class="d2">${label}</span></button>`;
   }).join("");
+
+  $("live").innerHTML = liveCard();
 
   $("banner").innerHTML = state.error
     ? `<div class="banner">${esc(state.error)}${state.fromCache ? " Affichage des dernières prévisions enregistrées." : " Vérifie ta connexion puis actualise."}</div>` : "";
@@ -670,8 +677,6 @@ function render() {
       </div>
       <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
     </section>
-
-    ${liveCard()}
 
     <section class="detail">
       <h2>${sel.hour} h</h2>

@@ -29,10 +29,14 @@ pousse, puis ferme et rouvre l'appli sur le téléphone.
 
 ## Balise Pioupiou : prévision vs mesure
 Chaque site peut porter un numéro de balise (`piou`). L'appli interroge
-`https://api.pioupiou.fr/v1/live/<n°>` et affiche, sous le verdict, la mesure du
-moment en face de la prévision pour la même heure : vent moyen, rafales,
-direction, puis ce que l'écart dit du modèle (« le modèle sous-estime le vent de
-8 km/h à cette heure »). La flèche jaune sur la rose des vents est la balise.
+`https://api.pioupiou.fr/v1/live/<n°>` et affiche, en tête d'écran sous le nom du
+site et avant le choix du jour (bloc « En direct au déco »), la mesure du moment
+en face de la prévision pour la même heure : vent moyen, rafales, direction, puis
+ce que l'écart dit du modèle (« le modèle sous-estime le vent de 8 km/h à cette
+heure »). La flèche jaune sur la rose des vents est la balise.
+
+Le bloc vit hors de `#main`, dans son conteneur `#live` : il ne dépend pas du jour
+sélectionné, c'est toujours « maintenant ».
 
 La mesure est rafraîchie toutes les 4 min tant que l'appli est au premier plan,
 et au-delà de 45 min elle est signalée comme trop ancienne pour être comparée.
