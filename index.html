@@ -124,6 +124,10 @@ button { cursor: pointer; }
 .ov .c.l2 { background: var(--stop-soft); border-color: var(--stop); box-shadow: inset 0 -4px 0 var(--stop); }
 .ov .c.far { opacity: .6; }
 .ov .c.none { color: var(--muted); cursor: default; }
+.welcome { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 16px; margin-top: 8px; }
+.welcome h2 { margin: 0; font: 700 1.5rem var(--cond); }
+.welcome p { margin: 0; }
+.welcome .btn { padding: 12px; }
 .ov-legend { margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
 
 /* Hourly table */
@@ -172,8 +176,10 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
 .pge-results:not(:empty) { margin-top: 4px; border-top: 1px solid var(--line); }
-.pge-item { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 9px 2px; }
-.pge-item small { display: block; color: var(--muted); font-size: .8rem; }
+.pge-item { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+.pge-pick { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 9px 2px; }
+.pge-pick small { display: block; color: var(--muted); font-size: .8rem; }
+.pge-done { flex: none; padding: 0 6px; font-size: .85rem; font-weight: 600; color: var(--go); }
 
 @media (prefers-reduced-motion: reduce) { .icon-btn.spin svg, .live h2 .pulse { animation: none; } }
 </style>
@@ -219,10 +225,11 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
   <div id="sitesList"></div>
   <h3 id="siteFormTitle">Ajouter un site</h3>
   <div id="pgeSearch" class="stack">
-    <label for="pge-q">Chercher un déco par son nom</label>
+    <button type="button" class="btn" id="pgeNear" style="width:100%">Décos autour de moi</button>
+    <label for="pge-q">ou chercher un déco par son nom</label>
     <input id="pge-q" type="search" placeholder="Ex. Planfait, Sapenay…" autocomplete="off" enterkeyhint="search">
     <div id="pgeResults" class="pge-results"></div>
-    <p class="hint" id="pgeHint">Remplit le formulaire : vérifie ensuite l'altitude et le secteur. Les terrains de gonflage n'y sont pas, ils se saisissent à la main. Sites © <a href="https://www.paraglidingearth.com/" target="_blank" rel="noopener">ParaglidingEarth</a>, CC BY-SA.</p>
+    <p class="hint" id="pgeHint">« Ajouter » enregistre le déco tel quel ; toucher son nom remplit le formulaire pour vérifier l'altitude et le secteur avant. Les terrains de gonflage n'y sont pas, ils se saisissent à la main. Sites © <a href="https://www.paraglidingearth.com/" target="_blank" rel="noopener">ParaglidingEarth</a>, CC BY-SA.</p>
   </div>
   <form id="siteForm" class="stack" autocomplete="off">
     <input type="hidden" name="id">
@@ -259,6 +266,7 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 "use strict";
 
 // ---------- Configuration ----------
+// Préréglages de l'auteur, livrés aux seuls téléphones qui avaient déjà des sites (voir withPresets)
 const DEFAULT_SITES = [{
   id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315, piou: 1446,
   note: "Déco ouest. Approche de Chambéry-Aix : ne pas monter à plus de 300 m au-dessus du déco. Vent d'est = déco sous le vent."
@@ -358,20 +366,18 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 
-// Les sites livrés avec l'appli rejoignent ceux déjà enregistrés, sans écraser tes réglages.
-function withDefaults(saved) {
-  if (!Array.isArray(saved) || !saved.length) return DEFAULT_SITES.map((d) => ({ ...d }));
-  const out = saved.map((s) => ({ ...s }));
-  for (const d of DEFAULT_SITES) {
-    const cur = out.find((s) => s.id === d.id);
-    if (!cur) out.push({ ...d });
-    else if (cur.piou === undefined) cur.piou = d.piou; // on ajoute la balise manquante, rien d'autre
-  }
+// Un nouveau téléphone démarre sans site. Les préréglages ne vont qu'aux téléphones qui avaient déjà
+// des sites, une seule fois chacun : un site supprimé ne revient plus, les réglages ne sont jamais écrasés.
+function withPresets(saved) {
+  const seen = store.get("presets", []);
+  const out = Array.isArray(saved) ? saved.map((s) => ({ ...s })) : [];
+  if (out.length) for (const d of DEFAULT_SITES) if (!seen.includes(d.id) && !out.some((s) => s.id === d.id)) out.push({ ...d });
+  store.set("presets", DEFAULT_SITES.map((d) => d.id));
   return out;
 }
 
 const state = {
-  sites: withDefaults(store.get("sites", null)),
+  sites: withPresets(store.get("sites", null)),
   limits: { ...DEFAULT_LIMITS, ...store.get("limits", {}) },     // vol, et choix du modèle météo
   limitsG: { ...DEFAULT_LIMITS_G, ...store.get("limitsG", {}) }, // gonflage
   siteId: store.get("siteId", "sapenay"),
@@ -587,6 +593,7 @@ async function loadForecast(s, force) {
 async function loadOverview(force = false) {
   state.view = "overview"; state.loading = true; state.error = null; renderChrome();
   const sites = state.sites, ov = { rows: [], fetchedAt: Date.now(), fromCache: false };
+  if (!sites.length) { state.ov = { rows: [], fetchedAt: null }; state.loading = false; render(); return; }
   try {
     const list = await fetchForecasts(sites, force);
     ov.rows = sites.map((s, i) => ({ s, json: list[i] }));
@@ -807,7 +814,7 @@ function renderChrome() {
   const has = (k) => state.sites.some((x) => kind(x) === k);
   $("backBtn").hidden = ov;
   $("siteName").textContent = ov ? "Où voler ?" : s ? s.name : "Aucun site";
-  $("siteMeta").textContent = ov ? `${state.sites.length} sites, aujourd'hui à J+${FORECAST_DAYS - 1}`
+  $("siteMeta").textContent = ov ? (state.sites.length ? `${state.sites.length} site${state.sites.length > 1 ? "s" : ""}, aujourd'hui à J+${FORECAST_DAYS - 1}` : "Aucun site pour l'instant")
     : s ? `${kind(s).label} ${s.alt} m, vent favorable ${cardinal(s.secMin)} à ${cardinal(s.secMax)}` : "";
   $("siteBtn").setAttribute("aria-label", ov ? "Mes sites" : "Changer de site");
   $("limitsBtn").hidden = ov;
@@ -824,6 +831,17 @@ function renderOverview() {
   $("banner").innerHTML = state.error
     ? `<div class="banner">${esc(state.error)}${ov && ov.fromCache ? " Affichage des dernières prévisions enregistrées." : " Vérifie ta connexion puis actualise."}</div>` : "";
   if (!ov) { $("main").innerHTML = `<p class="empty">Chargement des prévisions…</p>`; renderStatus(); return; }
+  if (!state.sites.length) {
+    $("main").innerHTML = `<section class="welcome">
+      <h2>Bienvenue</h2>
+      <p>Ajoute tes sites : l'appli te dira, jour par jour, où les conditions restent dans tes limites.</p>
+      <button class="btn primary" data-start="near">Décos autour de moi</button>
+      <button class="btn" data-start="search">Chercher un déco par son nom</button>
+      <button class="btn" data-start="manual">Saisir un site à la main</button>
+      <p class="hint">Les terrains de gonflage ne sont pas dans la liste des décos : saisis-les à la main, type « Terrain de gonflage ».</p>
+    </section>`;
+    renderStatus(); return;
+  }
 
   // Colonnes : les dates connues d'au moins un site (Météo-France s'arrête plus tôt que les autres)
   const dates = [...new Set(ov.rows.flatMap((r) => r.days.map((d) => d.date)))].sort().slice(0, FORECAST_DAYS);
@@ -1066,17 +1084,76 @@ async function pgeSearch() {
   const words = q.split(/\s+/);
   const hits = rows.filter((x) => words.every((w) => x.key.includes(w)))
     .sort((a, b) => b.key.startsWith(words[0]) - a.key.startsWith(words[0]) || a.key.localeCompare(b.key)).slice(0, 8);
-  out.innerHTML = hits.length ? hits.map(({ r }) => `<button type="button" class="pge-item" data-pge="${r[5]}">
-      <b>${esc(r[0])}</b><small>${r[3] != null ? `${r[3]} m · ` : ""}${esc(orientText(r[4]))}</small></button>`).join("")
-    : `<p class="hint">Aucun déco trouvé.</p>`;
+  pgeRender(hits, "Aucun déco trouvé.");
+}
+
+// Déjà dans mes sites : même fiche, ou un déco à moins de 300 m
+const pgeHave = (r) => state.sites.some((s) => s.id === `pge${r[5]}` || (kind(s) === KINDS.deco && km(s.lat, s.lon, r[1], r[2]) < 0.3));
+
+// Toucher le nom remplit le formulaire pour vérifier ; « Ajouter » enregistre tout de suite
+function pgeRender(hits, none) {
+  $("pgeResults").innerHTML = hits.length ? hits.map(({ r, d }) => `<div class="pge-item">
+      <button type="button" class="pge-pick" data-pge="${r[5]}"><b>${esc(r[0])}</b>
+        <small>${r[3] != null ? `${r[3]} m · ` : ""}${esc(orientText(r[4]))}${d != null ? ` · ${d.toFixed(d < 10 ? 1 : 0).replace(".", ",")} km` : ""}</small></button>
+      ${pgeHave(r) ? `<span class="pge-done">Ajouté</span>`
+        : pgeSector(r[4]) ? `<button type="button" class="btn pge-add" data-pge-add="${r[5]}" aria-label="Ajouter ${esc(r[0])}">Ajouter</button>` : ""}
+    </div>`).join("") : `<p class="hint">${esc(none)}</p>`;
+}
+
+// Un déco ParaglidingEarth devenu site : secteur des orientations principales, les autres dans la note
+function pgeSite(r) {
+  const [name, lat, lon, alt, o, id] = r, sec = pgeSector(o);
+  return { sec, site: {
+    id: `pge${id}`, type: "deco", name, lat, lon, alt: alt ?? "", secMin: sec ? sec.min : "", secMax: sec ? sec.max : "", piou: null,
+    note: sec && sec.others.length ? `ParaglidingEarth donne aussi : ${sec.others.join(", ")}.` : ""
+  } };
+}
+
+async function pgeQuickAdd(id, btn) {
+  const { r } = (await pgeLoad()).find((x) => x.r[5] === id);
+  const { site: s } = pgeSite(r);
+  btn.disabled = true; btn.textContent = "…";
+  try { const b = await nearestPiou(s.lat, s.lon); if (b) s.piou = b.id; } catch {}
+  state.sites.push(s); store.set("sites", state.sites);
+  renderSitesList();
+  if (state.view === "overview") loadOverview(); // le tableau se met à jour derrière la feuille
+  btn.outerHTML = `<span class="pge-done">Ajouté</span>`;
+}
+
+const NEAR_KM = 60;
+function pgeNear() {
+  const out = $("pgeResults");
+  $("pge-q").value = "";
+  if (!navigator.geolocation) { out.innerHTML = `<p class="hint">Position indisponible sur cet appareil : cherche par nom.</p>`; return; }
+  out.innerHTML = `<p class="hint">Recherche de ta position…</p>`;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude: la, longitude: lo } = pos.coords;
+    let rows;
+    try { rows = await pgeLoad(); } catch { out.innerHTML = `<p class="hint">Liste des sites indisponible.</p>`; return; }
+    const hits = rows.map((x) => ({ r: x.r, d: km(la, lo, x.r[1], x.r[2]) })).filter((x) => x.d <= NEAR_KM)
+      .sort((a, b) => a.d - b.d).slice(0, 12);
+    pgeRender(hits, `Aucun déco connu à moins de ${NEAR_KM} km.`);
+  }, () => {
+    out.innerHTML = `<p class="hint">Position refusée ou introuvable : autorise la localisation, ou cherche par nom.</p>`;
+  }, { timeout: 10000, maximumAge: 10 * 60 * 1000 });
 }
 
 const km = (la1, lo1, la2, lo2) => 111.2 * Math.hypot(la2 - la1, (lo2 - lo1) * Math.cos(la1 * Math.PI / 180));
 
+// La liste de toutes les balises pèse ~650 Ko : une seule fois par séance d'ajout
+let piouAll = null;
+function piouList() {
+  if (!piouAll || Date.now() - piouAll.at > 10 * 60 * 1000) {
+    const p = fetch("https://api.pioupiou.fr/v1/live-with-meta/all").then((r) => r.json()).then((j) => j.data);
+    piouAll = { at: Date.now(), p };
+    p.catch(() => { piouAll = null; });
+  }
+  return piouAll.p;
+}
+
 // Balise en service la plus proche, si elle est assez près pour parler du même site
 async function nearestPiou(lat, lon) {
-  const res = await fetch("https://api.pioupiou.fr/v1/live-with-meta/all");
-  const { data } = await res.json();
+  const data = await piouList();
   const day = Date.now() - 24 * 3600 * 1000;
   return data.filter((b) => b.location && b.location.latitude != null && (!b.status || b.status.state === "on")
       && b.measurements && Date.parse(b.measurements.date) > day)
@@ -1087,11 +1164,9 @@ async function nearestPiou(lat, lon) {
 let pgePick = 0;
 async function pgeFill(id) {
   const { r } = (await pgeLoad()).find((x) => x.r[5] === id);
-  const [name, lat, lon, alt, o] = r, f = $("siteForm"), sec = pgeSector(o), pick = ++pgePick;
+  const { site: s, sec } = pgeSite(r), { name, lat, lon } = s, f = $("siteForm"), pick = ++pgePick;
   resetSiteForm();
-  Object.entries({ name, lat, lon, alt: alt ?? "", secMin: sec ? sec.min : "", secMax: sec ? sec.max : "" })
-    .forEach(([k, v]) => { el(f, k).value = v; });
-  el(f, "note").value = sec && sec.others.length ? `ParaglidingEarth donne aussi : ${sec.others.join(", ")}.` : "";
+  ["name", "lat", "lon", "alt", "secMin", "secMax", "note"].forEach((k) => { el(f, k).value = s[k]; });
   const status = document.createElement("p");
   status.className = "hint"; status.id = "pgeStatus";
   status.textContent = `${name} : ${sec ? "secteur repris des orientations principales" : "pas d'orientation connue, secteur à saisir"}. Recherche d'une balise…`;
@@ -1115,8 +1190,10 @@ $("pge-q").addEventListener("focus", () => {
   $("siteFormTitle").scrollIntoView({ block: "start" });
 });
 $("pgeResults").addEventListener("click", (e) => {
+  const a = e.target.closest("[data-pge-add]"); if (a) { pgeQuickAdd(+a.dataset.pgeAdd, a); return; }
   const b = e.target.closest("[data-pge]"); if (b) pgeFill(+b.dataset.pge);
 });
+$("pgeNear").addEventListener("click", pgeNear);
 
 $("sitesList").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
@@ -1183,6 +1260,14 @@ $("days").addEventListener("click", (e) => {
   state.dayIdx = +b.dataset.day; state.hourSel = null; render();
 });
 $("main").addEventListener("click", (e) => {
+  const w = e.target.closest("[data-start]");
+  if (w) {
+    openSites();
+    if (w.dataset.start === "near") pgeNear();
+    else if (w.dataset.start === "search") $("pge-q").focus();
+    else { $("siteForm").scrollIntoView({ block: "start" }); $("sf-name").focus({ preventScroll: true }); }
+    return;
+  }
   const o = e.target.closest("[data-ov-site]");
   if (o) { openSite(o.dataset.ovSite, o.dataset.ovDate || null); return; }
   const b = e.target.closest("[data-hour]"); if (!b) return;

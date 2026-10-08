@@ -59,12 +59,24 @@ Sites préréglés et leur balise :
 nord-est. La comparaison mesure / modèle y porte donc sur deux points voisins,
 pas sur la même maille.
 
-Les sites livrés avec l'appli sont fusionnés au démarrage avec ceux déjà
-enregistrés sur le téléphone : tes réglages ne sont pas écrasés, seuls les sites
-absents sont ajoutés.
+Ces sites préréglés ne vont qu'aux téléphones qui avaient déjà des sites
+enregistrés (le mien) : chacun n'est proposé qu'une fois (mémoire `presets`), donc
+un site supprimé ne revient pas, et les réglages ne sont jamais écrasés. Un
+nouveau téléphone démarre sans site (voir « Premier lancement »).
 
 Données balises : © contributeurs du réseau OpenWindMap,
 https://developers.pioupiou.fr/data-licensing
+
+## Premier lancement
+Un téléphone qui n'a encore aucun site arrive sur un écran d'accueil :
+- **Décos autour de moi** : les 12 décos ParaglidingEarth les plus proches (à moins
+  de 60 km), avec leur distance ;
+- **Chercher un déco par son nom** ;
+- **Saisir un site à la main**, notamment pour un terrain de gonflage.
+
+Dans les résultats, « Ajouter » enregistre le déco tout de suite (secteur, balise
+la plus proche) et le tableau se met à jour derrière la feuille ; toucher le nom
+remplit le formulaire pour vérifier avant d'enregistrer.
 
 ## Tableau « Où voler ? »
 L'appli s'ouvre sur un tableau de tous tes sites : une ligne par site, regroupés
@@ -129,7 +141,8 @@ Marennes est un terrain de club : se renseigner avant d'y aller.
 
 ## Où modifier la logique
 Dans `index.html` :
-- `DEFAULT_SITES` : sites par défaut (trois décos, trois terrains de gonflage)
+- `DEFAULT_SITES` / `withPresets()` : mes six sites préréglés, et la règle qui ne les
+  donne qu'une fois aux téléphones existants
 - `FORECAST_DAYS` : horizon de prévision (6 = aujourd'hui + 5 jours ; Météo-France
   ne va que jusqu'à J+4 vers 14 h, les heures sans vent prévu sont écartées)
 - `DEFAULT_LIMITS` / `DEFAULT_LIMITS_G` : limites débutant, vol et gonflage (aussi
