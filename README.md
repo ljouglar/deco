@@ -66,6 +66,21 @@ absents sont ajoutés.
 Données balises : © contributeurs du réseau OpenWindMap,
 https://developers.pioupiou.fr/data-licensing
 
+## Tableau « Où voler ? »
+L'appli s'ouvre sur un tableau de tous tes sites : une ligne par site, regroupés
+en vol puis gonflage, une case par jour (aujourd'hui à J+5). Chaque case prend la
+couleur du verdict du jour, calculé avec les règles et les limites du site, et
+porte son meilleur créneau (« 10–16 »). Au-delà de J+2, les cases sont atténuées :
+c'est une tendance. Une case grise « · » : le modèle ne couvre pas ce jour.
+
+Toucher une case ouvre l'écran du site sur ce jour ; toucher le nom l'ouvre sur
+demain. La flèche en haut à gauche ramène au tableau. Depuis le tableau, « Lim. vol »
+et « Lim. gonflage » règlent chaque type de site.
+
+Une seule requête Open-Meteo sert tous les sites (listes de coordonnées). Chaque
+réponse est enregistrée par site : ouvrir un site dans les 10 minutes ne refait
+pas d'appel, et hors ligne chaque site retombe sur sa dernière prévision.
+
 ## Ajouter un déco par son nom
 Dans « Mes sites », le champ « Chercher un déco par son nom » parcourt les décos
 français de ParaglidingEarth (accents et majuscules ignorés). En touchant un
@@ -121,5 +136,7 @@ Dans `index.html` :
   réglables dans l'appli, « Mes limites »)
 - `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, évaluation)
 - `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure
+- `buildDays()` / `dayVerdict()` : jours évalués d'un site et verdict du jour
+- `loadOverview()` / `renderOverview()` : le tableau « Où voler ? »
 - `liveNotes()` : la lecture de la balise et la comparaison avec le modèle
 - `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)
