@@ -6,6 +6,9 @@ des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 ## Fichiers
 - `index.html` : la structure de la page (en-tête, feuilles), rien d'autre
 - `style.css` : la feuille de style, rangée par composant, thèmes clair et sombre
+- `fonts/` : Barlow et Barlow Condensed (sous-ensemble latin, licence SIL OFL dans
+  `fonts/OFL.txt`), servies par le site : pas d'appel à Google, et l'appli s'ouvre
+  hors ligne avec sa police dès le premier lancement
 - `js/` : le code, en modules ES natifs (pas d'outil de compilation), chargés depuis
   `js/main.js`. Chaque module importe ce qu'il utilise ; les dépendances vont
   toujours dans le même sens :
@@ -45,8 +48,8 @@ balise simulée). Il contrôle :
   modèle météo, recherche et ajout de sites, suppression jusqu'à l'accueil, sans
   erreur JS ;
 - le réseau lent : Open-Meteo ne répond plus, l'appli doit retomber sur le cache ;
-- le service worker : chaque fichier de l'appli est dans `SHELL`, et `CACHE` a
-  changé si l'appli a changé depuis le dernier commit.
+- le service worker : chaque fichier de l'appli (modules, polices…) est dans
+  `SHELL`, et `CACHE` a changé si l'appli a changé depuis le dernier commit.
 
 Quand une règle change exprès, `tools/verifier.sh --accepter` réécrit
 `tools/attendu.txt` : `git diff tools/attendu.txt` montre alors quels sites, quels

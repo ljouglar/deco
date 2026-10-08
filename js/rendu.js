@@ -206,7 +206,9 @@ function hoursHtml(K, L, day, sel) {
       </button>`).join("")}</div>`;
 }
 
+// Appelée en fin de chaque rendu : c'est aussi elle qui découvre la barre et le pied de page au premier
 function renderStatus() {
+  delete $("app").dataset.loading;
   const ov = state.view === "overview", at = ov ? state.ov && state.ov.fetchedAt : state.fetchedAt;
   const t = at ? new Date(at).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : null;
   $("status").innerHTML = `

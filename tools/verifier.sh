@@ -56,14 +56,15 @@ import pathlib, re, sys
 sw = pathlib.Path("sw.js").read_text()
 shell = re.findall(r'"\./([^"]*)"', sw.split("SHELL = [")[1].split("];")[0])
 manque = [p for p in shell if p and not pathlib.Path(p).is_file()]
-appli = ["index.html", "style.css", "manifest.webmanifest", "sites-fr.json"] + sorted(str(p) for p in pathlib.Path("js").glob("*.js"))
+appli = ["index.html", "style.css", "manifest.webmanifest", "sites-fr.json"] + sorted(str(p) for p in pathlib.Path("js").glob("*.js")) \
+    + sorted(str(p) for p in pathlib.Path("fonts").glob("*.woff2"))
 oublie = [p for p in appli if p not in shell]
 print("OK" if not manque else "KO", "fichiers de SHELL présents" + (f" : absents {manque}" if manque else ""))
 print("OK" if not oublie else "KO", "fichiers de l'appli dans SHELL" + (f" : oubliés {oublie} (l'appli ne s'ouvrirait plus hors ligne)" if oublie else ""))
 sys.exit(1 if manque or oublie else 0)
 EOF
 # Toute modification de l'appli doit changer CACHE, sinon les téléphones gardent l'ancienne version
-if ! git diff --quiet HEAD -- index.html style.css js manifest.webmanifest sites-fr.json sw.js icons 2>/dev/null; then
+if ! git diff --quiet HEAD -- index.html style.css js fonts manifest.webmanifest sites-fr.json sw.js icons 2>/dev/null; then
   avant=$(git show HEAD:sw.js | grep -o 'CACHE = "[^"]*"'); apres=$(grep -o 'CACHE = "[^"]*"' sw.js)
   if [ "$avant" != "$apres" ]; then ok "CACHE changé ($avant → $apres)"; else ko "l'appli a changé mais pas CACHE dans sw.js ($apres)"; fi
 else
