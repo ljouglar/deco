@@ -6,6 +6,7 @@ import { pruneCache } from "./donnees.js";
 import { render } from "./rendu.js";
 import { load, loadOverview, openSite, refresh, refreshLive } from "./chargement.js";
 import { openLimits, openModel, openSites, pgeNear } from "./feuilles.js";
+import { initUpdates } from "./maj.js";
 
 pruneCache();
 if (state.sites.length) protectStorage();
@@ -59,9 +60,7 @@ document.addEventListener("visibilitychange", () => {
 // La balise émet toutes les ~4 min : on la resuit en continu, sans retoucher aux prévisions
 setInterval(() => { if (document.visibilityState === "visible" && state.view === "site") refreshLive(); }, 4 * 60 * 1000);
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-}
+initUpdates();
 
 // Accès de débogage depuis la console (et pour les pages de contrôle) : les modules ne sont pas globaux
 window.deco = { state, site, load, loadOverview, openSite, refresh };

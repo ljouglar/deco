@@ -1,12 +1,12 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v20";
+const CACHE = "deco-v21";
 const NET_WAIT = 3000; // au-delà, la copie en cache plutôt que d'attendre un réseau lent
 // En développement (python3 -m http.server sur localhost), toujours le réseau : chaque rechargement voit tes modifications
 const DEV = self.location.hostname === "localhost";
 const SHELL = ["./", "./index.html", "./style.css", "./manifest.webmanifest", "./sites-fr.json",
   "./js/main.js", "./js/outils.js", "./js/config.js", "./js/etat.js", "./js/regles.js", "./js/donnees.js",
-  "./js/balise.js", "./js/rendu.js", "./js/chargement.js", "./js/feuilles.js",
+  "./js/balise.js", "./js/rendu.js", "./js/chargement.js", "./js/feuilles.js", "./js/maj.js",
   "./fonts/barlow-400.woff2", "./fonts/barlow-500.woff2", "./fonts/barlow-600.woff2",
   "./fonts/barlow-condensed-500.woff2", "./fonts/barlow-condensed-700.woff2",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png"];
@@ -14,6 +14,9 @@ const SHELL = ["./", "./index.html", "./style.css", "./manifest.webmanifest", ".
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
+
+// La page demande le numéro de la version installée pour l'afficher
+self.addEventListener("message", (e) => { if (e.data === "version" && e.ports[0]) e.ports[0].postMessage(CACHE); });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys()

@@ -252,7 +252,7 @@ tools/                vérificateur, banc d'essai, mise à jour de sites-fr.json
 Les modules dépendent les uns des autres dans un seul sens, sans boucle :
 
 ```
-outils → config → etat → regles → donnees → balise → rendu → chargement → feuilles → main
+outils → config → etat → regles → donnees → balise → rendu → chargement → feuilles → maj → main
 ```
 
 | Module | Rôle |
@@ -266,6 +266,7 @@ outils → config → etat → regles → donnees → balise → rendu → charg
 | `rendu.js` | en-tête, tableau, écran d'un site, pied de page |
 | `chargement.js` | chargements et navigation : seul le chargement le plus récent s'applique |
 | `feuilles.js` | limites, modèle météo, mes sites, sauvegarde, recherche de décos |
+| `maj.js` | service worker : enregistrement, recherche de mise à jour, avis « Nouvelle version », numéro de version |
 | `main.js` | événements de l'écran principal et démarrage |
 
 ### Où modifier quoi
@@ -319,7 +320,10 @@ publie en une minute environ.
    version ; ajouter tout nouveau fichier à `SHELL`, sans quoi l'appli ne s'ouvre
    plus hors ligne. Le vérificateur contrôle les deux.
 2. Lancer `tools/verifier.sh`, commiter, pousser.
-3. Sur le téléphone, fermer puis rouvrir l'appli (parfois deux fois).
+3. Sur le téléphone, la nouvelle version est cherchée à chaque retour de l'appli au
+   premier plan ; dès qu'elle est installée, un avis « Nouvelle version de Déco
+   disponible » propose de recharger. Le numéro de la version installée figure en
+   bas de l'écran (« Déco v21 »).
 
 ### Mettre à jour la liste des décos
 
