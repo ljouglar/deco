@@ -1,4 +1,4 @@
-# Déco – conditions de vol jusqu'à J+5
+# Déco – conditions de vol et de gonflage jusqu'à J+5
 
 PWA sans dépendance : HTML + JS, prévisions Open-Meteo et mesures en temps réel
 des balises Pioupiou / OpenWindMap (gratuites, sans clé).
@@ -64,12 +64,38 @@ absents sont ajoutés.
 Données balises : © contributeurs du réseau OpenWindMap,
 https://developers.pioupiou.fr/data-licensing
 
+## Terrains de gonflage
+Un site est soit un déco, soit un terrain de gonflage (« Type de site » dans
+« Mes sites » ; un site sans type est un déco). Sur un terrain, l'appli évalue le
+gonflage face voile niveau débutant au lieu du vol :
+- vent moyen entre 8 et 20 km/h : en dessous le face voile est laborieux (orange),
+  au-dessus on se fait traîner (rouge) ;
+- rafales au-delà de 25 km/h (rouge), écart rafales / vent au-delà de 8 km/h (orange) ;
+- secteur = directions où le vent arrive sans passer par des haies ou des arbres ;
+  hors secteur, c'est orange (turbulences d'obstacles), pas rouge comme au déco ;
+- pluie (rouge), instabilité et vent fort vers 1500 m (orange : rafales au sol) ;
+- la base des nuages et le plafond thermique ne comptent pas.
+
+Ces limites ont leurs propres réglages (« Mes limites » affiche celles du type de
+site affiché) ; le modèle météo est commun aux deux.
+
+| Terrain | Altitude | Secteur | Balise |
+| --- | --- | --- | --- |
+| Marennes | 230 m | NO à NE (315–45°), pente école face nord | 2229 – Pente Ecole MARENNES |
+| Miribel-Jonage | 175 m | SE à SO (135–225°), champ plat | aucune à moins de 15 km |
+| Le Rebat (Poleymieux) | 450 m | ONO à NNE (285–15°), pente école face NNO | aucune en service (la n° 97, à 3 km, est muette) |
+
+Sources : ParaglidingEarth, fil « Gonflage près de Lyon » sur parapentiste.info.
+Marennes est un terrain de club : se renseigner avant d'y aller.
+
 ## Où modifier la logique
 Dans `index.html` :
-- `DEFAULT_SITES` : sites par défaut (Sapenay, Saint-Hilaire, Aiguebelette)
+- `DEFAULT_SITES` : sites par défaut (trois décos, trois terrains de gonflage)
 - `FORECAST_DAYS` : horizon de prévision (6 = aujourd'hui + 5 jours ; Météo-France
   ne va que jusqu'à J+4 vers 14 h, les heures sans vent prévu sont écartées)
-- `DEFAULT_LIMITS` : limites débutant (aussi réglables dans l'appli, « Mes limites »)
-- `evaluate()` : les règles vert / orange / rouge, heure par heure
+- `DEFAULT_LIMITS` / `DEFAULT_LIMITS_G` : limites débutant, vol et gonflage (aussi
+  réglables dans l'appli, « Mes limites »)
+- `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, évaluation)
+- `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure
 - `liveNotes()` : la lecture de la balise et la comparaison avec le modèle
 - `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#15303F">
-<meta name="description" content="Conditions de vol parapente jusqu'à J+5 pour vos sites">
+<meta name="description" content="Conditions de vol et de gonflage parapente jusqu'à J+5 pour vos sites">
 <title>Déco</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -61,6 +61,8 @@ button { cursor: pointer; }
 .verdict.l0 { border-left-color: var(--go); background: var(--go-soft); }
 .verdict.l1 { border-left-color: var(--warn); background: var(--warn-soft); }
 .verdict.l2 { border-left-color: var(--stop); background: var(--stop-soft); }
+.verdict .kind { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font: 600 .78rem/1 var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.verdict .kind svg { width: 16px; height: 16px; flex: none; }
 .verdict h1 { margin: 0; font: 700 2.6rem/0.95 var(--cond); letter-spacing: -.005em; }
 .verdict .window { margin: 6px 0 0; font: 500 1.25rem/1.2 var(--cond); }
 .verdict .why { margin: 8px 0 0; font-size: .9rem; color: var(--muted); }
@@ -141,7 +143,7 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .field input, .field select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); text-align: right; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .stack label { display: block; font-size: .8rem; color: var(--muted); margin-top: 8px; }
-.stack input { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.stack input, .stack select { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
 .site-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .site-row .info { flex: 1; min-width: 0; }
 .site-row .info b { display: block; }
@@ -182,7 +184,7 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 </div>
 
 <dialog id="limitsDlg">
-  <h2>Mes limites</h2>
+  <h2 id="limitsTitle">Mes limites</h2>
   <form method="dialog" id="limitsForm"></form>
 </dialog>
 
@@ -194,19 +196,21 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
     <input type="hidden" name="id">
     <label for="sf-name">Nom</label>
     <input id="sf-name" name="name" required placeholder="Ex. Planfait">
+    <label for="sf-type">Type de site</label>
+    <select id="sf-type" name="type"><option value="deco">Déco (vol)</option><option value="gonflage">Terrain de gonflage</option></select>
     <div class="grid2">
       <div><label for="sf-lat">Latitude</label><input id="sf-lat" name="lat" type="number" step="any" required></div>
       <div><label for="sf-lon">Longitude</label><input id="sf-lon" name="lon" type="number" step="any" required></div>
     </div>
     <div class="grid2">
-      <div><label for="sf-alt">Altitude du déco (m)</label><input id="sf-alt" name="alt" type="number" required></div>
+      <div><label for="sf-alt">Altitude (m)</label><input id="sf-alt" name="alt" type="number" required></div>
       <div style="align-self:end"><button type="button" class="btn" id="geoBtn" style="width:100%">Ma position</button></div>
     </div>
     <div class="grid2">
       <div><label for="sf-min">Vent favorable de (°)</label><input id="sf-min" name="secMin" type="number" min="0" max="359" required></div>
       <div><label for="sf-max">à (°)</label><input id="sf-max" name="secMax" type="number" min="0" max="359" required></div>
     </div>
-    <p class="hint">Direction d'où vient le vent, sens horaire : 270 = ouest. Un déco ouest se règle par exemple de 225 à 315.</p>
+    <p class="hint">Direction d'où vient le vent, sens horaire : 270 = ouest. Un déco ouest se règle par exemple de 225 à 315. Pour un terrain de gonflage : les directions où le vent arrive sans passer par des haies ou des arbres.</p>
     <label for="sf-piou">Balise Pioupiou (numéro, facultatif)</label>
     <input id="sf-piou" name="piou" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 1446">
     <p class="hint">Numéro de la station sur <a href="https://www.openwindmap.org/" target="_blank" rel="noopener">openwindmap.org</a> : il apparaît dans l'adresse de la balise (PIOU_1446).</p>
@@ -232,6 +236,15 @@ const DEFAULT_SITES = [{
 }, {
   id: "aiguebelette", name: "Aiguebelette", lat: 45.6016, lon: 5.8073, alt: 1120, secMin: 200, secMax: 315, piou: 1722,
   note: "Déco des Provinces (l'Épine), face ouest sur le lac. La brise monte souvent après 13 h : la balise mesure surtout cette brise, pas le vent météo."
+}, {
+  id: "marennes", type: "gonflage", name: "Marennes", lat: 45.6154, lon: 4.9038, alt: 230, secMin: 315, secMax: 45, piou: 2229,
+  note: "Pente école face nord, chemin des Condamines. Terrain de club : se renseigner avant d'y aller. Se garer le long de la route ou du chemin, ne pas monter jusqu'à la maison ni y faire demi-tour."
+}, {
+  id: "miribel", type: "gonflage", name: "Miribel-Jonage", lat: 45.7936, lon: 4.9578, alt: 175, secMin: 135, secMax: 225,
+  note: "Grand champ plat au sud-est du lac, idéal en vent météo sud. Cerfs-volants et paramoteurs fréquents. Vols signalés dans les voitures : ne rien laisser en vue."
+}, {
+  id: "rebat", type: "gonflage", name: "Le Rebat", lat: 45.8651, lon: 4.7935, alt: 450, secMin: 285, secMax: 15,
+  note: "Pente école face nord-nord-ouest à Poleymieux, près du déco de la Croix Rampau. Pas de balise en service à proximité."
 }];
 
 const DEFAULT_LIMITS = {
@@ -243,6 +256,12 @@ const DEFAULT_LIMITS = {
   capeStop: 1000,   // J/kg : risque orageux
   minBase: 500,     // base des nuages mini au-dessus du déco (m)
   startHour: 9, endHour: 18, model: "best_match"
+};
+
+// Gonflage face voile : il faut assez de vent, mais régulier, et le plafond est plus bas qu'au déco
+const DEFAULT_LIMITS_G = {
+  minWind: 8, maxWind: 20, maxGust: 25, maxGustDelta: 8,
+  maxAlt: 35, capeWarn: 300, capeStop: 1000, startHour: 9, endHour: 19
 };
 
 const MODELS = {
@@ -274,6 +293,33 @@ const LIMIT_FIELDS = [
   ["endHour", "Fin de journée", "heure"]
 ];
 
+const LIMIT_FIELDS_G = [
+  ["minWind", "Vent moyen mini", "en dessous, face voile difficile, km/h"],
+  ["maxWind", "Vent moyen max", "au sol, km/h"],
+  ["maxGust", "Rafales max", "km/h"],
+  ["maxGustDelta", "Écart rafales / vent", "irrégularité tolérée, km/h"],
+  ["maxAlt", "Vent vers 1500 m", "au-delà, rafales possibles au sol, km/h"],
+  ["capeWarn", "Instabilité : vigilance", "CAPE, J/kg"],
+  ["capeStop", "Instabilité : orage", "CAPE, J/kg"],
+  ["startHour", "Début de journée", "heure"],
+  ["endHour", "Fin de journée", "heure"]
+];
+
+// Ce qui distingue un déco d'un terrain de gonflage ; `key` nomme ses limites dans state et localStorage
+const KINDS = {
+  deco: {
+    key: "limits", defaults: DEFAULT_LIMITS, fields: LIMIT_FIELDS, evaluate,
+    label: "Déco", place: "déco", here: "au déco", limitsTitle: "Mes limites de vol", kicker: "Vol",
+    titles: ["Volable", "À surveiller", "Non volable"]
+  },
+  gonflage: {
+    key: "limitsG", defaults: DEFAULT_LIMITS_G, fields: LIMIT_FIELDS_G, evaluate: evaluateGonflage,
+    label: "Gonflage", place: "terrain", here: "sur le terrain", limitsTitle: "Mes limites de gonflage", kicker: "Gonflage face voile",
+    titles: ["Bon pour gonfler", "À surveiller", "Pas de gonflage"]
+  }
+};
+const kind = (s) => KINDS[s && s.type === "gonflage" ? "gonflage" : "deco"];
+
 // ---------- Storage ----------
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -294,7 +340,8 @@ function withDefaults(saved) {
 
 const state = {
   sites: withDefaults(store.get("sites", null)),
-  limits: { ...DEFAULT_LIMITS, ...store.get("limits", {}) },
+  limits: { ...DEFAULT_LIMITS, ...store.get("limits", {}) },     // vol, et choix du modèle météo
+  limitsG: { ...DEFAULT_LIMITS_G, ...store.get("limitsG", {}) }, // gonflage
   siteId: store.get("siteId", "sapenay"),
   dayIdx: 1, hourSel: null, days: [], fetchedAt: null, fromCache: false, error: null, loading: false,
   live: null
@@ -307,6 +354,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const r0 = (v) => (v == null || Number.isNaN(v) ? "–" : Math.round(v));
 const el = (form, name) => form.elements.namedItem(name);
 const site = () => state.sites.find((s) => s.id === state.siteId) || state.sites[0];
+const limitsOf = (s) => state[kind(s).key];
 
 // ---------- Wind helpers ----------
 const CARD = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"];
@@ -341,9 +389,7 @@ function evaluate(h, s, L) {
   let level = 0;
   const flag = (l, msg, tag) => { level = Math.max(level, l); reasons.push({ l, msg, tag }); };
 
-  // Pluie
-  if ((h.pr ?? 0) >= 0.3 || (h.pp ?? 0) >= 60) flag(2, `Pluie probable (${r0(h.pp)} %)`, "pluie");
-  else if ((h.pp ?? 0) >= 30) flag(1, `Risque d'averse (${r0(h.pp)} %)`, "risque d'averse");
+  flagRain(h, flag);
 
   // Direction du vent au déco
   if (h.ws != null && h.wd != null) {
@@ -392,6 +438,44 @@ function evaluate(h, s, L) {
   return { level, reasons, base };
 }
 
+function flagRain(h, flag) {
+  if ((h.pr ?? 0) >= 0.3 || (h.pp ?? 0) >= 60) flag(2, `Pluie probable (${r0(h.pp)} %)`, "pluie");
+  else if ((h.pp ?? 0) >= 30) flag(1, `Risque d'averse (${r0(h.pp)} %)`, "risque d'averse");
+}
+
+// Gonflage face voile : trop peu de vent gêne, trop ou irrégulier fait traîner ; la base des nuages ne compte pas
+function evaluateGonflage(h, s, L) {
+  const reasons = [];
+  let level = 0;
+  const flag = (l, msg, tag) => { level = Math.max(level, l); reasons.push({ l, msg, tag }); };
+
+  flagRain(h, flag);
+
+  if (h.ws != null) {
+    if (h.ws < L.minWind) flag(1, `Vent faible (${r0(h.ws)} km/h) : face voile difficile`, "vent trop faible");
+    else if (h.ws > L.maxWind) flag(2, `Vent moyen ${r0(h.ws)} km/h, au-dessus de ta limite`, "vent trop fort");
+    else if (h.ws > L.maxWind * 0.85) flag(1, `Vent moyen ${r0(h.ws)} km/h, proche de ta limite`, "vent soutenu");
+    else flag(0, `Vent ${r0(h.ws)} km/h : bonne plage pour le face voile`);
+    // Sur un terrain, un vent hors secteur passe par les haies et les arbres : turbulent, sans être un piège de déco
+    if (h.wd != null && h.ws >= L.minWind) {
+      const gap = sectorGap(h.wd, s.secMin, s.secMax);
+      if (gap === 0) flag(0, `Vent ${cardinal(h.wd)} bien orienté sur le terrain`);
+      else if (gap <= 30) flag(1, `Vent ${cardinal(h.wd)} de travers sur le terrain`, "vent travers");
+      else flag(1, `Vent ${cardinal(h.wd)} hors secteur : turbulences d'obstacles possibles`, "vent hors secteur");
+    }
+  }
+  if (h.wg != null) {
+    if (h.wg > L.maxGust) flag(2, `Rafales ${r0(h.wg)} km/h`, "rafales");
+    else if (h.ws != null && h.wg - h.ws > L.maxGustDelta) flag(1, `Vent irrégulier (rafales ${r0(h.wg)} km/h)`, "vent irrégulier");
+  }
+  if (h.w850 != null && h.w850 > L.maxAlt) flag(1, `Vent fort vers 1500 m (${r0(h.w850)} km/h) : rafales possibles au sol`, "vent fort en altitude");
+  if (h.cape != null) {
+    if (h.cape >= L.capeStop) flag(2, `Masse d'air très instable (CAPE ${r0(h.cape)}) : risque orageux`, "risque orageux");
+    else if (h.cape >= L.capeWarn) flag(1, `Masse d'air instable (CAPE ${r0(h.cape)}) : thermiques et rafales irrégulières`, "thermiques");
+  }
+  return { level, reasons, base: null };
+}
+
 function bestWindow(hours, L) {
   let best = null, cur = null;
   for (const h of hours) {
@@ -405,7 +489,7 @@ function bestWindow(hours, L) {
   return best;
 }
 
-function dayVerdict(day, L) {
+function dayVerdict(day, L, K) {
   const open = day.hours.filter((h) => h.hour >= L.startHour && h.hour <= L.endHour);
   const win = bestWindow(day.hours, L);
   const counts = [0, 0, 0];
@@ -417,9 +501,9 @@ function dayVerdict(day, L) {
     tally[r.tag].n++; tally[r.tag].l = Math.max(tally[r.tag].l, r.l);
   }));
   const top = Object.values(tally).sort((a, b) => b.l - a.l || b.n - a.n).slice(0, 3).map((t) => t.tag);
-  if (win && win.to - win.from >= 1) return { level: 0, title: "Volable", win, top };
-  if (counts[0] + counts[1] > 0) return { level: 1, title: "À surveiller", win, top };
-  return { level: 2, title: "Non volable", win: null, top };
+  if (win && win.to - win.from >= 1) return { level: 0, title: K.titles[0], win, top };
+  if (counts[0] + counts[1] > 0) return { level: 1, title: K.titles[1], win, top };
+  return { level: 2, title: K.titles[2], win: null, top };
 }
 
 // ---------- Data ----------
@@ -499,13 +583,15 @@ function forecastAt(ts) {
 
 // Ce que la mesure dit, et ce qu'elle dit du modèle
 function liveNotes(lv, fc, s, L) {
-  const out = [];
+  const out = [], g = kind(s) === KINDS.gonflage;
+  if (g && lv.ws != null && lv.ws < L.minWind) out.push({ l: 1, msg: `Vent ${r0(lv.ws)} km/h : trop faible pour le face voile` });
   if (lv.wd != null && lv.ws >= 3) {
     const gap = sectorGap(lv.wd, s.secMin, s.secMax);
-    if (gap === 0) out.push({ l: 0, msg: `Vent ${cardinal(lv.wd)} dans l'axe du déco` });
-    else if (gap <= 30) out.push({ l: 1, msg: `Vent ${cardinal(lv.wd)} travers au déco` });
+    if (gap === 0) out.push({ l: 0, msg: g ? `Vent ${cardinal(lv.wd)} bien orienté sur le terrain` : `Vent ${cardinal(lv.wd)} dans l'axe du déco` });
+    else if (gap <= 30) out.push({ l: 1, msg: g ? `Vent ${cardinal(lv.wd)} de travers sur le terrain` : `Vent ${cardinal(lv.wd)} travers au déco` });
+    else if (g) out.push({ l: 1, msg: `Vent ${cardinal(lv.wd)} hors secteur : turbulences d'obstacles possibles` });
     else out.push({ l: 2, msg: `Vent ${cardinal(lv.wd)} hors secteur : déco sous le vent` });
-  } else {
+  } else if (!g) {
     out.push({ l: 0, msg: "Vent nul ou très faible à la balise" });
   }
   if (lv.wg != null && lv.wg > L.maxGust) out.push({ l: 2, msg: `Rafales ${r0(lv.wg)} km/h, au-dessus de ta limite` });
@@ -525,7 +611,7 @@ function liveNotes(lv, fc, s, L) {
 }
 
 function ingest(json, at, fromCache) {
-  const H = json.hourly, s = site(), L = state.limits;
+  const H = json.hourly, s = site(), K = kind(s), L = limitsOf(s);
   const pick = (k, i) => (H[k] ? H[k][i] : null);
   const byDate = new Map();
   H.time.forEach((t, i) => {
@@ -539,7 +625,7 @@ function ingest(json, at, fromCache) {
       w700: pick("wind_speed_700hPa", i), d700: pick("wind_direction_700hPa", i),
       cape: pick("cape", i), blh: pick("boundary_layer_height", i)
     };
-    h.ev = evaluate(h, s, L);
+    h.ev = K.evaluate(h, s, L);
     if (!byDate.has(h.date)) byDate.set(h.date, []);
     byDate.get(h.date).push(h);
   });
@@ -547,7 +633,7 @@ function ingest(json, at, fromCache) {
   // plutôt que de la noter verte faute de règle déclenchée
   state.days = [...byDate.entries()].slice(0, FORECAST_DAYS).map(([date, hours]) => {
     const day = { date, hours: hours.filter((h) => h.hour >= 7 && h.hour <= 20 && h.ws != null) };
-    day.verdict = dayVerdict(day, L);
+    day.verdict = dayVerdict(day, L, K);
     return day;
   }).filter((d) => d.hours.length);
   state.fetchedAt = at; state.fromCache = fromCache;
@@ -560,6 +646,9 @@ const LEVEL_COLOR = ["var(--go)", "var(--warn)", "var(--stop)"];
 const DAY_SHORT = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
+// Petite voile, pour marquer le type de site au-dessus du verdict
+const WING_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10 Q12 2 22 10"/><path d="M2 10 L12 21 L22 10 M8 7.2 L12 21 L16 7.2"/></svg>`;
+
 function arrowSvg(deg) {
   return `<svg viewBox="-10 -10 20 20" aria-hidden="true"><g transform="rotate(${deg ?? 0})"><path d="M0 -8 V6 M-4.5 2 L0 7 L4.5 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
 }
@@ -570,7 +659,7 @@ function dialSvg(s, h, lv) {
   const sector = `M0 0 L${p(s.secMin, 50)} A50 50 0 ${span > 180 ? 1 : 0} 1 ${p(s.secMax, 50)} Z`;
   const arrow = (deg, cls, len) => deg == null ? "" :
     `<g transform="rotate(${deg})"><line class="${cls}" x1="0" y1="${-len}" x2="0" y2="${len - 8}"/><path class="${cls}" d="M-6 ${len - 15} L0 ${len - 7} L6 ${len - 15}" fill="none"/></g>`;
-  return `<svg class="dial" viewBox="-62 -62 124 124" role="img" aria-label="Secteur du déco et direction du vent">
+  return `<svg class="dial" viewBox="-62 -62 124 124" role="img" aria-label="Secteur favorable du site et direction du vent">
     <path class="sector" d="${sector}"/>
     <circle class="ring" r="50"/>
     ${["N", "E", "S", "O"].map((c, i) => `<text class="card" x="${p(i * 90, 57).split(" ")[0]}" y="${p(i * 90, 57).split(" ")[1]}">${c}</text>`).join("")}
@@ -590,16 +679,16 @@ function skyText(h) {
 }
 
 function liveCard() {
-  const s = site(), L = state.limits, lv = state.live;
+  const s = site(), K = kind(s), L = limitsOf(s), lv = state.live;
   if (!s || !s.piou) return "";
   if (!lv || lv.failed) {
-    return `<section class="live"><h2><span class="pulse off"></span>En direct au déco<span class="age">balise injoignable</span></h2>
+    return `<section class="live"><h2><span class="pulse off"></span>En direct ${K.here}<span class="age">balise injoignable</span></h2>
       <p class="stale">Aucune mesure reçue de la balise n° ${esc(s.piou)}. Vérifie ta connexion, ou le numéro dans « Mes sites ».</p></section>`;
   }
   const age = Date.now() - (lv.date || lv.at);
   const fresh = age <= PIOU_STALE;
   const fc = fresh ? forecastAt(lv.date || lv.at) : null;
-  const head = (stale) => `<h2><span class="pulse${stale ? " off" : ""}"></span>En direct au déco<span class="age">mesure ${esc(ago(age))}${lv.offline ? " · hors ligne" : ""}</span></h2>
+  const head = (stale) => `<h2><span class="pulse${stale ? " off" : ""}"></span>En direct ${K.here}<span class="age">mesure ${esc(ago(age))}${lv.offline ? " · hors ligne" : ""}</span></h2>
     <span class="bname">Balise ${esc(lv.name || `n° ${lv.id}`)}</span>`;
 
   if (!fresh) {
@@ -628,13 +717,13 @@ function liveCard() {
 function renderChrome() {
   const s = site();
   $("siteName").textContent = s ? s.name : "Aucun site";
-  $("siteMeta").textContent = s ? `Déco ${s.alt} m, vent favorable ${cardinal(s.secMin)} à ${cardinal(s.secMax)}` : "";
+  $("siteMeta").textContent = s ? `${kind(s).label} ${s.alt} m, vent favorable ${cardinal(s.secMin)} à ${cardinal(s.secMax)}` : "";
   $("refreshBtn").classList.toggle("spin", state.loading);
 }
 
 function render() {
   renderChrome();
-  const L = state.limits, s = site();
+  const s = site(), K = kind(s), L = limitsOf(s);
 
   // Tabs
   $("days").innerHTML = state.days.map((d, i) => {
@@ -680,6 +769,7 @@ function render() {
   $("main").innerHTML = `
     <section class="verdict l${v.level}" aria-live="polite">
       <div>
+        <p class="kind">${WING_SVG}${K.kicker}</p>
         <h1>${v.title}</h1>
         <p class="window">${winTxt}</p>
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
@@ -691,11 +781,14 @@ function render() {
     <section class="detail">
       <h2>${sel.hour} h</h2>
       <dl class="facts">
-        <div><dt>Vent au déco</dt><dd>${r0(sel.ws)} km/h ${cardinal(sel.wd)}</dd></div>
+        <div><dt>Vent au ${K.place}</dt><dd>${r0(sel.ws)} km/h ${cardinal(sel.wd)}</dd></div>
         <div><dt>Rafales</dt><dd>${r0(sel.wg)} km/h</dd></div>
         <div><dt>Vers 1500 m</dt><dd>${r0(sel.w850)} km/h ${cardinal(sel.d850)}</dd></div>
-        <div><dt>Base nuages</dt><dd>${baseTxt}</dd></div>
-        <div><dt>Plafond thermique</dt><dd>${blhTxt}</dd></div>
+        ${K === KINDS.gonflage
+          ? `<div><dt>Écart rafales</dt><dd>${sel.ws != null && sel.wg != null ? `${r0(sel.wg - sel.ws)} km/h` : "–"}</dd></div>
+        <div><dt>Pluie</dt><dd>${sel.pp != null ? `${r0(sel.pp)} %` : `${r0(sel.pr)} mm`}</dd></div>`
+          : `<div><dt>Base nuages</dt><dd>${baseTxt}</dd></div>
+        <div><dt>Plafond thermique</dt><dd>${blhTxt}</dd></div>`}
         <div><dt>Température</dt><dd>${r0(sel.t)} °C</dd></div>
       </dl>
       <ul class="reasons">${ev.reasons.sort((a, b) => b.l - a.l).map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
@@ -721,38 +814,40 @@ function renderStatus() {
   $("status").innerHTML = `
     <p>Données <a href="https://open-meteo.com/" style="color:inherit">Open-Meteo</a>, modèle ${esc(MODELS[state.limits.model] || state.limits.model)}${t ? `, mises à jour ${t}` : ""}. Vent en km/h, flèches dans le sens où souffle le vent.</p>
     ${site() && site().piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(site().piou)}" style="color:inherit">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : ""}
-    <p>Aide à la préparation : la décision se prend au déco, avec la balise et la manche à air sous les yeux.</p>`;
+    <p>Aide à la préparation : la décision se prend ${kind(site()).here}, avec la balise et la manche à air sous les yeux.</p>`;
 }
 
 // ---------- Dialogs ----------
+// Les limites affichées sont celles du type de site en cours ; le modèle météo est commun
 function openLimits() {
-  const L = state.limits;
-  $("limitsForm").innerHTML = LIMIT_FIELDS.map(([k, label, sub]) =>
+  const K = kind(site()), L = state[K.key];
+  $("limitsTitle").textContent = K.limitsTitle;
+  $("limitsForm").innerHTML = K.fields.map(([k, label, sub]) =>
     `<label class="field"><span>${label}<small>${sub}</small></span><input type="number" name="${k}" value="${L[k]}" inputmode="numeric"></label>`
   ).join("") + `
     <label class="field wide"><span>Modèle météo<small>compare-les pour voir s'ils sont d'accord</small></span>
-      <select name="model">${Object.entries(MODELS).map(([k, n]) => `<option value="${k}"${k === L.model ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+      <select name="model">${Object.entries(MODELS).map(([k, n]) => `<option value="${k}"${k === state.limits.model ? " selected" : ""}>${n}</option>`).join("")}</select></label>
     <div class="actions">
       <button type="button" class="btn" id="limitsReset">Valeurs débutant</button>
       <button type="submit" class="btn primary">Enregistrer</button>
     </div>`;
-  $("limitsReset").onclick = () => { state.limits = { ...DEFAULT_LIMITS }; store.set("limits", state.limits); $("limitsDlg").close(); load(); };
+  $("limitsReset").onclick = () => { state[K.key] = { ...K.defaults }; store.set(K.key, state[K.key]); $("limitsDlg").close(); load(); };
   $("limitsDlg").showModal();
 }
 
 $("limitsForm").addEventListener("submit", () => {
-  const fd = new FormData($("limitsForm"));
-  const next = { ...state.limits };
-  for (const [k] of LIMIT_FIELDS) { const n = parseFloat(fd.get(k)); if (!Number.isNaN(n)) next[k] = n; }
-  const modelChanged = next.model !== fd.get("model");
-  next.model = fd.get("model");
-  state.limits = next; store.set("limits", next);
+  const fd = new FormData($("limitsForm")), K = kind(site());
+  const next = { ...state[K.key] };
+  for (const [k] of K.fields) { const n = parseFloat(fd.get(k)); if (!Number.isNaN(n)) next[k] = n; }
+  state[K.key] = next; store.set(K.key, next);
+  const modelChanged = state.limits.model !== fd.get("model");
+  state.limits.model = fd.get("model"); store.set("limits", state.limits);
   if (modelChanged) load(); else { reevaluate(); render(); }
 });
 
 function reevaluate() {
-  const s = site(), L = state.limits;
-  state.days.forEach((d) => { d.hours.forEach((h) => { h.ev = evaluate(h, s, L); }); d.verdict = dayVerdict(d, L); });
+  const s = site(), K = kind(s), L = limitsOf(s);
+  state.days.forEach((d) => { d.hours.forEach((h) => { h.ev = K.evaluate(h, s, L); }); d.verdict = dayVerdict(d, L, K); });
   state.hourSel = null;
 }
 
@@ -761,7 +856,7 @@ function openSites() { renderSitesList(); resetSiteForm(); $("sitesDlg").showMod
 function renderSitesList() {
   $("sitesList").innerHTML = state.sites.map((s) => `
     <div class="site-row">
-      <div class="info"><b>${esc(s.name)}</b><small>${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}</small></div>
+      <div class="info"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}</small></div>
       ${s.id === state.siteId ? `<small>Affiché</small>` : `<button class="btn" data-use="${esc(s.id)}">Afficher</button>`}
       <button class="btn" data-edit="${esc(s.id)}">Modifier</button>
       ${state.sites.length > 1 ? `<button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>` : ""}
@@ -773,6 +868,7 @@ function resetSiteForm(s) {
   f.reset();
   el(f, "id").value = s ? s.id : "";
   if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
+  el(f, "type").value = s && s.type === "gonflage" ? "gonflage" : "deco";
   $("siteFormTitle").textContent = s ? `Modifier ${s.name}` : "Ajouter un site";
   $("siteSubmit").textContent = s ? "Enregistrer le site" : "Ajouter le site";
 }
@@ -795,7 +891,7 @@ $("siteForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const f = e.target;
   const s = {
-    id: el(f, "id").value || `s${Date.now()}`, name: el(f, "name").value.trim(),
+    id: el(f, "id").value || `s${Date.now()}`, name: el(f, "name").value.trim(), type: el(f, "type").value,
     lat: +el(f, "lat").value, lon: +el(f, "lon").value, alt: Math.round(+el(f, "alt").value),
     secMin: ((+el(f, "secMin").value % 360) + 360) % 360, secMax: ((+el(f, "secMax").value % 360) + 360) % 360,
     piou: el(f, "piou").value.trim() ? Math.round(+el(f, "piou").value) : null,
