@@ -1,5 +1,5 @@
 // Feuilles : limites, modèle météo, mes sites et recherche ParaglidingEarth
-import { $, cardinal, el, esc, fold, km, store } from "./outils.js";
+import { $, cardinal, el, esc, fetchT, fold, km, store } from "./outils.js";
 import { kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
 import { site, state } from "./etat.js";
 import { nearestPiou } from "./balise.js";
@@ -270,7 +270,7 @@ $("geoBtn").addEventListener("click", () => {
     const { latitude, longitude } = pos.coords;
     el(f, "lat").value = latitude.toFixed(4); el(f, "lon").value = longitude.toFixed(4);
     try {
-      const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${latitude}&longitude=${longitude}`);
+      const r = await fetchT(`https://api.open-meteo.com/v1/elevation?latitude=${latitude}&longitude=${longitude}`);
       const j = await r.json();
       if (j.elevation) el(f, "alt").value = Math.round(j.elevation[0]);
     } catch {}

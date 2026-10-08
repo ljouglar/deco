@@ -1,5 +1,5 @@
 // Prévisions Open-Meteo et cache local
-import { store } from "./outils.js";
+import { fetchT, store } from "./outils.js";
 import { ENSEMBLE, FORECAST_DAYS, HOURLY } from "./config.js";
 import { state } from "./etat.js";
 
@@ -29,7 +29,7 @@ export async function fetchForecasts(sites, force) {
     hourly: HOURLY.join(","), models: requestedModels().join(","),
     timezone: "Europe/Paris", forecast_days: FORECAST_DAYS, wind_speed_unit: "kmh"
   });
-  const res = await fetch(url, { cache: force ? "reload" : "default" });
+  const res = await fetchT(url, { cache: force ? "reload" : "default" });
   const json = await res.json();
   if (!res.ok || json.error) throw new Error(json.reason || `Erreur ${res.status}`);
   const list = Array.isArray(json) ? json : [json];
@@ -38,7 +38,8 @@ export async function fetchForecasts(sites, force) {
   return list;
 }
 
-export const fetchError = (e) => (navigator.onLine ? `Prévisions indisponibles : ${e.message}` : "Hors ligne.");
+export const fetchError = (e) => (!navigator.onLine ? "Hors ligne."
+  : e.name === "TimeoutError" ? "Réseau trop lent : pas de réponse d'Open-Meteo." : `Prévisions indisponibles : ${e.message}`);
 
 // Prévision d'un site : { json, at, fromCache, error }, sans toucher à l'état
 export async function loadForecast(s, force) {

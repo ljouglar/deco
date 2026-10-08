@@ -1,5 +1,5 @@
 // Balise Pioupiou / OpenWindMap : mesure, historique, tendance, et le bloc « En direct »
-import { ago, angleGap, arrowSvg, cardinal, esc, inSector, km, parisParts, r0, reasonsHtml, store } from "./outils.js";
+import { ago, angleGap, arrowSvg, cardinal, esc, fetchT, inSector, km, parisParts, r0, reasonsHtml, store } from "./outils.js";
 import { kind, KINDS } from "./config.js";
 import { limitsOf, site, state } from "./etat.js";
 import { dirNote } from "./regles.js";
@@ -13,7 +13,7 @@ const HIST_SPAN = 2 * 3600 * 1000;
 
 async function loadHist(id) {
   const start = new Date(Date.now() - HIST_SPAN - 10 * 60 * 1000).toISOString();
-  const res = await fetch(`https://api.pioupiou.fr/v1/archive/${encodeURIComponent(id)}?start=${start}&stop=now`, { cache: "no-store" });
+  const res = await fetchT(`https://api.pioupiou.fr/v1/archive/${encodeURIComponent(id)}?start=${start}&stop=now`, { cache: "no-store" });
   const json = await res.json();
   return (json.data || []).map((x) => [Date.parse(x[0]), x[4], x[5], x[6]]).filter((x) => x[1] != null);
 }
@@ -86,7 +86,7 @@ export async function loadLive(s, force = false) {
   if (cached && !force && Date.now() - cached.at < PIOU_TTL) return cached;
   try {
     const [res, hist] = await Promise.all([
-      fetch(`https://api.pioupiou.fr/v1/live/${encodeURIComponent(s.piou)}`, { cache: "no-store" }),
+      fetchT(`https://api.pioupiou.fr/v1/live/${encodeURIComponent(s.piou)}`, { cache: "no-store" }),
       loadHist(s.piou).catch(() => null) // sans historique, on garde la mesure du moment
     ]);
     const json = await res.json();
@@ -182,7 +182,7 @@ let piouAll = null;
 
 function piouList() {
   if (!piouAll || Date.now() - piouAll.at > 10 * 60 * 1000) {
-    const p = fetch("https://api.pioupiou.fr/v1/live-with-meta/all").then((r) => r.json()).then((j) => j.data);
+    const p = fetchT("https://api.pioupiou.fr/v1/live-with-meta/all", {}, 20000) // ~650 Ko.then((r) => r.json()).then((j) => j.data);
     piouAll = { at: Date.now(), p };
     p.catch(() => { piouAll = null; });
   }

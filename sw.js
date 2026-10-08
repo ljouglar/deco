@@ -1,6 +1,9 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v15";
+const CACHE = "deco-v16";
+const NET_WAIT = 3000; // au-delà, la copie en cache plutôt que d'attendre un réseau lent
+// En développement (python3 -m http.server sur localhost), toujours le réseau : chaque rechargement voit tes modifications
+const DEV = self.location.hostname === "localhost";
 const SHELL = ["./", "./index.html", "./style.css", "./manifest.webmanifest", "./sites-fr.json",
   "./js/main.js", "./js/outils.js", "./js/config.js", "./js/etat.js", "./js/regles.js", "./js/donnees.js",
   "./js/balise.js", "./js/rendu.js", "./js/chargement.js", "./js/feuilles.js",
@@ -30,10 +33,18 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Fichiers de l'appli : réseau d'abord (pour récupérer tes mises à jour), cache si hors ligne
-  if (url.origin === self.location.origin) {
-    e.respondWith(fetch(e.request)
-      .then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return r; })
-      .catch(() => caches.match(e.request).then((r) => r || caches.match("./index.html"))));
-  }
+  if (url.origin !== self.location.origin) return;
+  e.respondWith((async () => {
+    const net = fetch(e.request).then((r) => {
+      if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
+      return r;
+    });
+    const cached = await caches.match(e.request);
+    if (!cached || DEV) return net.catch(() => cached || caches.match("./index.html"));
+    // Les fichiers de l'appli (CSS, modules, icônes) : la copie de cette version, tout de suite ; le réseau
+    // la rafraîchit en arrière-plan. Une nouvelle version (CACHE) recharge tout le lot à l'installation.
+    if (e.request.mode !== "navigate") { net.catch(() => {}); return cached; }
+    // La page elle-même : le réseau d'abord, mais au déco avec un réseau qui traîne, la copie au bout de NET_WAIT
+    return Promise.race([net.catch(() => cached), new Promise((ok) => setTimeout(() => ok(cached), NET_WAIT))]);
+  })());
 });

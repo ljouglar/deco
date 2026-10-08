@@ -48,6 +48,20 @@ pousse, puis ferme et rouvre l'appli sur le téléphone. Un nouveau fichier (mod
 feuille de style) doit aussi entrer dans la liste `SHELL` de `sw.js`, sinon l'appli
 ne s'ouvre plus hors ligne.
 
+## Réseau faible et hors ligne
+Au déco, la 3G peut traîner :
+- chaque appel à Open-Meteo et Pioupiou abandonne au bout de 8 s (`fetchT`,
+  `outils.js`) ; l'appli affiche alors « Réseau trop lent » et les dernières
+  prévisions enregistrées, au lieu de tourner indéfiniment ;
+- le service worker sert la page depuis le réseau, mais au bout de 3 s sans réponse
+  il donne la copie en cache. Les autres fichiers (CSS, modules, icônes) viennent
+  tout de suite du cache de la version installée et sont rafraîchis en
+  arrière-plan ; une nouvelle version (`CACHE`) recharge tout le lot. Mesuré avec
+  10 s par réponse : l'appli installée s'ouvre en 3 s, contre 40 s sans service
+  worker.
+- Sur `localhost`, le service worker passe toujours par le réseau : en
+  développement, chaque rechargement voit tes modifications.
+
 Les modules ne sont pas des variables globales : depuis la console, ou une page de
 contrôle qui charge l'appli dans un cadre, l'état et la navigation sont exposés
 dans `window.deco` (`state`, `site`, `load`, `loadOverview`, `openSite`, `refresh`).
