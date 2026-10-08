@@ -33,6 +33,29 @@ des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 puis ouvre http://localhost:8000 dans Chrome.
 Astuce : outils de développement (F12), mode appareil, choisis un Pixel.
 
+## Vérifier avant de commiter
+    tools/verifier.sh
+
+Sans framework : un serveur local, Chrome sans fenêtre et un banc d'essai
+(`tools/banc.html`) qui fait tourner l'appli dans un cadre où le réseau et l'heure
+sont simulés (prévision figée `tools/prevision-figee.json`, heure figée à midi,
+balise simulée). Il contrôle :
+- les verdicts des 6 sites, heure par heure, comparés à `tools/attendu.txt` ;
+- un parcours complet : tableau, écran d'un site, balise et tendance, limites,
+  modèle météo, recherche et ajout de sites, suppression jusqu'à l'accueil, sans
+  erreur JS ;
+- le réseau lent : Open-Meteo ne répond plus, l'appli doit retomber sur le cache ;
+- le service worker : chaque fichier de l'appli est dans `SHELL`, et `CACHE` a
+  changé si l'appli a changé depuis le dernier commit.
+
+Quand une règle change exprès, `tools/verifier.sh --accepter` réécrit
+`tools/attendu.txt` : `git diff tools/attendu.txt` montre alors quels sites, quels
+jours et quelles heures basculent, et pourquoi. `--lighthouse` ajoute un audit
+Lighthouse (seuil 90 par catégorie).
+
+Le banc s'ouvre aussi à la main : http://localhost:8000/tools/banc.html#parcours
+(ou `#lent`, `#tableau`, `#deco`…). Il efface le stockage local de `localhost`.
+
 ## Installer sur le Pixel 9
 Une PWA doit être servie en HTTPS. Le plus simple, GitHub Pages :
 1. Crée un dépôt GitHub (par ex. `deco`) et pousse le contenu du dossier.
