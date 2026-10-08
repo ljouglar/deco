@@ -7,6 +7,8 @@ des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 - `index.html` : toute l'appli (interface, appel API, évaluation des conditions)
 - `manifest.webmanifest` + `icons/` : installation sur l'écran d'accueil
 - `sw.js` : service worker (ouverture hors ligne)
+- `sites-fr.json` : instantané des décos ParaglidingEarth pour la recherche par nom,
+  généré par `tools/pge_snapshot.py`
 
 ## Tester sur ton PC (Linux)
     cd deco
@@ -63,6 +65,28 @@ absents sont ajoutés.
 
 Données balises : © contributeurs du réseau OpenWindMap,
 https://developers.pioupiou.fr/data-licensing
+
+## Ajouter un déco par son nom
+Dans « Mes sites », le champ « Chercher un déco par son nom » parcourt les décos
+français de ParaglidingEarth (accents et majuscules ignorés). En touchant un
+résultat, le formulaire se remplit :
+- nom, position et altitude du déco ;
+- secteur tiré des orientations **principales** seulement (les « possibles » sont
+  souvent très larges : Saint-Hilaire est noté possible dans les 8 directions) ;
+  les autres orientations sont reprises dans la note ;
+- balise Pioupiou en service la plus proche, si elle est à moins de 3 km.
+
+Il reste à vérifier l'altitude et le secteur avant d'enregistrer. Les terrains de
+gonflage ne sont pas dans ParaglidingEarth : ils se saisissent à la main.
+
+L'API ParaglidingEarth n'a ni recherche par nom ni en-têtes CORS, d'où la liste
+embarquée (~60 Ko). Pour la rafraîchir, ou ajouter des pays :
+
+    python3 tools/pge_snapshot.py            # France
+    python3 tools/pge_snapshot.py fr ch it   # plusieurs pays
+
+puis incrémenter `CACHE` dans `sw.js`. Données © contributeurs ParaglidingEarth,
+CC BY-SA 3.0.
 
 ## Terrains de gonflage
 Un site est soit un déco, soit un terrain de gonflage (« Type de site » dans

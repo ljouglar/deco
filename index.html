@@ -153,6 +153,9 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .btn.danger { color: var(--stop); }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
+.pge-results:not(:empty) { margin-top: 4px; border-top: 1px solid var(--line); }
+.pge-item { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 9px 2px; }
+.pge-item small { display: block; color: var(--muted); font-size: .8rem; }
 
 @media (prefers-reduced-motion: reduce) { .icon-btn.spin svg, .live h2 .pulse { animation: none; } }
 </style>
@@ -192,6 +195,12 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
   <h2>Mes sites</h2>
   <div id="sitesList"></div>
   <h3 id="siteFormTitle">Ajouter un site</h3>
+  <div id="pgeSearch" class="stack">
+    <label for="pge-q">Chercher un déco par son nom</label>
+    <input id="pge-q" type="search" placeholder="Ex. Planfait, Sapenay…" autocomplete="off" enterkeyhint="search">
+    <div id="pgeResults" class="pge-results"></div>
+    <p class="hint" id="pgeHint">Remplit le formulaire : vérifie ensuite l'altitude et le secteur. Les terrains de gonflage n'y sont pas, ils se saisissent à la main. Sites © <a href="https://www.paraglidingearth.com/" target="_blank" rel="noopener">ParaglidingEarth</a>, CC BY-SA.</p>
+  </div>
   <form id="siteForm" class="stack" autocomplete="off">
     <input type="hidden" name="id">
     <label for="sf-name">Nom</label>
@@ -869,9 +878,110 @@ function resetSiteForm(s) {
   el(f, "id").value = s ? s.id : "";
   if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
   el(f, "type").value = s && s.type === "gonflage" ? "gonflage" : "deco";
+  $("pgeSearch").hidden = !!s;
+  $("pge-q").value = ""; $("pgeResults").innerHTML = ""; $("pgeStatus")?.remove();
   $("siteFormTitle").textContent = s ? `Modifier ${s.name}` : "Ajouter un site";
   $("siteSubmit").textContent = s ? "Enregistrer le site" : "Ajouter le site";
 }
+
+// ---------- Recherche ParaglidingEarth ----------
+// Instantané embarqué (tools/pge_snapshot.py) : l'API n'a ni recherche par nom ni CORS.
+// Une ligne : [nom, lat, lon, altitude, orientations N→NO (2 principale, 1 possible), n° PGE]
+const PGE_DIRS = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+const fold = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+let pgeRows = null;
+
+function pgeLoad() {
+  pgeRows ??= fetch("sites-fr.json").then((r) => r.json())
+    .then((rows) => rows.map((r) => ({ r, key: fold(r[0]) })))
+    .catch((e) => { pgeRows = null; throw e; });
+  return pgeRows;
+}
+
+// Secteur bâti sur les orientations principales seulement : les « possibles » sont souvent très larges
+function pgeSector(o) {
+  const lvl = o.includes("2") ? "2" : o.includes("1") ? "1" : null;
+  if (!lvl) return null;
+  const on = [...o].map((c) => c === lvl);
+  let best = null;
+  if (on.every(Boolean)) best = { i: 0, n: 8 };
+  else for (let i = 0; i < 8; i++) {
+    if (!on[i] || on[(i + 7) % 8]) continue;
+    let n = 0; while (on[(i + n) % 8]) n++;
+    if (!best || n > best.n) best = { i, n };
+  }
+  const run = Array.from({ length: best.n }, (_, k) => (best.i + k) % 8);
+  const pad = best.n === 1 ? 22 : 0; // une seule direction : ± un demi-quart
+  return {
+    min: best.n === 8 ? 0 : (run[0] * 45 - pad + 360) % 360,
+    max: best.n === 8 ? 359 : (run[run.length - 1] * 45 + pad) % 360,
+    others: [...o].map((c, i) => (c !== "0" && !run.includes(i) ? PGE_DIRS[i] : null)).filter(Boolean)
+  };
+}
+
+const orientText = (o) => [...o].map((c, i) => (c === "2" ? PGE_DIRS[i] : null)).filter(Boolean).join(" ")
+  || [...o].map((c, i) => (c === "1" ? `(${PGE_DIRS[i]})` : null)).filter(Boolean).join(" ") || "orientation inconnue";
+
+async function pgeSearch() {
+  const q = fold($("pge-q").value.trim()), out = $("pgeResults");
+  if (q.length < 2) { out.innerHTML = ""; return; }
+  let rows;
+  try { rows = await pgeLoad(); } catch { out.innerHTML = `<p class="hint">Liste des sites indisponible.</p>`; return; }
+  if (fold($("pge-q").value.trim()) !== q) return; // une frappe plus récente a pris le relais
+  const words = q.split(/\s+/);
+  const hits = rows.filter((x) => words.every((w) => x.key.includes(w)))
+    .sort((a, b) => b.key.startsWith(words[0]) - a.key.startsWith(words[0]) || a.key.localeCompare(b.key)).slice(0, 8);
+  out.innerHTML = hits.length ? hits.map(({ r }) => `<button type="button" class="pge-item" data-pge="${r[5]}">
+      <b>${esc(r[0])}</b><small>${r[3] != null ? `${r[3]} m · ` : ""}${esc(orientText(r[4]))}</small></button>`).join("")
+    : `<p class="hint">Aucun déco trouvé.</p>`;
+}
+
+const km = (la1, lo1, la2, lo2) => 111.2 * Math.hypot(la2 - la1, (lo2 - lo1) * Math.cos(la1 * Math.PI / 180));
+
+// Balise en service la plus proche, si elle est assez près pour parler du même site
+async function nearestPiou(lat, lon) {
+  const res = await fetch("https://api.pioupiou.fr/v1/live-with-meta/all");
+  const { data } = await res.json();
+  const day = Date.now() - 24 * 3600 * 1000;
+  return data.filter((b) => b.location && b.location.latitude != null && (!b.status || b.status.state === "on")
+      && b.measurements && Date.parse(b.measurements.date) > day)
+    .map((b) => ({ id: b.id, name: b.meta && b.meta.name, d: km(lat, lon, b.location.latitude, b.location.longitude) }))
+    .filter((b) => b.d <= 3).sort((a, b) => a.d - b.d)[0] || null;
+}
+
+let pgePick = 0;
+async function pgeFill(id) {
+  const { r } = (await pgeLoad()).find((x) => x.r[5] === id);
+  const [name, lat, lon, alt, o] = r, f = $("siteForm"), sec = pgeSector(o), pick = ++pgePick;
+  resetSiteForm();
+  Object.entries({ name, lat, lon, alt: alt ?? "", secMin: sec ? sec.min : "", secMax: sec ? sec.max : "" })
+    .forEach(([k, v]) => { el(f, k).value = v; });
+  el(f, "note").value = sec && sec.others.length ? `ParaglidingEarth donne aussi : ${sec.others.join(", ")}.` : "";
+  const status = document.createElement("p");
+  status.className = "hint"; status.id = "pgeStatus";
+  status.textContent = `${name} : ${sec ? "secteur repris des orientations principales" : "pas d'orientation connue, secteur à saisir"}. Recherche d'une balise…`;
+  $("pgeSearch").after(status);
+  status.scrollIntoView({ block: "start" });
+  try {
+    const b = await nearestPiou(lat, lon);
+    if (pick !== pgePick) return;
+    if (b) el(f, "piou").value = b.id;
+    status.textContent = status.textContent.replace("Recherche d'une balise…",
+      b ? `Balise n° ${b.id}${b.name ? ` « ${b.name.trim()} »` : ""} à ${b.d.toFixed(1).replace(".", ",")} km.` : "Aucune balise en service à moins de 3 km.");
+  } catch {
+    if (pick === pgePick) status.textContent = status.textContent.replace("Recherche d'une balise…", "Balises injoignables, numéro à saisir si besoin.");
+  }
+}
+
+$("pge-q").addEventListener("input", pgeSearch);
+// Sous la liste des sites, le champ finirait sous le clavier avec ses résultats : on le remonte en haut de la feuille
+$("pge-q").addEventListener("focus", () => {
+  pgeLoad().catch(() => {});
+  $("siteFormTitle").scrollIntoView({ block: "start" });
+});
+$("pgeResults").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pge]"); if (b) pgeFill(+b.dataset.pge);
+});
 
 $("sitesList").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
@@ -922,8 +1032,13 @@ $("geoBtn").addEventListener("click", () => {
 
 $("siteCancel").addEventListener("click", () => $("sitesDlg").close());
 
-// Fermer une feuille en touchant le fond
-document.querySelectorAll("dialog").forEach((d) => d.addEventListener("click", (e) => { if (e.target === d) d.close(); }));
+// Fermer une feuille en touchant le fond. La cible seule ne suffit pas : un toucher dans la marge de la feuille,
+// ou un défilement entre l'appui et le relâché (focus de la recherche), donne aussi la feuille pour cible
+document.querySelectorAll("dialog").forEach((d) => d.addEventListener("click", (e) => {
+  if (e.target !== d) return;
+  const r = d.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
+}));
 
 // ---------- Events ----------
 $("days").addEventListener("click", (e) => {
