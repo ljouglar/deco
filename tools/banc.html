@@ -15,6 +15,13 @@
 //   #parcours            les gestes courants, avec leurs contrôles
 //   #lent                Open-Meteo ne répond plus : l'appli doit retomber sur le cache
 //   #tableau, #deco…     un écran, pour les captures
+// Le banc efface le stockage local : publié avec l'appli sur GitHub Pages, il viderait tes sites.
+// Il ne tourne donc qu'en local.
+if (!["localhost", "127.0.0.1"].includes(location.hostname)) {
+  document.body.textContent = "Banc d'essai : à lancer en local uniquement (tools/verifier.sh).";
+  throw new Error("banc hors local");
+}
+
 const SITES = [
   { id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315, piou: 1446, note: "Déco ouest." },
   { id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, note: "" },
