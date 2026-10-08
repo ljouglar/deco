@@ -1,7 +1,9 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v14";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./sites-fr.json",
+const CACHE = "deco-v15";
+const SHELL = ["./", "./index.html", "./style.css", "./manifest.webmanifest", "./sites-fr.json",
+  "./js/main.js", "./js/outils.js", "./js/config.js", "./js/etat.js", "./js/regles.js", "./js/donnees.js",
+  "./js/balise.js", "./js/rendu.js", "./js/chargement.js", "./js/feuilles.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png"];
 
 self.addEventListener("install", (e) => {

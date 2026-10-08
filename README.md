@@ -4,7 +4,24 @@ PWA sans dépendance : HTML + JS, prévisions Open-Meteo et mesures en temps ré
 des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 
 ## Fichiers
-- `index.html` : toute l'appli (interface, appel API, évaluation des conditions)
+- `index.html` : la structure de la page (en-tête, feuilles), rien d'autre
+- `style.css` : la feuille de style, rangée par composant, thèmes clair et sombre
+- `js/` : le code, en modules ES natifs (pas d'outil de compilation), chargés depuis
+  `js/main.js`. Chaque module importe ce qu'il utilise ; les dépendances vont
+  toujours dans le même sens :
+  `outils` → `config` → `etat` → `regles` → `donnees` → `balise` → `rendu` →
+  `chargement` → `feuilles` → `main`
+  - `outils.js` : petites aides sans état (DOM, texte, vent, distances, stockage)
+  - `config.js` : sites préréglés, limites et niveaux, modèles, `KINDS`
+  - `etat.js` : l'état de l'appli (`state`), chargé depuis le téléphone
+  - `regles.js` : évaluation heure par heure, verdict du jour, accord des modèles ;
+    ni DOM ni réseau, il se teste seul
+  - `donnees.js` : prévisions Open-Meteo et cache local
+  - `balise.js` : balise Pioupiou, historique, tendance, bloc « En direct »
+  - `rendu.js` : en-tête, tableau, écran d'un site, pied de page
+  - `chargement.js` : chargements et navigation (seul le plus récent s'applique)
+  - `feuilles.js` : limites, modèle météo, mes sites, recherche ParaglidingEarth
+  - `main.js` : événements de l'écran principal et démarrage
 - `manifest.webmanifest` + `icons/` : installation sur l'écran d'accueil
 - `sw.js` : service worker (ouverture hors ligne)
 - `sites-fr.json` : instantané des décos ParaglidingEarth pour la recherche par nom,
@@ -27,7 +44,13 @@ Alternative sans compte Git : glisser le dossier sur https://app.netlify.com/dro
 
 ## Mettre à jour
 Après une modification, incrémente `CACHE` dans `sw.js` (`deco-v3` → `deco-v4`…),
-pousse, puis ferme et rouvre l'appli sur le téléphone.
+pousse, puis ferme et rouvre l'appli sur le téléphone. Un nouveau fichier (module,
+feuille de style) doit aussi entrer dans la liste `SHELL` de `sw.js`, sinon l'appli
+ne s'ouvre plus hors ligne.
+
+Les modules ne sont pas des variables globales : depuis la console, ou une page de
+contrôle qui charge l'appli dans un cadre, l'état et la navigation sont exposés
+dans `window.deco` (`state`, `site`, `load`, `loadOverview`, `openSite`, `refresh`).
 
 ## Balise Pioupiou : prévision vs mesure
 Chaque site peut porter un numéro de balise (`piou`). L'appli interroge
@@ -204,22 +227,29 @@ Le seuil d'orage (CAPE 1000) est le même à tous les niveaux : il ne dépend pa
 pilote. Les heures de début et de fin de journée ne changent pas non plus.
 
 ## Où modifier la logique
-Dans `index.html` :
-- `DEFAULT_SITES` / `withPresets()` : mes six sites préréglés, et la règle qui ne les
-  donne qu'une fois aux téléphones existants
+- `DEFAULT_SITES` (`config.js`) / `withPresets()` (`etat.js`) : mes six sites
+  préréglés, et la règle qui ne les donne qu'une fois aux téléphones existants
 - `FORECAST_DAYS` : horizon de prévision (6 = aujourd'hui + 5 jours ; Météo-France
   ne va que jusqu'à J+4 vers 14 h, les heures sans vent prévu sont écartées)
 - `DEFAULT_LIMITS` / `DEFAULT_LIMITS_G` : limites débutant, vol et gonflage (aussi
   réglables dans l'appli, « Mes limites »)
 - `LEVELS_VOL` / `LEVELS_G` : repères débutant, intermédiaire, confirmé
-- `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, évaluation)
+- `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, phrases)
+- `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)
+
+Dans `regles.js` :
 - `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure ;
   `flagRain()`, `flagGusts()`, `flagCape()` et `dirNote()` sont communes aux deux
   (les phrases de direction propres à chaque type sont dans `KINDS`)
-- `buildDays()` / `dayVerdict()` : jours évalués d'un site et verdict du jour
-- `loadOverview()` / `renderOverview()` : le tableau « Où voler ? »
-- `render()` : l'écran d'un site, assemblé par `verdictHtml()`, `detailHtml()` et `hoursHtml()`
-- `pruneCache()` : au démarrage, ne garde en cache que les prévisions et balises utiles
-- `liveNotes()` : la lecture de la balise et la comparaison avec le modèle
-- `liveTrend()` / `trendSvg()` : la tendance des 2 dernières heures et sa courbe
-- `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)
+- `buildDays()` / `buildAll()` / `dayVerdict()` : jours évalués d'un site, accord des
+  modèles, verdict du jour
+
+Ailleurs :
+- `pruneCache()` (`donnees.js`) : au démarrage, ne garde en cache que les prévisions
+  et balises utiles
+- `liveNotes()` / `liveTrend()` / `trendSvg()` (`balise.js`) : la lecture de la
+  balise, sa tendance des 2 dernières heures et sa courbe
+- `renderOverview()` / `render()` (`rendu.js`) : le tableau « Où voler ? » et l'écran
+  d'un site, assemblé par `verdictHtml()`, `detailHtml()` et `hoursHtml()`
+- `loadOverview()` / `load()` / `openSite()` (`chargement.js`) : chargements et
+  navigation
