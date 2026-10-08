@@ -1,267 +1,146 @@
-# Déco – conditions de vol et de gonflage jusqu'à J+5
+# Déco
 
-PWA sans dépendance : HTML + JS, prévisions Open-Meteo et mesures en temps réel
-des balises Pioupiou / OpenWindMap (gratuites, sans clé).
+**Conditions de vol et de gonflage en parapente, site par site, d'aujourd'hui à J+5.**
 
-## Fichiers
-- `index.html` : la structure de la page (en-tête, feuilles), rien d'autre
-- `style.css` : la feuille de style, rangée par composant, thèmes clair et sombre
-- `fonts/` : Barlow et Barlow Condensed (sous-ensemble latin, licence SIL OFL dans
-  `fonts/OFL.txt`), servies par le site : pas d'appel à Google, et l'appli s'ouvre
-  hors ligne avec sa police dès le premier lancement
-- `screenshots/` : captures montrées par Android dans le dialogue d'installation
-- `js/` : le code, en modules ES natifs (pas d'outil de compilation), chargés depuis
-  `js/main.js`. Chaque module importe ce qu'il utilise ; les dépendances vont
-  toujours dans le même sens :
-  `outils` → `config` → `etat` → `regles` → `donnees` → `balise` → `rendu` →
-  `chargement` → `feuilles` → `main`
-  - `outils.js` : petites aides sans état (DOM, texte, vent, distances, stockage)
-  - `config.js` : sites préréglés, limites et niveaux, modèles, `KINDS`
-  - `etat.js` : l'état de l'appli (`state`), chargé depuis le téléphone
-  - `regles.js` : évaluation heure par heure, verdict du jour, accord des modèles ;
-    ni DOM ni réseau, il se teste seul
-  - `donnees.js` : prévisions Open-Meteo et cache local
-  - `balise.js` : balise Pioupiou, historique, tendance, bloc « En direct »
-  - `rendu.js` : en-tête, tableau, écran d'un site, pied de page
-  - `chargement.js` : chargements et navigation (seul le plus récent s'applique)
-  - `feuilles.js` : limites, modèle météo, mes sites, recherche ParaglidingEarth
-  - `main.js` : événements de l'écran principal et démarrage
-- `manifest.webmanifest` + `icons/` : installation sur l'écran d'accueil
-- `sw.js` : service worker (ouverture hors ligne)
-- `sites-fr.json` : instantané des décos ParaglidingEarth pour la recherche par nom,
-  généré par `tools/pge_snapshot.py`
+Déco est une application web installable (PWA) qui croise les prévisions de trois
+modèles météo avec vos limites de pilote, et les confronte en direct aux balises
+installées sur les sites. Sans compte, sans serveur, sans publicité : tout tourne
+sur le téléphone.
 
-## Tester sur ton PC (Linux)
-    cd deco
-    python3 -m http.server 8000
-puis ouvre http://localhost:8000 dans Chrome.
-Astuce : outils de développement (F12), mode appareil, choisis un Pixel.
+**→ https://ljouglar.github.io/deco/**
 
-## Tes données
-Sites, notes et limites ne vivent que dans le stockage du navigateur. L'appli
-demande à Chrome de ne pas l'effacer quand le téléphone manque de place
-(`navigator.storage.persist()`), et « Mes sites » permet de les **exporter** dans
-un fichier (`deco-sites-AAAA-MM-JJ.json`, avec les limites) puis de les
-**importer** sur un autre téléphone ou après une réinstallation, y compris depuis
-l'écran d'accueil. À l'import, seuls les champs connus sont repris, et le fichier
-doit contenir des sites valides.
+<p>
+  <img src="screenshots/tableau.png" alt="Tableau « Où voler ? » : tous les sites, jour par jour" width="280">
+  <img src="screenshots/deco.png" alt="Écran d'un déco : balise en direct, verdict et accord des modèles" width="280">
+</p>
 
-## Sécurité
-Une politique de sécurité (CSP, en tête de `index.html`) n'autorise que les
-scripts, styles et polices du site, et les appels réseau vers Open-Meteo et
-Pioupiou. Aucun style écrit dans le HTML : ce qui doit varier passe par le CSSOM
-(par exemple le nombre de colonnes du tableau).
+> **Avertissement.** Déco est une aide à la préparation, un indicateur de tendance.
+> Le verdict dit si les conditions *prévues* restent dans vos limites ; il ne dit pas
+> si vous pouvez voler. La décision se prend sur place, avec la balise, la manche à
+> air, l'avis des pilotes présents et celui de votre moniteur.
 
-## Vérifier avant de commiter
-    tools/verifier.sh
+## Sommaire
 
-Sans framework : un serveur local, Chrome sans fenêtre et un banc d'essai
-(`tools/banc.html`) qui fait tourner l'appli dans un cadre où le réseau et l'heure
-sont simulés (prévision figée `tools/prevision-figee.json`, heure figée à midi,
-balise simulée). Il contrôle :
-- les verdicts des 6 sites, heure par heure, comparés à `tools/attendu.txt` ;
-- un parcours complet : tableau, écran d'un site, balise et tendance, limites,
-  modèle météo, recherche et ajout de sites, suppression jusqu'à l'accueil, sans
-  erreur JS ;
-- le réseau lent : Open-Meteo ne répond plus, l'appli doit retomber sur le cache ;
-- le service worker : chaque fichier de l'appli (modules, polices…) est dans
-  `SHELL`, et `CACHE` a changé si l'appli a changé depuis le dernier commit.
-Le parcours couvre aussi l'export et l'import des sites, et toute violation de la
-CSP compte comme une erreur.
+- [Fonctionnalités](#fonctionnalités)
+- [Installer et utiliser](#installer-et-utiliser)
+- [Comment Déco juge les conditions](#comment-déco-juge-les-conditions)
+- [La balise en direct](#la-balise-en-direct)
+- [Hors ligne et réseau faible](#hors-ligne-et-réseau-faible)
+- [Données, confidentialité et licences](#données-confidentialité-et-licences)
+- [Développement](#développement)
+- [Sites préréglés](#sites-préréglés)
+- [Licence](#licence)
 
-Quand une règle change exprès, `tools/verifier.sh --accepter` réécrit
-`tools/attendu.txt` : `git diff tools/attendu.txt` montre alors quels sites, quels
-jours et quelles heures basculent, et pourquoi. `--lighthouse` ajoute un audit
-Lighthouse (seuil 90 par catégorie).
+## Fonctionnalités
 
-Le banc s'ouvre aussi à la main : http://localhost:8000/tools/banc.html#parcours
-(ou `#lent`, `#tableau`, `#deco`…). Il efface le stockage local de `localhost`.
+- **Où voler ?** : un tableau de tous vos sites, une case par jour, colorée selon le
+  verdict et portant le meilleur créneau.
+- **Vol et gonflage** : chaque site est un déco ou un terrain de gonflage face
+  voile, jugé avec ses propres règles et ses propres limites.
+- **Trois modèles comparés** : Météo-France (AROME/ARPEGE), ICON et ECMWF ; un vert
+  qu'un seul modèle annonce se repère d'un coup d'œil.
+- **Balise en direct** : la mesure du moment face à la prévision, et la tendance des
+  deux dernières heures (le vent forcit, faiblit, tourne).
+- **Limites par niveau** : repères débutant, intermédiaire et confirmé, entièrement
+  réglables.
+- **Ajout de sites en deux gestes** : les décos autour de soi ou par leur nom
+  (base ParaglidingEarth), avec la balise la plus proche.
+- **Hors ligne** : l'appli s'ouvre sans réseau et tient avec une 3G faible.
+- **Vos données restent chez vous** : rien n'est envoyé nulle part ; export et import
+  des sites pour changer de téléphone.
 
-## Installer sur le Pixel 9
-Une PWA doit être servie en HTTPS. Le plus simple, GitHub Pages :
-1. Crée un dépôt GitHub (par ex. `deco`) et pousse le contenu du dossier.
-2. Settings > Pages > Source : branche `main`, dossier `/ (root)`.
-3. Ouvre `https://<ton-pseudo>.github.io/deco/` dans Chrome sur le Pixel.
-4. Menu ⋮ > « Ajouter à l'écran d'accueil » > « Installer ».
+## Installer et utiliser
 
-Alternative sans compte Git : glisser le dossier sur https://app.netlify.com/drop
+### Installation
 
-## Mettre à jour
-Après une modification, incrémente `CACHE` dans `sw.js` (`deco-v3` → `deco-v4`…),
-pousse, puis ferme et rouvre l'appli sur le téléphone. Un nouveau fichier (module,
-feuille de style) doit aussi entrer dans la liste `SHELL` de `sw.js`, sinon l'appli
-ne s'ouvre plus hors ligne.
+Ouvrir https://ljouglar.github.io/deco/ puis :
 
-## Réseau faible et hors ligne
-Au déco, la 3G peut traîner :
-- chaque appel à Open-Meteo et Pioupiou abandonne au bout de 8 s (`fetchT`,
-  `outils.js`) ; l'appli affiche alors « Réseau trop lent » et les dernières
-  prévisions enregistrées, au lieu de tourner indéfiniment ;
-- le service worker sert la page depuis le réseau, mais au bout de 3 s sans réponse
-  il donne la copie en cache. Les autres fichiers (CSS, modules, icônes) viennent
-  tout de suite du cache de la version installée et sont rafraîchis en
-  arrière-plan ; une nouvelle version (`CACHE`) recharge tout le lot. Mesuré avec
-  10 s par réponse : l'appli installée s'ouvre en 3 s, contre 40 s sans service
-  worker.
-- Sur `localhost`, le service worker passe toujours par le réseau : en
-  développement, chaque rechargement voit tes modifications.
+- **Android (Chrome)** : menu ⋮ > « Installer l'application » (ou « Ajouter à l'écran d'accueil ») ;
+- **iPhone (Safari)** : bouton Partager > « Sur l'écran d'accueil ».
 
-Les modules ne sont pas des variables globales : depuis la console, ou une page de
-contrôle qui charge l'appli dans un cadre, l'état et la navigation sont exposés
-dans `window.deco` (`state`, `site`, `load`, `loadOverview`, `openSite`, `refresh`).
+L'appli est développée et testée sur Android avec Chrome.
 
-## Balise Pioupiou : prévision vs mesure
-Chaque site peut porter un numéro de balise (`piou`). L'appli interroge
-`https://api.pioupiou.fr/v1/live/<n°>` et affiche, en tête d'écran sous le nom du
-site et avant le choix du jour (bloc « En direct au déco »), la mesure du moment
-en face de la prévision pour la même heure : vent moyen, rafales, direction, puis
-ce que l'écart dit du modèle (« le modèle sous-estime le vent de 8 km/h à cette
-heure »). La flèche jaune sur la rose des vents est la balise.
+### Premier lancement
 
-Le bloc vit hors de `#main`, dans son conteneur `#live` : il ne dépend pas du jour
-sélectionné, c'est toujours « maintenant ».
+Sans site enregistré, l'appli propose :
 
-Sous la comparaison, une courbe des 2 dernières heures (historique
-`/v1/archive/<n°>`, une mesure toutes les ~5 min) : la moyenne en trait plein, les
-rafales en zone claire, la prévision du modèle en pointillés et ta limite de vent
-en rouge. La tendance se lit en comparant les 20 dernières minutes aux mêmes
-20 minutes une heure plus tôt :
-- « Le vent forcit : +6 km/h en 1 h » (orange si, à ce rythme, ta limite peut être
-  atteinte dans l'heure), « faiblit » ou « stable » ;
-- « Direction qui tourne : de S à O en 1 h, vers l'axe » (au-delà de 40°, et
-  seulement quand le vent dépasse 3 km/h) ;
-- « Rafales de plus en plus irrégulières » quand l'écart rafales / moyenne se creuse.
+- **Décos autour de moi** : les 12 décos connus les plus proches, à moins de 60 km ;
+- **Chercher un déco par son nom** (accents et majuscules ignorés) ;
+- **Saisir un site à la main**, notamment pour un terrain de gonflage, absent de la
+  base des décos ;
+- **Importer des sites exportés** depuis un autre téléphone.
 
-La mesure est rafraîchie toutes les 4 min tant que l'appli est au premier plan,
-et au-delà de 45 min elle est signalée comme trop ancienne pour être comparée.
+Dans les résultats, « Ajouter » enregistre le déco tout de suite ; toucher son nom
+remplit le formulaire pour vérifier l'altitude et le secteur avant d'enregistrer.
 
-Trouver un numéro : sur https://www.openwindmap.org/, il est dans l'adresse de
-la station (`PIOU_1446`). On le saisit dans « Mes sites ».
+### Le tableau « Où voler ? »
 
-Sites préréglés et leur balise :
+L'écran d'accueil : une ligne par site (vol, puis gonflage), une colonne par jour.
 
-| Site | Déco | Secteur | Balise |
-| --- | --- | --- | --- |
-| Sapenay | 890 m | SO à NO (225–315°) | 1446 – Déco SAPENAY 901m |
-| Saint-Hilaire | 1000 m | NE à SE (45–135°) | 1333 – Décollage A5 / déco Nord |
-| Aiguebelette | 1120 m | SSO à NO (200–315°) | 1722 – Déco Aiguebelette 1121m |
+- **Couleur** : verdict du jour selon les limites du site ; le créneau favorable le
+  plus long est indiqué dans la case (« 10–16 »).
+- **Trois pastilles** : le verdict de Météo-France, d'ICON et d'ECMWF ; **bordure en
+  pointillés** quand ils ne sont pas d'accord.
+- **Cases atténuées** au-delà de J+2 : c'est une tendance.
+- **« · »** : le modèle ne couvre pas ce jour ; **« – »** : la journée est terminée.
 
-À Sapenay, la balise n'est pas au point de prévision : le site est réglé sur
-45.8109 / 5.8657, la balise 1446 est à 45.8268 / 5.8792, 2 km au
-nord-est. La comparaison mesure / modèle y porte donc sur deux points voisins,
-pas sur la même maille.
+Toucher une case ouvre l'écran du site sur ce jour.
 
-Ces sites préréglés ne vont qu'aux téléphones qui avaient déjà des sites
-enregistrés (le mien) : chacun n'est proposé qu'une fois (mémoire `presets`), donc
-un site supprimé ne revient pas, et les réglages ne sont jamais écrasés. Un
-nouveau téléphone démarre sans site (voir « Premier lancement »).
+### L'écran d'un site
 
-Données balises : © contributeurs du réseau OpenWindMap,
-https://developers.pioupiou.fr/data-licensing
+De haut en bas : la balise en direct (si le site en a une), les jours, le verdict
+avec la rose des vents et le verdict de chaque modèle, le détail de l'heure choisie
+(dont le vent selon chaque modèle), puis la liste des heures.
 
-## Accord entre modèles
-Chaque requête demande, en plus du modèle choisi, Météo-France (AROME/ARPEGE),
-ICON et ECMWF (Open-Meteo suffixe alors chaque variable par le nom du modèle).
-Le verdict reste celui du modèle choisi ; les trois autres sont évalués avec les
-mêmes règles et les mêmes limites, pour voir s'ils sont d'accord :
-- dans le tableau, trois pastilles par case (Météo-France, ICON, ECMWF), et une
-  bordure en pointillés quand leurs verdicts diffèrent ;
-- sur l'écran du site, le verdict de chacun sous le verdict principal, puis
-  « Les 3 modèles sont d'accord » ou « Les modèles divergent : à confirmer » ;
-- dans le détail de l'heure, vent et rafales selon chaque modèle.
+### Réglages
 
-Le modèle du verdict principal se choisit dans le pied de page (« changer ») : il
-vaut pour tous les sites.
+- **Mes sites** : ajouter, modifier, supprimer ; exporter et importer.
+- **Mes limites** (ou « Lim. vol » / « Lim. gonflage » depuis le tableau) : un
+  niveau en un geste, puis chaque seuil à la main.
+- **Modèle météo** (« changer », en pied de page) : le modèle du verdict principal,
+  pour tous les sites. Les trois autres restent toujours comparés.
 
-Météo-France s'arrête vers J+4 14 h (pastille creuse au-delà) et ne donne pas la
-probabilité de pluie : il ne voit la pluie qu'à sa quantité prévue.
+## Comment Déco juge les conditions
 
-## Premier lancement
-Un téléphone qui n'a encore aucun site arrive sur un écran d'accueil :
-- **Décos autour de moi** : les 12 décos ParaglidingEarth les plus proches (à moins
-  de 60 km), avec leur distance ;
-- **Chercher un déco par son nom** ;
-- **Saisir un site à la main**, notamment pour un terrain de gonflage.
+Chaque heure entre 7 h et 20 h reçoit un niveau : **favorable**, **à surveiller** ou
+**défavorable**. Le jour est favorable s'il offre au moins deux heures favorables
+d'affilée dans votre journée (9 h – 18 h par défaut), à surveiller s'il reste des
+heures jouables, défavorable sinon. Pour aujourd'hui, seules les heures restantes
+comptent.
 
-Dans les résultats, « Ajouter » enregistre le déco tout de suite (secteur, balise
-la plus proche) et le tableau se met à jour derrière la feuille ; toucher le nom
-remplit le formulaire pour vérifier avant d'enregistrer.
+### Au déco
 
-## Tableau « Où voler ? »
-L'appli s'ouvre sur un tableau de tous tes sites : une ligne par site, regroupés
-en vol puis gonflage, une case par jour (aujourd'hui à J+5). Chaque case prend la
-couleur du verdict du jour, calculé avec les règles et les limites du site, et
-porte son meilleur créneau (« 10–16 »). Au-delà de J+2, les cases sont atténuées :
-c'est une tendance. Une case grise « · » : le modèle ne couvre pas ce jour.
+| Critère | À surveiller | Défavorable |
+| --- | --- | --- |
+| Pluie | probabilité ≥ 30 % | ≥ 60 % ou ≥ 0,3 mm |
+| Direction | travers (≤ 30° hors secteur) | hors secteur : déco sous le vent possible |
+| Vent moyen | > 80 % de la limite | > limite |
+| Rafales | écart rafales / vent > limite | > limite |
+| Vent vers 1500 m | > 75 % de la limite | > limite |
+| Flux de sud vers 3000 m | ≥ 25 km/h (foehn) | ≥ 40 km/h |
+| Instabilité (CAPE) | ≥ seuil de vigilance | ≥ seuil d'orage |
+| Base des nuages (nuages bas ≥ 50 %) | sous le minimum | à moins de 200 m du déco |
 
-Pour aujourd'hui, seules les heures restantes comptent : les heures passées restent
-affichées, grisées, mais ne pèsent plus sur le verdict ni sur le créneau. Le soir,
-quand il ne reste plus d'heure de ta journée, la case passe à « – » et l'écran du
-site affiche « Journée terminée ».
+Sous 6 km/h de vent météo, la direction n'est pas jugée : la brise de pente devrait
+s'installer.
 
-Toucher une case ouvre l'écran du site sur ce jour ; toucher le nom l'ouvre sur
-demain. La flèche en haut à gauche ramène au tableau. Depuis le tableau, « Lim. vol »
-et « Lim. gonflage » règlent chaque type de site.
+### Sur un terrain de gonflage (face voile)
 
-Une seule requête Open-Meteo sert tous les sites (listes de coordonnées). Chaque
-réponse est enregistrée par site : ouvrir un site dans les 10 minutes ne refait
-pas d'appel, et hors ligne chaque site retombe sur sa dernière prévision.
+| Critère | À surveiller | Défavorable |
+| --- | --- | --- |
+| Vent moyen | sous le minimum (face voile laborieux) ou > 85 % du maximum | > maximum (on se fait traîner) |
+| Rafales | écart rafales / vent > limite | > limite |
+| Direction | travers, ou hors secteur (turbulences d'obstacles) | – |
+| Pluie, instabilité | comme au déco | comme au déco |
+| Vent vers 1500 m | > limite (rafales possibles au sol) | – |
 
-## Ajouter un déco par son nom
-Dans « Mes sites », le champ « Chercher un déco par son nom » parcourt les décos
-français de ParaglidingEarth (accents et majuscules ignorés). En touchant un
-résultat, le formulaire se remplit :
-- nom, position et altitude du déco ;
-- secteur tiré des orientations **principales** seulement (les « possibles » sont
-  souvent très larges : Saint-Hilaire est noté possible dans les 8 directions) ;
-  les autres orientations sont reprises dans la note ;
-- balise Pioupiou en service la plus proche, si elle est à moins de 3 km.
+Le secteur d'un terrain, ce sont les directions d'où le vent arrive sans passer par
+des haies ou des arbres. La base des nuages ne compte pas.
 
-Il reste à vérifier l'altitude et le secteur avant d'enregistrer. Les terrains de
-gonflage ne sont pas dans ParaglidingEarth : ils se saisissent à la main.
+### Repères par niveau
 
-L'API ParaglidingEarth n'a ni recherche par nom ni en-têtes CORS, d'où la liste
-embarquée (~60 Ko). Pour la rafraîchir, ou ajouter des pays :
-
-    python3 tools/pge_snapshot.py            # France
-    python3 tools/pge_snapshot.py fr ch it   # plusieurs pays
-
-puis incrémenter `CACHE` dans `sw.js`. Données © contributeurs ParaglidingEarth,
-CC BY-SA 3.0.
-
-## Terrains de gonflage
-Un site est soit un déco, soit un terrain de gonflage (« Type de site » dans
-« Mes sites » ; un site sans type est un déco). Sur un terrain, l'appli évalue le
-gonflage face voile niveau débutant au lieu du vol :
-- vent moyen entre 8 et 20 km/h : en dessous le face voile est laborieux (orange),
-  au-dessus on se fait traîner (rouge) ;
-- rafales au-delà de 25 km/h (rouge), écart rafales / vent au-delà de 8 km/h (orange) ;
-- secteur = directions où le vent arrive sans passer par des haies ou des arbres ;
-  hors secteur, c'est orange (turbulences d'obstacles), pas rouge comme au déco ;
-- pluie (rouge), instabilité et vent fort vers 1500 m (orange : rafales au sol) ;
-- la base des nuages et le plafond thermique ne comptent pas.
-
-Ces limites ont leurs propres réglages (« Mes limites » affiche celles du type de
-site affiché).
-
-| Terrain | Altitude | Secteur | Balise |
-| --- | --- | --- | --- |
-| Marennes | 230 m | NO à NE (315–45°), pente école face nord | 2229 – Pente Ecole MARENNES |
-| Miribel-Jonage | 175 m | SE à SO (135–225°), champ plat | aucune à moins de 15 km |
-| Le Rebat (Poleymieux) | 450 m | ONO à NNE (285–15°), pente école face NNO | aucune en service (la n° 97, à 3 km, est muette) |
-
-Sources : ParaglidingEarth, fil « Gonflage près de Lyon » sur parapentiste.info.
-Marennes est un terrain de club : se renseigner avant d'y aller.
-
-## Niveaux et verdicts
-Le verdict s'écrit **Favorable / À surveiller / Défavorable**, pour le vol comme
-pour le gonflage (le type de site est écrit au-dessus) : il dit si les conditions
-prévues restent dans tes limites, pas si tu peux voler.
-
-En tête de « Mes limites », trois boutons remplissent les champs avec des repères
-par niveau ; rien n'est pris en compte avant « Enregistrer », et toute retouche
-passe en « Réglages personnalisés ». Ces repères sont indicatifs, à ajuster avec
-son moniteur.
+Indicatifs, à ajuster avec son moniteur. Le seuil d'orage (CAPE 1000 J/kg) ne
+dépend pas du pilote et reste le même à tous les niveaux.
 
 | Vol | Débutant | Intermédiaire | Confirmé |
 | --- | --- | --- | --- |
@@ -281,33 +160,204 @@ son moniteur.
 | Vent vers 1500 m (km/h) | 35 | 40 | 45 |
 | CAPE vigilance (J/kg) | 300 | 500 | 700 |
 
-Le seuil d'orage (CAPE 1000) est le même à tous les niveaux : il ne dépend pas du
-pilote. Les heures de début et de fin de journée ne changent pas non plus.
+### Accord entre modèles
 
-## Où modifier la logique
-- `DEFAULT_SITES` (`config.js`) / `withPresets()` (`etat.js`) : mes six sites
-  préréglés, et la règle qui ne les donne qu'une fois aux téléphones existants
-- `FORECAST_DAYS` : horizon de prévision (6 = aujourd'hui + 5 jours ; Météo-France
-  ne va que jusqu'à J+4 vers 14 h, les heures sans vent prévu sont écartées)
-- `DEFAULT_LIMITS` / `DEFAULT_LIMITS_G` : limites débutant, vol et gonflage (aussi
-  réglables dans l'appli, « Mes limites »)
-- `LEVELS_VOL` / `LEVELS_G` : repères débutant, intermédiaire, confirmé
-- `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, phrases)
-- `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)
+Le verdict principal suit le modèle choisi (« Automatique » par défaut). Météo-France,
+ICON et ECMWF sont évalués en plus, avec les mêmes règles et les mêmes limites.
+L'accord renforce la confiance sans la garantir : les modèles partagent une partie
+de leurs observations et ratent souvent les mêmes effets locaux (brise de lac,
+confluence, foehn).
 
-Dans `regles.js` :
-- `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure ;
-  `flagRain()`, `flagGusts()`, `flagCape()` et `dirNote()` sont communes aux deux
-  (les phrases de direction propres à chaque type sont dans `KINDS`)
-- `buildDays()` / `buildAll()` / `dayVerdict()` : jours évalués d'un site, accord des
-  modèles, verdict du jour
+Météo-France s'arrête vers J+4 en début d'après-midi et ne fournit pas la
+probabilité de pluie : il ne voit la pluie qu'à sa quantité prévue.
 
-Ailleurs :
-- `pruneCache()` (`donnees.js`) : au démarrage, ne garde en cache que les prévisions
-  et balises utiles
-- `liveNotes()` / `liveTrend()` / `trendSvg()` (`balise.js`) : la lecture de la
-  balise, sa tendance des 2 dernières heures et sa courbe
-- `renderOverview()` / `render()` (`rendu.js`) : le tableau « Où voler ? » et l'écran
-  d'un site, assemblé par `verdictHtml()`, `detailHtml()` et `hoursHtml()`
-- `loadOverview()` / `load()` / `openSite()` (`chargement.js`) : chargements et
-  navigation
+## La balise en direct
+
+Un site peut être associé à une balise **Pioupiou / OpenWindMap** (son numéro figure
+dans l'adresse de la station sur [openwindmap.org](https://www.openwindmap.org/),
+par exemple `PIOU_1446`). L'écran du site affiche alors :
+
+- la mesure du moment face à la prévision de la même heure, et ce que l'écart dit du
+  modèle (« le modèle sous-estime le vent de 8 km/h à cette heure ») ;
+- une courbe des deux dernières heures : vent moyen, rafales, prévision et votre
+  limite ;
+- la tendance, en comparant les 20 dernières minutes à la même durée une heure plus
+  tôt : le vent forcit (avec alerte si la limite peut être atteinte dans l'heure),
+  faiblit ou reste stable ; la direction tourne, vers l'axe ou hors de l'axe ; les
+  rafales deviennent plus irrégulières.
+
+La mesure est rafraîchie toutes les 4 minutes tant que l'appli est ouverte, et
+signalée trop ancienne au-delà de 45 minutes. Sous 3 km/h, la direction n'est pas
+interprétée. Une balise reste un point : abritée ou prise dans une brise locale,
+elle peut ne pas représenter tout le site.
+
+## Hors ligne et réseau faible
+
+- **Hors ligne** : l'appli s'ouvre depuis le cache de son service worker, et chaque
+  site affiche sa dernière prévision enregistrée.
+- **Réseau faible** : chaque appel à Open-Meteo ou à une balise abandonne au bout de
+  8 s ; l'appli affiche alors « Réseau trop lent » et les prévisions enregistrées.
+  La page elle-même est servie depuis le cache si le réseau ne répond pas en 3 s.
+  Mesuré avec 10 s par réponse : l'appli installée s'ouvre en 3 s, contre 40 s sans
+  service worker.
+
+## Données, confidentialité et licences
+
+### Confidentialité
+
+Déco n'a ni serveur ni compte, et ne collecte rien. Vos sites, notes et limites
+restent dans le stockage du navigateur ; l'appli demande qu'il ne soit pas effacé
+quand le téléphone manque de place. **Mes sites > Exporter** produit un fichier
+`deco-sites-AAAA-MM-JJ.json` à réimporter sur un autre appareil. Les seuls appels
+réseau vont vers Open-Meteo (les coordonnées de vos sites) et Pioupiou. La position
+n'est demandée que sur action : « Décos autour de moi » la garde sur le téléphone,
+« Ma position » l'envoie à Open-Meteo pour obtenir l'altitude.
+
+### Sources de données
+
+| Données | Source | Licence |
+| --- | --- | --- |
+| Prévisions | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0, usage non commercial gratuit |
+| Mesures des balises | [OpenWindMap / Pioupiou](https://www.openwindmap.org/) | © contributeurs du réseau OpenWindMap, [conditions](https://developers.pioupiou.fr/data-licensing) |
+| Liste des décos | [ParaglidingEarth](https://www.paraglidingearth.com/) | CC BY-SA 3.0 |
+| Polices Barlow et Barlow Condensed | [The Barlow Project](https://github.com/jpt/barlow) | SIL Open Font License 1.1 (`fonts/OFL.txt`) |
+
+## Développement
+
+Sans dépendance ni outil de compilation : HTML, CSS et modules ES natifs.
+
+### Lancer en local
+
+```sh
+python3 -m http.server 8000
+```
+
+puis ouvrir http://localhost:8000 dans Chrome (outils de développement > mode
+appareil pour simuler un téléphone). Sur `localhost`, le service worker passe
+toujours par le réseau : chaque rechargement voit les modifications.
+
+### Structure
+
+```
+index.html            structure de la page et politique de sécurité (CSP)
+style.css             feuille de style, rangée par composant, thèmes clair et sombre
+js/                   modules ES, chargés depuis main.js
+sw.js                 service worker : cache de l'appli, ouverture hors ligne
+manifest.webmanifest  installation (icônes dans icons/, captures dans screenshots/)
+fonts/                polices Barlow, servies par le site
+sites-fr.json         instantané des décos ParaglidingEarth (recherche par nom)
+tools/                vérificateur, banc d'essai, mise à jour de sites-fr.json
+```
+
+Les modules dépendent les uns des autres dans un seul sens, sans boucle :
+
+```
+outils → config → etat → regles → donnees → balise → rendu → chargement → feuilles → main
+```
+
+| Module | Rôle |
+| --- | --- |
+| `outils.js` | aides sans état : DOM, texte, vent, distances, stockage, `fetchT` (délai réseau) |
+| `config.js` | sites préréglés, limites et niveaux, modèles, `KINDS` (déco ou terrain) |
+| `etat.js` | état de l'appli (`state`), préréglages, stockage persistant |
+| `regles.js` | évaluation heure par heure, verdict du jour, accord des modèles ; ni DOM ni réseau |
+| `donnees.js` | prévisions Open-Meteo et cache local |
+| `balise.js` | balise Pioupiou : mesure, historique, tendance, bloc « En direct » |
+| `rendu.js` | en-tête, tableau, écran d'un site, pied de page |
+| `chargement.js` | chargements et navigation : seul le chargement le plus récent s'applique |
+| `feuilles.js` | limites, modèle météo, mes sites, sauvegarde, recherche de décos |
+| `main.js` | événements de l'écran principal et démarrage |
+
+### Où modifier quoi
+
+| Pour changer… | Voir |
+| --- | --- |
+| les règles de jugement | `evaluate()`, `evaluateGonflage()` et les règles communes (`flagRain`, `flagGusts`, `flagCape`, `dirNote`) dans `regles.js` |
+| le verdict du jour, l'accord des modèles | `dayVerdict()`, `buildDays()`, `buildAll()` dans `regles.js` |
+| les limites par défaut, les niveaux | `DEFAULT_LIMITS`, `DEFAULT_LIMITS_G`, `LEVELS_VOL`, `LEVELS_G` dans `config.js` |
+| les libellés et phrases propres à un type de site | `KINDS` dans `config.js` |
+| l'horizon, les variables demandées | `FORECAST_DAYS`, `HOURLY` ([liste Open-Meteo](https://open-meteo.com/en/docs)) dans `config.js` |
+| la lecture de la balise | `liveNotes()`, `liveTrend()`, `trendSvg()` dans `balise.js` |
+| le tableau, l'écran d'un site | `renderOverview()`, `render()` et ses parties dans `rendu.js` |
+
+Depuis la console (ou une page de contrôle), l'état et la navigation sont exposés
+dans `window.deco` : `state`, `site`, `load`, `loadOverview`, `openSite`, `refresh`.
+
+### Vérifier avant de commiter
+
+```sh
+tools/verifier.sh                # tous les contrôles (environ une minute)
+tools/verifier.sh --accepter     # une règle a changé exprès : met à jour la référence
+tools/verifier.sh --lighthouse   # ajoute un audit Lighthouse (seuil 90 par catégorie)
+```
+
+Sans framework : un serveur local, Chrome sans fenêtre et un banc d'essai
+(`tools/banc.html`) où l'appli tourne avec un réseau et une heure simulés
+(prévision figée `tools/prevision-figee.json`, heure figée à midi, balise simulée).
+Il contrôle :
+
+- **les verdicts** des six sites, heure par heure, comparés à `tools/attendu.txt` ;
+  après `--accepter`, `git diff tools/attendu.txt` montre quels sites, jours et
+  heures basculent, et pourquoi ;
+- **un parcours complet** sans erreur JS ni violation de la CSP : tableau, écran d'un
+  site, balise, limites, modèle météo, recherche et ajout de sites, export et
+  import, suppression jusqu'à l'accueil ;
+- **le réseau lent** : Open-Meteo ne répond plus, l'appli doit retomber sur le cache ;
+- **le service worker** : chaque fichier de l'appli figure dans `SHELL`, et `CACHE`
+  a changé si l'appli a changé depuis le dernier commit.
+
+Le banc s'ouvre aussi à la main, en local uniquement :
+http://localhost:8000/tools/banc.html#parcours (ou `#lent`, `#tableau`, `#deco`…).
+Il efface le stockage local de `localhost`.
+
+### Publier une nouvelle version
+
+L'appli est servie par GitHub Pages depuis la branche `main` (racine) : un push la
+publie en une minute environ.
+
+1. Incrémenter `CACHE` dans `sw.js`, sans quoi les téléphones gardent l'ancienne
+   version ; ajouter tout nouveau fichier à `SHELL`, sans quoi l'appli ne s'ouvre
+   plus hors ligne. Le vérificateur contrôle les deux.
+2. Lancer `tools/verifier.sh`, commiter, pousser.
+3. Sur le téléphone, fermer puis rouvrir l'appli (parfois deux fois).
+
+### Mettre à jour la liste des décos
+
+L'API ParaglidingEarth n'a ni recherche par nom ni en-têtes CORS : la liste est
+embarquée (`sites-fr.json`, environ 60 Ko) et se régénère avec :
+
+```sh
+python3 tools/pge_snapshot.py            # France
+python3 tools/pge_snapshot.py fr ch it   # plusieurs pays
+```
+
+puis incrémenter `CACHE`. Le secteur d'un déco ajouté est tiré de ses orientations
+**principales** seulement (les orientations « possibles » sont souvent très larges) ;
+les autres sont reprises dans sa note.
+
+## Sites préréglés
+
+Les sites de l'auteur, livrés aux seuls téléphones qui avaient déjà des sites
+enregistrés, une seule fois chacun : un site supprimé ne revient pas, et les
+réglages ne sont jamais écrasés. Un nouveau téléphone démarre sans site.
+
+| Site | Type | Altitude | Secteur | Balise |
+| --- | --- | --- | --- | --- |
+| Sapenay | déco | 890 m | SO à NO (225–315°) | 1446 – Déco SAPENAY 901m |
+| Saint-Hilaire | déco | 1000 m | NE à SE (45–135°) | 1333 – Décollage A5 / déco Nord |
+| Aiguebelette | déco | 1120 m | SSO à NO (200–315°) | 1722 – Déco Aiguebelette 1121m |
+| Marennes | gonflage | 230 m | NO à NE (315–45°), pente école face nord | 2229 – Pente Ecole MARENNES |
+| Miribel-Jonage | gonflage | 175 m | SE à SO (135–225°), champ plat | aucune à moins de 15 km |
+| Le Rebat (Poleymieux) | gonflage | 450 m | ONO à NNE (285–15°), pente école face NNO | aucune en service |
+
+- À Sapenay, la balise est à 2 km au nord-est du point de prévision : la comparaison
+  mesure / modèle porte sur deux points voisins, pas sur la même maille.
+- Marennes est un terrain de club : se renseigner avant d'y aller.
+- Sources des terrains : ParaglidingEarth et le fil « Gonflage près de Lyon » sur
+  parapentiste.info.
+
+## Licence
+
+Le code est distribué sous licence [MIT](LICENSE). Les polices Barlow (licence SIL
+OFL, `fonts/OFL.txt`) et les données des services tiers restent sous leurs propres
+licences, détaillées dans [Sources de données](#sources-de-données).
