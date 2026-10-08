@@ -1,7 +1,7 @@
 // Feuilles : limites, modèle météo, mes sites et recherche ParaglidingEarth
-import { $, cardinal, el, esc, fetchT, fold, km, store } from "./outils.js";
-import { kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
-import { site, state } from "./etat.js";
+import { $, cardinal, el, esc, fetchT, fold, km, parisParts, store } from "./outils.js";
+import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
+import { protectStorage, site, state, storageProtected } from "./etat.js";
 import { nearestPiou } from "./balise.js";
 import { render } from "./rendu.js";
 import { loadOverview, openSite, reevaluate, refresh } from "./chargement.js";
@@ -66,7 +66,64 @@ $("modelForm").addEventListener("submit", () => {
   refresh();
 });
 
-export function openSites() { renderSitesList(); resetSiteForm(); $("sitesDlg").showModal(); }
+export function openSites() { renderSitesList(); resetSiteForm(); backupHint(); $("sitesDlg").showModal(); }
+
+// ---------- Sauvegarde : exporter et importer ses sites ----------
+// Le fichier garde aussi les limites : c'est ce qui sert à retrouver son appli sur un autre téléphone
+// Le message par défaut attend la réponse du navigateur : un message plus récent (export, import) passe devant
+let hintGen = 0;
+async function backupHint(msg) {
+  const gen = ++hintGen;
+  $("exportBtn").disabled = !state.sites.length;
+  if (msg) { $("backupHint").textContent = msg; return; }
+  const text = !state.sites.length ? "Tu peux aussi importer des sites exportés depuis un autre téléphone."
+    : await storageProtected() ? "Tes sites sont protégés sur ce téléphone. Exporte-les pour les retrouver après une réinstallation ou sur un autre appareil."
+    : "Le téléphone peut effacer tes sites s'il manque de place : exporte-les de temps en temps.";
+  if (gen === hintGen) $("backupHint").textContent = text;
+}
+
+function exportSites() {
+  const data = { app: "deco", version: 1, date: new Date().toISOString(), sites: state.sites, limits: state.limits, limitsG: state.limitsG };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+  a.download = `deco-sites-${parisParts(Date.now()).date}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  backupHint(`${state.sites.length} site${state.sites.length > 1 ? "s" : ""} exporté${state.sites.length > 1 ? "s" : ""} dans ${a.download}.`);
+}
+
+// Un fichier venu d'ailleurs : on ne garde que les champs connus, et des nombres là où il en faut
+const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"];
+const NUM = ["lat", "lon", "alt", "secMin", "secMax"];
+function cleanSite(s) {
+  if (!s || typeof s.id !== "string" || typeof s.name !== "string" || !NUM.every((k) => Number.isFinite(s[k]))) return null;
+  const out = Object.fromEntries(SITE_FIELDS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
+  out.type = s.type === "gonflage" ? "gonflage" : "deco";
+  out.piou = Number.isFinite(s.piou) ? s.piou : null;
+  out.note = typeof s.note === "string" ? s.note : "";
+  return out;
+}
+const cleanLimits = (l, defaults) => ({ ...defaults, ...Object.fromEntries(Object.entries(l && typeof l === "object" ? l : {})
+  .filter(([k, v]) => k in defaults && (k === "model" ? v in MODELS : Number.isFinite(v)))) });
+
+async function importSites(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { backupHint("Ce fichier n'est pas lisible."); return; }
+  const sites = (Array.isArray(data) ? data : data && data.sites) || [];
+  const clean = Array.isArray(sites) ? sites.map(cleanSite) : [];
+  if (!clean.length || clean.includes(null)) { backupHint("Ce fichier ne contient pas de sites Déco."); return; }
+  if (state.sites.length && !confirm(`Remplacer tes ${state.sites.length} sites et tes limites par les ${clean.length} sites du fichier ?`)) return;
+  state.sites = clean; store.set("sites", state.sites);
+  if (data.limits) { state.limits = cleanLimits(data.limits, DEFAULT_LIMITS); store.set("limits", state.limits); }
+  if (data.limitsG) { state.limitsG = cleanLimits(data.limitsG, DEFAULT_LIMITS_G); store.set("limitsG", state.limitsG); }
+  protectStorage();
+  renderSitesList(); backupHint(`${clean.length} site${clean.length > 1 ? "s" : ""} importé${clean.length > 1 ? "s" : ""}.`);
+  loadOverview();
+}
+
+$("exportBtn").addEventListener("click", exportSites);
+$("importBtn").addEventListener("click", () => $("importFile").click());
+$("importFile").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) importSites(f); });
 
 function renderSitesList() {
   $("sitesList").innerHTML = state.sites.map((s) => `
@@ -165,7 +222,7 @@ async function pgeQuickAdd(id, btn) {
   const { site: s } = pgeSite(r);
   btn.disabled = true; btn.textContent = "…";
   try { const b = await nearestPiou(s.lat, s.lon); if (b) s.piou = b.id; } catch {}
-  state.sites.push(s); store.set("sites", state.sites);
+  state.sites.push(s); store.set("sites", state.sites); protectStorage();
   renderSitesList();
   if (state.view === "overview") loadOverview(); // le tableau se met à jour derrière la feuille
   btn.outerHTML = `<span class="pge-done">Ajouté</span>`;
@@ -235,7 +292,7 @@ $("sitesList").addEventListener("click", (e) => {
   if (b.dataset.del) {
     const s = state.sites.find((x) => x.id === b.dataset.del);
     if (s && confirm(`Supprimer ${s.name} ?`)) {
-      state.sites = state.sites.filter((x) => x.id !== s.id); store.set("sites", state.sites);
+      state.sites = state.sites.filter((x) => x.id !== s.id); store.set("sites", state.sites); backupHint();
       const shown = state.siteId === s.id;
       if (shown && state.sites.length) { state.siteId = state.sites[0].id; store.set("siteId", state.siteId); }
       // Le site affiché disparaît, ou plus aucun site : retour au tableau (et à l'accueil s'il est vide)
@@ -257,7 +314,7 @@ $("siteForm").addEventListener("submit", (e) => {
   };
   const i = state.sites.findIndex((x) => x.id === s.id);
   if (i >= 0) state.sites[i] = s; else state.sites.push(s);
-  store.set("sites", state.sites);
+  store.set("sites", state.sites); protectStorage();
   $("sitesDlg").close();
   if (state.view === "overview") loadOverview(); else openSite(s.id);
 });

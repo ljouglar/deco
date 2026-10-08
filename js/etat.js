@@ -24,6 +24,11 @@ export const state = {
 
 store.set("sites", state.sites);
 
+// Sites, notes et limites ne vivent que dans le stockage du navigateur : on demande qu'il ne soit pas effacé
+// quand le téléphone manque de place (Chrome l'accorde sans question à une appli installée ou très utilisée)
+export const protectStorage = () => (navigator.storage && navigator.storage.persist ? navigator.storage.persist().catch(() => false) : Promise.resolve(false));
+export const storageProtected = () => (navigator.storage && navigator.storage.persisted ? navigator.storage.persisted().catch(() => false) : Promise.resolve(false));
+
 export const site = () => state.sites.find((s) => s.id === state.siteId) || state.sites[0];
 
 export const limitsOf = (s) => state[kind(s).key];

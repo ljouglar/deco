@@ -56,6 +56,7 @@ button { cursor: pointer; }
 .btn.primary { background: var(--action); border-color: var(--action); color: var(--on-action); }
 .btn.danger { color: var(--stop-ink); }
 .btn.block { width: 100%; }
+.btn:disabled { opacity: .5; cursor: default; }
 .link { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
 .empty { padding: 40px 0; text-align: center; color: var(--muted); }
@@ -194,6 +195,8 @@ dialog h2 { margin: 0 0 12px; font: 700 1.5rem var(--cond); }
 dialog h2:focus { outline: none; } /* le titre reçoit le focus à l'ouverture, sans anneau qui ressemblerait à une sélection */
 dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+.actions.start { justify-content: flex-start; margin-top: 8px; }
+.backup { padding: 10px 0 4px; }
 /* Limites et modèle */
 .field { display: grid; grid-template-columns: 1fr 96px; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .field span small { display: block; color: var(--muted); font-size: .8rem; }

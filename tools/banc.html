@@ -131,10 +131,34 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       D.getElementById("sitesBtn").click(); D.querySelector('#sitesList [data-edit="marennes"]').click();
       check(D.getElementById("sf-type").value === "gonflage" && D.getElementById("pgeSearch").hidden, "modifier un terrain");
       D.getElementById("siteCancel").click();
+      // Sauvegarde : on intercepte le fichier exporté pour le réimporter après tout avoir supprimé
+      let exported = null;
+      W.URL.createObjectURL = (blob) => { exported = blob; return "blob:banc"; };
+      W.HTMLAnchorElement.prototype.click = function () {};
+      D.getElementById("sitesBtn").click(); D.getElementById("exportBtn").click(); await wait(300);
+      const saved = exported && JSON.parse(await exported.text());
+      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG, "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
+      D.getElementById("sitesDlg").close();
       W.confirm = () => true; D.getElementById("sitesBtn").click();
       for (const id of deco.state.sites.map((s) => s.id)) { D.querySelector(`#sitesList [data-del="${id}"]`).click(); await wait(150); }
       await wait(500); D.getElementById("sitesDlg").close();
       check(t(".welcome h2")[0] === "Bienvenue" && localStorage.getItem("sites") === "[]", "tout supprimer ramène à l'accueil");
+      // La lecture du fichier prend du vrai temps, alors que les attentes du banc sont en temps virtuel :
+      // on attend que l'appli ait répondu (message de la feuille), pas une durée fixe
+      const importer = async (texte) => {
+        const dt = new W.DataTransfer(); dt.items.add(new W.File([texte], "deco-sites.json", { type: "application/json" }));
+        const inp = D.getElementById("importFile"), avant = D.getElementById("backupHint").textContent;
+        inp.files = dt.files; inp.dispatchEvent(new Event("change"));
+        for (let i = 0; i < 100 && D.getElementById("backupHint").textContent === avant; i++) await new Promise((ok) => setTimeout(ok, 50));
+        await wait(300);
+      };
+      D.getElementById("sitesBtn").click();
+      check(D.getElementById("exportBtn").disabled, "exporter grisé sans site");
+      await importer('{"sites": [{"name": 3}]}');
+      check(t("#backupHint")[0] === "Ce fichier ne contient pas de sites Déco." && deco.state.sites.length === 0, "fichier invalide refusé", t("#backupHint").join());
+      D.getElementById("sitesDlg").close();
+      await importer(JSON.stringify(saved)); D.getElementById("sitesDlg").close(); await wait(500);
+      check(deco.state.sites.length === 8 && t(".ov .nm b").length === 8 && deco.state.limitsG.minWind === saved.limitsG.minWind, "importer des sites", t(".ov .nm b").join(", "));
     } catch (e) { check(false, "parcours interrompu", e.message); }
     check(!errors.length, "aucune erreur JS", errors.join(" | "));
     out.textContent = lines.join("\n");

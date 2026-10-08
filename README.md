@@ -37,6 +37,15 @@ des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 puis ouvre http://localhost:8000 dans Chrome.
 Astuce : outils de développement (F12), mode appareil, choisis un Pixel.
 
+## Tes données
+Sites, notes et limites ne vivent que dans le stockage du navigateur. L'appli
+demande à Chrome de ne pas l'effacer quand le téléphone manque de place
+(`navigator.storage.persist()`), et « Mes sites » permet de les **exporter** dans
+un fichier (`deco-sites-AAAA-MM-JJ.json`, avec les limites) puis de les
+**importer** sur un autre téléphone ou après une réinstallation, y compris depuis
+l'écran d'accueil. À l'import, seuls les champs connus sont repris, et le fichier
+doit contenir des sites valides.
+
 ## Sécurité
 Une politique de sécurité (CSP, en tête de `index.html`) n'autorise que les
 scripts, styles et polices du site, et les appels réseau vers Open-Meteo et
@@ -57,7 +66,8 @@ balise simulée). Il contrôle :
 - le réseau lent : Open-Meteo ne répond plus, l'appli doit retomber sur le cache ;
 - le service worker : chaque fichier de l'appli (modules, polices…) est dans
   `SHELL`, et `CACHE` a changé si l'appli a changé depuis le dernier commit.
-Toute violation de la CSP compte comme une erreur du parcours.
+Le parcours couvre aussi l'export et l'import des sites, et toute violation de la
+CSP compte comme une erreur.
 
 Quand une règle change exprès, `tools/verifier.sh --accepter` réécrit
 `tools/attendu.txt` : `git diff tools/attendu.txt` montre alors quels sites, quels

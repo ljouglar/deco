@@ -114,6 +114,7 @@ const welcomeHtml = () => `<section class="welcome">
     <button class="btn primary" data-start="near">Décos autour de moi</button>
     <button class="btn" data-start="search">Chercher un déco par son nom</button>
     <button class="btn" data-start="manual">Saisir un site à la main</button>
+    <button class="btn" data-start="import">Importer des sites exportés</button>
     <p class="hint">Les terrains de gonflage ne sont pas dans la liste des décos : saisis-les à la main, type « Terrain de gonflage ».</p>
   </section>`;
 

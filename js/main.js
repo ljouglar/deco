@@ -1,13 +1,14 @@
 // Point d'entrée : événements de l'écran principal, rafraîchissements, démarrage
 import { $ } from "./outils.js";
 import { kind, KINDS } from "./config.js";
-import { site, state } from "./etat.js";
+import { protectStorage, site, state } from "./etat.js";
 import { pruneCache } from "./donnees.js";
 import { render } from "./rendu.js";
 import { load, loadOverview, openSite, refresh, refreshLive } from "./chargement.js";
 import { openLimits, openModel, openSites, pgeNear } from "./feuilles.js";
 
 pruneCache();
+if (state.sites.length) protectStorage();
 
 $("days").addEventListener("click", (e) => {
   const b = e.target.closest("[data-day]"); if (!b) return;
@@ -20,6 +21,7 @@ $("main").addEventListener("click", (e) => {
     openSites();
     if (w.dataset.start === "near") pgeNear();
     else if (w.dataset.start === "search") $("pge-q").focus();
+    else if (w.dataset.start === "import") $("importFile").click();
     else { $("siteForm").scrollIntoView({ block: "start" }); $("sf-name").focus({ preventScroll: true }); }
     return;
   }
