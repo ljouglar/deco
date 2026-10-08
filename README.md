@@ -89,6 +89,9 @@ mêmes règles et les mêmes limites, pour voir s'ils sont d'accord :
   « Les 3 modèles sont d'accord » ou « Les modèles divergent : à confirmer » ;
 - dans le détail de l'heure, vent et rafales selon chaque modèle.
 
+Le modèle du verdict principal se choisit dans le pied de page (« changer ») : il
+vaut pour tous les sites.
+
 Météo-France s'arrête vers J+4 14 h (pastille creuse au-delà) et ne donne pas la
 probabilité de pluie : il ne voit la pluie qu'à sa quantité prévue.
 
@@ -109,6 +112,11 @@ en vol puis gonflage, une case par jour (aujourd'hui à J+5). Chaque case prend 
 couleur du verdict du jour, calculé avec les règles et les limites du site, et
 porte son meilleur créneau (« 10–16 »). Au-delà de J+2, les cases sont atténuées :
 c'est une tendance. Une case grise « · » : le modèle ne couvre pas ce jour.
+
+Pour aujourd'hui, seules les heures restantes comptent : les heures passées restent
+affichées, grisées, mais ne pèsent plus sur le verdict ni sur le créneau. Le soir,
+quand il ne reste plus d'heure de ta journée, la case passe à « – » et l'écran du
+site affiche « Journée terminée ».
 
 Toucher une case ouvre l'écran du site sur ce jour ; toucher le nom l'ouvre sur
 demain. La flèche en haut à gauche ramène au tableau. Depuis le tableau, « Lim. vol »
@@ -153,7 +161,7 @@ gonflage face voile niveau débutant au lieu du vol :
 - la base des nuages et le plafond thermique ne comptent pas.
 
 Ces limites ont leurs propres réglages (« Mes limites » affiche celles du type de
-site affiché) ; le modèle météo est commun aux deux.
+site affiché).
 
 | Terrain | Altitude | Secteur | Balise |
 | --- | --- | --- | --- |

@@ -62,6 +62,7 @@ button { cursor: pointer; }
 .verdict.l0 { border-left-color: var(--go); background: var(--go-soft); }
 .verdict.l1 { border-left-color: var(--warn); background: var(--warn-soft); }
 .verdict.l2 { border-left-color: var(--stop); background: var(--stop-soft); }
+.verdict.lnull h1 { color: var(--muted); }
 .verdict .kind { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font: 600 .78rem/1 var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .verdict .kind svg { width: 16px; height: 16px; flex: none; }
 .verdict h1 { margin: 0; font: 700 2.6rem/0.95 var(--cond); letter-spacing: -.005em; }
@@ -174,7 +175,7 @@ button { cursor: pointer; }
 
 /* Bottom bar */
 .bar { display: flex; gap: 8px; margin-top: 18px; }
-.bar button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px; font-weight: 600; }
+.bar button { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 6px; font-weight: 600; white-space: nowrap; }
 
 /* Dialogs */
 dialog { width: min(560px, 100%); max-height: 92vh; margin: auto auto 0; border: 0; border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--surface); color: var(--ink); }
@@ -189,7 +190,7 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .stack label { display: block; font-size: .8rem; color: var(--muted); margin-top: 8px; }
 .stack input, .stack select { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
 .site-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.site-row .info { flex: 1; min-width: 0; }
+.site-row .info { flex: 1; min-width: 0; background: none; border: 0; padding: 2px 0; text-align: left; }
 .site-row .info b { display: block; }
 .site-row .info small { color: var(--muted); }
 .btn { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 12px; font-weight: 600; }
@@ -197,6 +198,10 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .btn.danger { color: var(--stop); }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
+.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; }
+.choice { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.choice input { margin-top: 4px; flex: none; }
+.choice small { display: block; color: var(--muted); font-size: .8rem; }
 .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .levels button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 4px; font-weight: 600; font-size: .92rem; }
 .levels button[aria-pressed="true"] { border-color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink); }
@@ -244,6 +249,11 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 <dialog id="limitsDlg">
   <h2 id="limitsTitle">Mes limites</h2>
   <form method="dialog" id="limitsForm"></form>
+</dialog>
+
+<dialog id="modelDlg">
+  <h2>Modèle météo</h2>
+  <form method="dialog" id="modelForm"></form>
 </dialog>
 
 <dialog id="sitesDlg">
@@ -425,8 +435,8 @@ const state = {
   limits: { ...DEFAULT_LIMITS, ...store.get("limits", {}) },     // vol, et choix du modèle météo
   limitsG: { ...DEFAULT_LIMITS_G, ...store.get("limitsG", {}) }, // gonflage
   siteId: store.get("siteId", "sapenay"),
-  dayIdx: 1, hourSel: null, days: [], fetchedAt: null, fromCache: false, error: null, loading: false,
-  live: null,
+  dayIdx: 1, hourSel: null, days: [], fcJson: null, fetchedAt: null, fromCache: false, error: null,
+  loadingSite: false, loadingOv: false, live: null,
   view: "overview", ov: null, wantDate: null // l'appli s'ouvre sur le tableau « Où voler ? »
 };
 
@@ -561,10 +571,13 @@ function evaluateGonflage(h, s, L) {
   return { level, reasons, base: null };
 }
 
+// Une heure qui compte pour le verdict : dans ta journée, et pas déjà passée
+const inPlay = (h, L) => !h.past && h.hour >= L.startHour && h.hour <= L.endHour;
+
 function bestWindow(hours, L) {
   let best = null, cur = null;
   for (const h of hours) {
-    const open = h.hour >= L.startHour && h.hour <= L.endHour;
+    const open = inPlay(h, L);
     if (open && h.ev.level === 0) {
       if (!cur) cur = { from: h.hour, to: h.hour };
       else cur.to = h.hour;
@@ -574,8 +587,10 @@ function bestWindow(hours, L) {
   return best;
 }
 
+// level null : plus aucune heure à juger (le soir pour aujourd'hui)
 function dayVerdict(day, L, K) {
-  const open = day.hours.filter((h) => h.hour >= L.startHour && h.hour <= L.endHour);
+  const open = day.hours.filter((h) => inPlay(h, L));
+  if (!open.length) return { level: null, title: "Journée terminée", win: null, top: [] };
   const win = bestWindow(day.hours, L);
   const counts = [0, 0, 0];
   open.forEach((h) => counts[h.ev.level]++);
@@ -592,12 +607,21 @@ function dayVerdict(day, L, K) {
 }
 
 // ---------- Data ----------
+// Chaque chargement porte un numéro : seul le plus récent s'applique, une réponse lente d'un site
+// quitté entre-temps ne vient pas écraser celui qu'on regarde
+let siteGen = 0, ovGen = 0;
+
 async function load(force = false) {
   const s = site();
   if (!s) return;
-  state.loading = true; state.error = null; state.live = null; renderChrome();
-  await Promise.all([loadForecast(s, force), loadLive(s, force)]);
-  state.loading = false;
+  const gen = ++siteGen;
+  state.loadingSite = true; state.error = null; state.live = null; renderChrome();
+  const [fc, live] = await Promise.all([loadForecast(s, force), loadLive(s, force)]);
+  if (gen !== siteGen) return;
+  state.error = fc.error;
+  if (fc.json) ingest(fc.json, fc.at, fc.fromCache);
+  state.live = live;
+  state.loadingSite = false;
   render();
 }
 
@@ -622,37 +646,40 @@ async function fetchForecasts(sites, force) {
   return list;
 }
 
+const fetchError = (e) => (navigator.onLine ? `Prévisions indisponibles : ${e.message}` : "Hors ligne.");
+
+// Prévision d'un site : { json, at, fromCache, error }, sans toucher à l'état
 async function loadForecast(s, force) {
-  const key = fcKey(s);
-  const fresh = store.get(key, null);
-  if (!force && fresh && Date.now() - fresh.at < FC_FRESH) { ingest(fresh.json, fresh.at, false); return; }
+  const cached = store.get(fcKey(s), null);
+  if (!force && cached && Date.now() - cached.at < FC_FRESH) return { json: cached.json, at: cached.at, fromCache: false, error: null };
   try {
     const [json] = await fetchForecasts([s], force);
-    ingest(json, Date.now(), false);
+    return { json, at: Date.now(), fromCache: false, error: null };
   } catch (e) {
-    const cached = store.get(key, null);
-    state.error = navigator.onLine ? `Prévisions indisponibles : ${e.message}` : "Hors ligne.";
-    if (cached) ingest(cached.json, cached.at, true);
+    return { json: cached && cached.json, at: cached && cached.at, fromCache: true, error: fetchError(e) };
   }
 }
 
 async function loadOverview(force = false) {
-  state.view = "overview"; state.loading = true; state.error = null; renderChrome();
-  const sites = state.sites, ov = { rows: [], fetchedAt: Date.now(), fromCache: false };
-  if (!sites.length) { state.ov = { rows: [], fetchedAt: null }; state.loading = false; render(); return; }
+  const gen = ++ovGen;
+  state.view = "overview"; state.loadingOv = true; state.error = null; renderChrome();
+  const sites = state.sites.slice(), ov = { rows: [], fetchedAt: Date.now(), fromCache: false };
+  if (!sites.length) { state.ov = { rows: [], fetchedAt: null }; state.loadingOv = false; render(); return; }
+  let error = null;
   try {
     const list = await fetchForecasts(sites, force);
     ov.rows = sites.map((s, i) => ({ s, json: list[i] }));
   } catch (e) {
     // Hors ligne : chaque site retombe sur sa dernière prévision enregistrée
-    state.error = navigator.onLine ? `Prévisions indisponibles : ${e.message}` : "Hors ligne.";
+    error = fetchError(e);
     ov.fromCache = true;
     ov.rows = sites.map((s) => { const c = store.get(fcKey(s), null); return { s, json: c && c.json, at: c && c.at }; });
     const ats = ov.rows.map((r) => r.at).filter(Boolean);
     ov.fetchedAt = ats.length ? Math.min(...ats) : null;
   }
+  if (gen !== ovGen) return;
   ov.rows.forEach((r) => { r.days = r.json ? buildAll(r.json, r.s) : []; });
-  state.ov = ov; state.loading = false;
+  state.ov = ov; state.error = error; state.loadingOv = false;
   render();
 }
 
@@ -740,12 +767,12 @@ function trendSvg(lv, L) {
   </div>`;
 }
 
+// Mesure de la balise d'un site (null sans balise), sans toucher à l'état
 async function loadLive(s, force = false) {
-  state.live = null;
-  if (!s || !s.piou) return;
+  if (!s || !s.piou) return null;
   const key = `piou:${s.piou}`;
   const cached = store.get(key, null);
-  if (cached && !force && Date.now() - cached.at < PIOU_TTL) { state.live = cached; return; }
+  if (cached && !force && Date.now() - cached.at < PIOU_TTL) return cached;
   try {
     const [res, hist] = await Promise.all([
       fetch(`https://api.pioupiou.fr/v1/live/${encodeURIComponent(s.piou)}`, { cache: "no-store" }),
@@ -762,17 +789,19 @@ async function loadLive(s, force = false) {
       on: !d.status || d.status.state === "on", hist
     };
     store.set(key, live);
-    state.live = live;
+    return live;
   } catch {
     // Hors ligne ou balise injoignable : on montre la dernière mesure connue, son âge fait foi
-    state.live = cached ? { ...cached, offline: true } : { id: s.piou, failed: true };
+    return cached ? { ...cached, offline: true } : { id: s.piou, failed: true };
   }
 }
 
 async function refreshLive(force = false) {
   const s = site();
   if (!s || !s.piou) return;
-  await loadLive(s, force);
+  const live = await loadLive(s, force);
+  if (state.view !== "site" || site() !== s) return; // on a changé d'écran entre-temps
+  state.live = live;
   render();
 }
 
@@ -842,12 +871,13 @@ function buildAll(json, s) {
 
 // Jours évalués d'un site, à partir d'une réponse Open-Meteo à un modèle
 function buildDays(json, s) {
-  const H = json.hourly, K = kind(s), L = limitsOf(s);
+  const H = json.hourly, K = kind(s), L = limitsOf(s), now = parisParts(Date.now());
   const pick = (k, i) => (H[k] ? H[k][i] : null);
   const byDate = new Map();
   H.time.forEach((t, i) => {
     const h = {
       time: t, date: t.slice(0, 10), hour: +t.slice(11, 13),
+      past: t.slice(0, 10) === now.date && +t.slice(11, 13) < now.hour, // l'heure en cours compte encore
       t: pick("temperature_2m", i), td: pick("dew_point_2m", i),
       pp: pick("precipitation_probability", i), pr: pick("precipitation", i),
       cl: pick("cloud_cover_low", i), cm: pick("cloud_cover_mid", i), ch: pick("cloud_cover_high", i),
@@ -968,7 +998,7 @@ function renderChrome() {
   $("limitsBtn").hidden = ov;
   $("limitsVolBtn").hidden = !ov || !has(KINDS.deco);
   $("limitsGBtn").hidden = !ov || !has(KINDS.gonflage);
-  $("refreshBtn").classList.toggle("spin", state.loading);
+  $("refreshBtn").classList.toggle("spin", ov ? state.loadingOv : state.loadingSite);
 }
 
 // Une pastille par modèle (Météo-France, ICON, ECMWF), creuse quand le modèle ne couvre pas ce jour
@@ -1014,6 +1044,7 @@ function renderOverview() {
         const day = r.days.find((d) => d.date === date);
         const full = fmt(date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
         if (!day) return `<span class="c none" aria-label="${name}, ${full} : pas de prévision">·</span>`;
+        if (day.verdict.level == null) return `<button class="c none" data-ov-site="${esc(r.s.id)}" data-ov-date="${date}" aria-label="${name}, ${full} : journée terminée">–</button>`;
         const v = day.verdict, w = winShort(v.win), split = day.agree && day.agree.n > 1 && !day.agree.same;
         return `<button class="c l${v.level}${i >= 3 ? " far" : ""}${split ? " split" : ""}" data-ov-site="${esc(r.s.id)}" data-ov-date="${date}"
           aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}. ${agreeText(day)}">${modelDots(day)}<span>${w}</span></button>`;
@@ -1037,7 +1068,7 @@ function render() {
     const dt = new Date(d.date + "T12:00");
     const full = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
     return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}" aria-label="${i === 0 ? `Aujourd'hui, ${full}` : full}">
-      <span class="pip" style="background:${LEVEL_COLOR[d.verdict.level]}"></span>
+      <span class="pip" style="background:${LEVEL_COLOR[d.verdict.level] ?? "var(--line)"}"></span>
       <span class="d1">${i === 0 ? "Auj" : DAY_SHORT[dt.getDay()]}</span><span class="d2">${dt.getDate()}</span></button>`;
   }).join("");
 
@@ -1051,12 +1082,14 @@ function render() {
 
   const v = day.verdict;
   if (state.hourSel == null) {
-    const mid = v.win ? Math.round((v.win.from + v.win.to) / 2) : 13;
-    state.hourSel = mid;
+    // Le milieu du créneau ; aujourd'hui sans créneau, l'heure en cours plutôt que 13 h déjà passé
+    const nowH = day.date === parisParts(Date.now()).date ? parisParts(Date.now()).hour : null;
+    state.hourSel = v.win ? Math.round((v.win.from + v.win.to) / 2) : nowH != null && nowH >= 7 && nowH <= 20 ? nowH : 13;
   }
   const sel = day.hours.find((h) => h.hour === state.hourSel) || day.hours[0];
-  const winTxt = v.win ? (v.win.from === v.win.to ? `Créneau vers ${v.win.from} h` : `Créneau ${v.win.from} h – ${v.win.to + 1} h`) : "Pas de créneau favorable";
-  const why = v.level === 0 ? (v.top.length ? `Hors créneau : ${v.top.join(", ")}.` : "Conditions dans tes limites sur la journée.")
+  const winTxt = v.level == null ? "Plus d'heure à juger aujourd'hui"
+    : v.win ? (v.win.from === v.win.to ? `Créneau vers ${v.win.from} h` : `Créneau ${v.win.from} h – ${v.win.to + 1} h`) : "Pas de créneau favorable";
+  const why = v.level == null ? "Les heures de ta journée sont passées : regarde demain." : v.level === 0 ? (v.top.length ? `Hors créneau : ${v.top.join(", ")}.` : "Conditions dans tes limites sur la journée.")
     : (v.top.length ? `${cap(v.top.join(", "))}.` : "");
   const last = day.hours[day.hours.length - 1].hour;
   const caveat = [
@@ -1080,7 +1113,7 @@ function render() {
         <h1>${v.title}</h1>
         <p class="window">${winTxt}</p>
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
-        ${day.models ? `<p class="models">${day.models.map((x) => `<span><i class="md ${x.level == null ? "none" : `l${x.level}`}"></i>${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>` : ""}
+        ${day.models && v.level != null ? `<p class="models">${day.models.map((x) => `<span><i class="md ${x.level == null ? "none" : `l${x.level}`}"></i>${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>` : ""}
         ${caveat ? `<p class="why">${esc(caveat)}</p>` : ""}
       </div>
       <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
@@ -1106,7 +1139,7 @@ function render() {
 
     <div class="hours-head"><span>Heure</span><span>Vent / rafales</span><span>1500 m</span><span>Ciel</span><span></span></div>
     <div class="hours">${day.hours.map((h) => {
-      const closed = h.hour < L.startHour || h.hour > L.endHour;
+      const closed = !inPlay(h, L); // hors de ta journée, ou déjà passée
       return `<button class="hour l${h.ev.level}${closed ? " closed" : ""}" aria-pressed="${h.hour === sel.hour}" data-hour="${h.hour}">
         <span class="h">${h.hour} h</span>
         <span class="w">${arrowSvg(h.wd)}<span><b>${r0(h.ws)}</b> <small>/ ${r0(h.wg)}</small></span></span>
@@ -1122,7 +1155,7 @@ function renderStatus() {
   const ov = state.view === "overview", at = ov ? state.ov && state.ov.fetchedAt : state.fetchedAt;
   const t = at ? new Date(at).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : null;
   $("status").innerHTML = `
-    <p>Données <a href="https://open-meteo.com/" style="color:inherit">Open-Meteo</a>, modèle ${esc(MODELS[state.limits.model] || state.limits.model)}${t ? `, mises à jour ${t}` : ""}. Vent en km/h, flèches dans le sens où souffle le vent.</p>
+    <p>Données <a href="https://open-meteo.com/" style="color:inherit">Open-Meteo</a>${t ? `, mises à jour ${t}` : ""}. Verdict principal : modèle ${esc(MODELS[state.limits.model] || state.limits.model)} <button type="button" class="link" data-model>changer</button>. Vent en km/h, flèches dans le sens où souffle le vent.</p>
     ${!ov && site() && site().piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(site().piou)}" style="color:inherit">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : ""}
     <p>Aide à la préparation : la décision se prend ${ov ? "sur place" : kind(site()).here}, avec la balise et la manche à air sous les yeux.</p>`;
 }
@@ -1139,8 +1172,6 @@ function openLimits(K) {
     <p class="hint" id="levelHint"></p>` + K.fields.map(([k, label, sub]) =>
     `<label class="field"><span>${label}<small>${sub}</small></span><input type="number" name="${k}" value="${L[k]}" inputmode="numeric"></label>`
   ).join("") + `
-    <label class="field wide"><span>Modèle météo<small>compare-les pour voir s'ils sont d'accord</small></span>
-      <select name="model">${Object.entries(MODELS).map(([k, n]) => `<option value="${k}"${k === state.limits.model ? " selected" : ""}>${n}</option>`).join("")}</select></label>
     <div class="actions">
       <button type="submit" class="btn primary">Enregistrer</button>
     </div>`;
@@ -1170,9 +1201,28 @@ $("limitsForm").addEventListener("submit", () => {
   const next = { ...state[K.key] };
   for (const [k] of K.fields) { const n = parseFloat(fd.get(k)); if (!Number.isNaN(n)) next[k] = n; }
   state[K.key] = next; store.set(K.key, next);
-  const modelChanged = state.limits.model !== fd.get("model");
-  state.limits.model = fd.get("model"); store.set("limits", state.limits);
-  if (modelChanged) refresh(); else { reevaluate(); render(); }
+  reevaluate(); render();
+});
+
+// Le modèle météo vaut pour tous les sites : il a sa feuille, ouverte depuis le pied de page
+const MODEL_INFO = {
+  best_match: "Open-Meteo choisit pour chaque point le meilleur modèle disponible.",
+  meteofrance_seamless: "AROME à courte échéance, le plus fin en montagne, puis ARPEGE. S'arrête vers J+4.",
+  icon_seamless: "Modèle allemand du DWD, ICON-D2 à courte échéance.",
+  ecmwf_ifs025: "Modèle européen, plus lissé, solide à moyenne échéance."
+};
+function openModel() {
+  $("modelForm").innerHTML = `<p class="hint">Le verdict principal suit ce modèle. Météo-France, ICON et ECMWF sont de toute façon comparés en plus.</p>
+    ${Object.entries(MODELS).map(([k, n]) => `<label class="choice"><input type="radio" name="model" value="${k}"${k === state.limits.model ? " checked" : ""}>
+      <span><b>${n}</b><small>${MODEL_INFO[k]}</small></span></label>`).join("")}
+    <div class="actions"><button type="submit" class="btn primary">Enregistrer</button></div>`;
+  $("modelDlg").showModal();
+}
+$("modelForm").addEventListener("submit", () => {
+  const m = new FormData($("modelForm")).get("model");
+  if (!m || m === state.limits.model) return;
+  state.limits.model = m; store.set("limits", state.limits);
+  refresh();
 });
 
 function reevaluate() {
@@ -1191,10 +1241,9 @@ function openSites() { renderSitesList(); resetSiteForm(); $("sitesDlg").showMod
 function renderSitesList() {
   $("sitesList").innerHTML = state.sites.map((s) => `
     <div class="site-row">
-      <div class="info"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}</small></div>
-      ${s.id === state.siteId ? `<small>Affiché</small>` : `<button class="btn" data-use="${esc(s.id)}">Afficher</button>`}
+      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}</small></button>
       <button class="btn" data-edit="${esc(s.id)}">Modifier</button>
-      ${state.sites.length > 1 ? `<button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>` : ""}
+      <button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>
     </div>`).join("");
 }
 
@@ -1377,8 +1426,9 @@ $("sitesList").addEventListener("click", (e) => {
     if (s && confirm(`Supprimer ${s.name} ?`)) {
       state.sites = state.sites.filter((x) => x.id !== s.id); store.set("sites", state.sites);
       const shown = state.siteId === s.id;
-      if (shown) { state.siteId = state.sites[0].id; store.set("siteId", state.siteId); }
-      if (state.view === "overview") loadOverview(); else if (shown) load();
+      if (shown && state.sites.length) { state.siteId = state.sites[0].id; store.set("siteId", state.siteId); }
+      // Le site affiché disparaît, ou plus aucun site : retour au tableau (et à l'accueil s'il est vide)
+      if (state.view === "overview" || shown) loadOverview();
       renderSitesList();
     }
   }
@@ -1448,6 +1498,7 @@ $("main").addEventListener("click", (e) => {
   document.querySelector(".verdict")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 });
 $("refreshBtn").addEventListener("click", () => refresh(true));
+$("status").addEventListener("click", (e) => { if (e.target.closest("[data-model]")) openModel(); });
 $("backBtn").addEventListener("click", () => { window.scrollTo(0, 0); loadOverview(); });
 $("siteBtn").addEventListener("click", openSites);
 $("sitesBtn").addEventListener("click", openSites);
