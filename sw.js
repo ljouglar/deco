@@ -1,6 +1,6 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v21";
+const CACHE = "deco-v22";
 const NET_WAIT = 3000; // au-delà, la copie en cache plutôt que d'attendre un réseau lent
 // En développement (python3 -m http.server sur localhost), toujours le réseau : chaque rechargement voit tes modifications
 const DEV = self.location.hostname === "localhost";
@@ -12,7 +12,10 @@ const SHELL = ["./", "./index.html", "./style.css", "./manifest.webmanifest", ".
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: "reload" : GitHub Pages laisse le navigateur garder chaque fichier 10 min ; sans ce contournement,
+  // une nouvelle version pouvait se remplir avec les fichiers de l'ancienne, restés dans le cache HTTP
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))))
+    .then(() => self.skipWaiting()));
 });
 
 // La page demande le numéro de la version installée pour l'afficher
@@ -30,7 +33,8 @@ self.addEventListener("fetch", (e) => {
 
   if (url.origin !== self.location.origin) return;
   e.respondWith((async () => {
-    const net = fetch(e.request).then((r) => {
+    // Revalidé auprès du serveur (304 si rien n'a changé) plutôt que lu dans le cache HTTP, pour la même raison
+    const net = fetch(e.request, { cache: "no-cache" }).then((r) => {
       if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
       return r;
     });
