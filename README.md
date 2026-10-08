@@ -213,9 +213,13 @@ Dans `index.html` :
   réglables dans l'appli, « Mes limites »)
 - `LEVELS_VOL` / `LEVELS_G` : repères débutant, intermédiaire, confirmé
 - `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, évaluation)
-- `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure
+- `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure ;
+  `flagRain()`, `flagGusts()`, `flagCape()` et `dirNote()` sont communes aux deux
+  (les phrases de direction propres à chaque type sont dans `KINDS`)
 - `buildDays()` / `dayVerdict()` : jours évalués d'un site et verdict du jour
 - `loadOverview()` / `renderOverview()` : le tableau « Où voler ? »
+- `render()` : l'écran d'un site, assemblé par `verdictHtml()`, `detailHtml()` et `hoursHtml()`
+- `pruneCache()` : au démarrage, ne garde en cache que les prévisions et balises utiles
 - `liveNotes()` : la lecture de la balise et la comparaison avec le modèle
 - `liveTrend()` / `trendSvg()` : la tendance des 2 dernières heures et sa courbe
 - `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)

@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
 <style>
+/* ---------- Thème ---------- */
 :root {
   --bg: #EEF3F6; --surface: #FFFFFF; --ink: #15303F; --muted: #5E7684; --line: #D3DEE5;
   --action: #2459C6; --on-action: #FFFFFF; --wing: #F0B429;
@@ -29,6 +30,8 @@
     --action: #7BA4F5; --on-action: #0F1E27; --go-soft: #173A2C; --warn-soft: #3D3018; --stop-soft: #43211E;
   }
 }
+
+/* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: inherit; }
 [hidden] { display: none !important; }
 html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
@@ -36,10 +39,29 @@ body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); fo
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
-
 .app { max-width: 560px; margin: 0 auto; padding: 0 16px 32px; }
 
-/* Header */
+/* Éléments partagés : intertitre, pastilles d'état, raisons, boutons */
+.kicker { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font: 600 .78rem/1 var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.kicker svg { width: 16px; height: 16px; flex: none; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; transform: translateY(-1px); }
+.dot.l0 { background: var(--go); } .dot.l1 { background: var(--warn); } .dot.l2 { background: var(--stop); }
+.md { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: none; }
+.md.l0 { background: var(--go); } .md.l1 { background: var(--warn); } .md.l2 { background: var(--stop); }
+.md.none { background: none; box-shadow: inset 0 0 0 1px var(--muted); }
+.mdots { display: inline-flex; gap: 2px; }
+.reasons { list-style: none; margin: 0; padding: 0; font-size: .92rem; }
+.reasons li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; }
+.btn { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 12px; font-weight: 600; }
+.btn.primary { background: var(--action); border-color: var(--action); color: var(--on-action); }
+.btn.danger { color: var(--stop); }
+.btn.block { width: 100%; }
+.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; }
+.hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
+.empty { padding: 40px 0; text-align: center; color: var(--muted); }
+.banner { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); font-size: .9rem; }
+
+/* ---------- En-tête ---------- */
 .top { display: flex; align-items: center; gap: 8px; padding: 12px 0 8px; }
 .site-btn { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 4px 0; }
 .site-btn .name { display: block; font: 700 1.75rem/1.05 var(--cond); letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -49,51 +71,28 @@ button { cursor: pointer; }
 .icon-btn.spin svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Day tabs */
-.days { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 8px 0 14px; }
-.day { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 4px; text-align: center; position: relative; min-width: 0; }
-.day .d1 { display: block; font-weight: 600; font-size: .95rem; }
-.day .d2 { display: block; font-size: .8rem; color: var(--muted); }
-.day .pip { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; }
-.day[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+/* ---------- Tableau « Où voler ? » : une ligne par site, une case par jour ---------- */
+.ov { display: grid; grid-template-columns: minmax(0, 2.4fr) repeat(var(--n, 6), minmax(0, 1fr)); gap: 4px; margin: 4px 0 0; }
+.ov .hd { text-align: center; font-weight: 600; font-size: .85rem; line-height: 1.15; padding: 2px 0 4px; }
+.ov .hd small { display: block; font-weight: 400; font-size: .72rem; color: var(--muted); }
+.ov .grp { grid-column: 1 / -1; margin: 12px 0 2px; }
+.ov .nm { min-width: 0; align-self: center; background: none; border: 0; padding: 2px 0; text-align: left; }
+.ov .nm b { display: block; font: 700 1.05rem/1.1 var(--cond); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov .nm small { display: block; color: var(--muted); font-size: .75rem; }
+.ov .c { min-width: 0; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; padding: 2px 1px 5px; font: 500 .78rem/1 var(--cond); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ov .c.l0 { background: var(--go-soft); border-color: var(--go); box-shadow: inset 0 -4px 0 var(--go); }
+.ov .c.l1 { background: var(--warn-soft); border-color: var(--warn); box-shadow: inset 0 -4px 0 var(--warn); }
+.ov .c.l2 { background: var(--stop-soft); border-color: var(--stop); box-shadow: inset 0 -4px 0 var(--stop); }
+.ov .c.split { border-style: dashed; }
+.ov .c.far { opacity: .6; }
+.ov .c.none { color: var(--muted); cursor: default; }
+.ov-legend { margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
+.welcome { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 16px; margin-top: 8px; }
+.welcome h2 { margin: 0; font: 700 1.5rem var(--cond); }
+.welcome p { margin: 0; }
+.welcome .btn { padding: 12px; }
 
-/* Verdict */
-.verdict { border-radius: 20px; padding: 18px 18px 16px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: var(--surface); border-left: 8px solid var(--muted); }
-.verdict.l0 { border-left-color: var(--go); background: var(--go-soft); }
-.verdict.l1 { border-left-color: var(--warn); background: var(--warn-soft); }
-.verdict.l2 { border-left-color: var(--stop); background: var(--stop-soft); }
-.verdict.lnull h1 { color: var(--muted); }
-.verdict .kind { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font: 600 .78rem/1 var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.verdict .kind svg { width: 16px; height: 16px; flex: none; }
-.verdict h1 { margin: 0; font: 700 2.6rem/0.95 var(--cond); letter-spacing: -.005em; }
-.verdict .window { margin: 6px 0 0; font: 500 1.25rem/1.2 var(--cond); }
-.verdict .why { margin: 8px 0 0; font-size: .9rem; color: var(--muted); }
-.dial { width: 124px; height: 124px; }
-.dial .ring { fill: none; stroke: var(--line); stroke-width: 1.5; }
-.dial .sector { fill: var(--go); opacity: .28; }
-.dial .card { fill: var(--muted); font: 600 9px var(--sans); text-anchor: middle; dominant-baseline: central; }
-.dial .w10 { stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
-.dial .w850 { stroke: var(--action); stroke-width: 2; stroke-dasharray: 4 3; stroke-linecap: round; }
-.dial .wlive { stroke: var(--wing); stroke-width: 3; stroke-linecap: round; }
-.dial-legend { font-size: .75rem; color: var(--muted); text-align: center; margin-top: 2px; }
-.dial-legend i { display: inline-block; width: 14px; height: 0; border-top: 3px solid var(--ink); vertical-align: middle; margin-right: 3px; }
-.dial-legend i.alt { border-top: 2px dashed var(--action); margin-left: 6px; }
-.dial-legend i.bal { border-top: 3px solid var(--wing); margin-left: 6px; }
-
-/* Hour detail */
-.detail { margin: 12px 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
-.detail h2 { margin: 0 0 8px; font: 700 1.2rem var(--cond); }
-.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 0 0 10px; }
-.facts div { min-width: 0; }
-.facts dt { font-size: .75rem; color: var(--muted); }
-.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
-.reasons { list-style: none; margin: 0; padding: 0; font-size: .92rem; }
-.reasons li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; }
-.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; transform: translateY(-1px); }
-.dot.l0 { background: var(--go); } .dot.l1 { background: var(--warn); } .dot.l2 { background: var(--stop); }
-.site-note { margin: 10px 0 0; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
-
-/* Balise : mesure en temps réel */
+/* ---------- Balise : mesure en temps réel et tendance ---------- */
 .live { margin: 6px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 13px 16px 14px; }
 .live h2 { margin: 0; font: 700 1.2rem/1 var(--cond); display: flex; align-items: center; gap: 7px; letter-spacing: .02em; text-transform: uppercase; }
 .live h2 .age { margin-left: auto; font: 400 .78rem/1.2 var(--sans); color: var(--muted); white-space: nowrap; text-transform: none; letter-spacing: 0; }
@@ -108,6 +107,7 @@ button { cursor: pointer; }
 .live .col .val svg { width: 18px; height: 18px; flex: none; }
 .live .col small { display: block; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
 .live .col.meas .val svg { color: var(--wing); }
+.live .reasons { margin-top: 10px; }
 .live .stale { margin: 10px 0 0; font-size: .85rem; color: var(--muted); }
 .trend { margin: 10px 0 0; }
 .trend svg { display: block; width: 100%; height: 64px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
@@ -122,38 +122,50 @@ button { cursor: pointer; }
 .trend .k.fc { border-top: 1.5px dashed var(--ink); }
 .trend .k.lim { border-top: 1px dashed var(--stop); }
 
-/* Tableau « Où voler ? » : une ligne par site, une case par jour */
-.ov { display: grid; grid-template-columns: minmax(0, 2.4fr) repeat(var(--n, 6), minmax(0, 1fr)); gap: 4px; margin: 4px 0 0; }
-.ov .hd { text-align: center; font-weight: 600; font-size: .85rem; line-height: 1.15; padding: 2px 0 4px; }
-.ov .hd small { display: block; font-weight: 400; font-size: .72rem; color: var(--muted); }
-.ov .grp { grid-column: 1 / -1; margin: 12px 0 2px; display: flex; align-items: center; gap: 6px; font: 600 .78rem/1 var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.ov .grp svg { width: 16px; height: 16px; flex: none; }
-.ov .nm { min-width: 0; align-self: center; background: none; border: 0; padding: 2px 0; text-align: left; }
-.ov .nm b { display: block; font: 700 1.05rem/1.1 var(--cond); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ov .nm small { display: block; color: var(--muted); font-size: .75rem; }
-.ov .c { min-width: 0; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; padding: 2px 1px 5px; font: 500 .78rem/1 var(--cond); font-variant-numeric: tabular-nums; color: var(--ink); }
-.ov .c.l0 { background: var(--go-soft); border-color: var(--go); box-shadow: inset 0 -4px 0 var(--go); }
-.ov .c.l1 { background: var(--warn-soft); border-color: var(--warn); box-shadow: inset 0 -4px 0 var(--warn); }
-.ov .c.l2 { background: var(--stop-soft); border-color: var(--stop); box-shadow: inset 0 -4px 0 var(--stop); }
-.ov .c { flex-direction: column; gap: 4px; }
-.ov .c.split { border-style: dashed; }
-.ov .c.far { opacity: .6; }
-.mdots { display: inline-flex; gap: 2px; }
-.md { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: none; }
-.md.l0 { background: var(--go); } .md.l1 { background: var(--warn); } .md.l2 { background: var(--stop); }
-.md.none { background: none; box-shadow: inset 0 0 0 1px var(--muted); }
+/* ---------- Onglets de jour ---------- */
+.days { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 8px 0 14px; }
+.day { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 4px; text-align: center; position: relative; min-width: 0; }
+.day .d1 { display: block; font-weight: 600; font-size: .95rem; }
+.day .d2 { display: block; font-size: .8rem; color: var(--muted); }
+.day .pip { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.day .pip.l0 { background: var(--go); } .day .pip.l1 { background: var(--warn); } .day .pip.l2 { background: var(--stop); }
+.day[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+
+/* ---------- Verdict du jour ---------- */
+.verdict { border-radius: 20px; padding: 18px 18px 16px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: var(--surface); border-left: 8px solid var(--muted); }
+.verdict.l0 { border-left-color: var(--go); background: var(--go-soft); }
+.verdict.l1 { border-left-color: var(--warn); background: var(--warn-soft); }
+.verdict.l2 { border-left-color: var(--stop); background: var(--stop-soft); }
+.verdict.lnull h1 { color: var(--muted); }
+.verdict h1 { margin: 0; font: 700 2.6rem/0.95 var(--cond); letter-spacing: -.005em; }
+.verdict .window { margin: 6px 0 0; font: 500 1.25rem/1.2 var(--cond); }
+.verdict .why { margin: 8px 0 0; font-size: .9rem; color: var(--muted); }
 .verdict .models { margin: 8px 0 0; font-size: .82rem; line-height: 1.5; }
 .verdict .models span { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; white-space: nowrap; }
 .verdict .models em { display: block; font-style: normal; color: var(--muted); }
-.ens { margin: 0 0 10px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.ov .c.none { color: var(--muted); cursor: default; }
-.welcome { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 16px; margin-top: 8px; }
-.welcome h2 { margin: 0; font: 700 1.5rem var(--cond); }
-.welcome p { margin: 0; }
-.welcome .btn { padding: 12px; }
-.ov-legend { margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
+.dial { width: 124px; height: 124px; }
+.dial .ring { fill: none; stroke: var(--line); stroke-width: 1.5; }
+.dial .sector { fill: var(--go); opacity: .28; }
+.dial .card { fill: var(--muted); font: 600 9px var(--sans); text-anchor: middle; dominant-baseline: central; }
+.dial .w10 { stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+.dial .w850 { stroke: var(--action); stroke-width: 2; stroke-dasharray: 4 3; stroke-linecap: round; }
+.dial .wlive { stroke: var(--wing); stroke-width: 3; stroke-linecap: round; }
+.dial-legend { font-size: .75rem; color: var(--muted); text-align: center; margin-top: 2px; }
+.dial-legend i { display: inline-block; width: 14px; height: 0; border-top: 3px solid var(--ink); vertical-align: middle; margin-right: 3px; }
+.dial-legend i.alt { border-top: 2px dashed var(--action); margin-left: 6px; }
+.dial-legend i.bal { border-top: 3px solid var(--wing); margin-left: 6px; }
 
-/* Hourly table */
+/* ---------- Détail de l'heure ---------- */
+.detail { margin: 12px 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.detail h2 { margin: 0 0 8px; font: 700 1.2rem var(--cond); }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin: 0 0 10px; }
+.facts div { min-width: 0; }
+.facts dt { font-size: .75rem; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ens { margin: 0 0 10px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.site-note { margin: 10px 0 0; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* ---------- Liste des heures ---------- */
 .hours-head, .hour { display: grid; grid-template-columns: 44px 1.35fr 1fr 1fr 18px; align-items: center; gap: 6px; }
 .hours-head { font-size: .75rem; color: var(--muted); padding: 0 10px 6px 14px; }
 .hours { display: flex; flex-direction: column; gap: 4px; }
@@ -168,44 +180,39 @@ button { cursor: pointer; }
 .hour small { color: var(--muted); font-size: .8rem; }
 .hour .sky { font-size: .85rem; }
 
-.status { margin: 18px 0 0; font-size: .8rem; color: var(--muted); }
-.status p { margin: 4px 0; }
-.banner { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); font-size: .9rem; }
-.empty { padding: 40px 0; text-align: center; color: var(--muted); }
-
-/* Bottom bar */
+/* ---------- Barre du bas et pied de page ---------- */
 .bar { display: flex; gap: 8px; margin-top: 18px; }
 .bar button { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 6px; font-weight: 600; white-space: nowrap; }
+.status { margin: 18px 0 0; font-size: .8rem; color: var(--muted); }
+.status p { margin: 4px 0; }
+.status a { color: inherit; }
 
-/* Dialogs */
+/* ---------- Feuilles ---------- */
 dialog { width: min(560px, 100%); max-height: 92vh; margin: auto auto 0; border: 0; border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--surface); color: var(--ink); }
 dialog::backdrop { background: rgba(10, 25, 33, .5); }
 dialog h2 { margin: 0 0 12px; font: 700 1.5rem var(--cond); }
 dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+/* Limites et modèle */
 .field { display: grid; grid-template-columns: 1fr 96px; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .field span small { display: block; color: var(--muted); font-size: .78rem; }
-.field.wide { grid-template-columns: 1fr 1.1fr; }
-.field input, .field select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); text-align: right; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.stack label { display: block; font-size: .8rem; color: var(--muted); margin-top: 8px; }
-.stack input, .stack select { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
-.site-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.site-row .info { flex: 1; min-width: 0; background: none; border: 0; padding: 2px 0; text-align: left; }
-.site-row .info b { display: block; }
-.site-row .info small { color: var(--muted); }
-.btn { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 12px; font-weight: 600; }
-.btn.primary { background: var(--action); border-color: var(--action); color: var(--on-action); }
-.btn.danger { color: var(--stop); }
-.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
-.hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
-.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; }
-.choice { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.choice input { margin-top: 4px; flex: none; }
-.choice small { display: block; color: var(--muted); font-size: .8rem; }
+.field input { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); text-align: right; }
 .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .levels button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 4px; font-weight: 600; font-size: .92rem; }
 .levels button[aria-pressed="true"] { border-color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink); }
 #levelHint { margin: 6px 0 10px; }
+.choice { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.choice input { margin-top: 4px; flex: none; }
+.choice small { display: block; color: var(--muted); font-size: .8rem; }
+/* Mes sites */
+.site-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.site-row .info { flex: 1; min-width: 0; background: none; border: 0; padding: 2px 0; text-align: left; }
+.site-row .info b { display: block; }
+.site-row .info small { color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid2 .end { align-self: end; }
+.stack label { display: block; font-size: .8rem; color: var(--muted); margin-top: 8px; }
+.stack input, .stack select { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
 .pge-results:not(:empty) { margin-top: 4px; border-top: 1px solid var(--line); }
 .pge-item { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
 .pge-pick { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 9px 2px; }
@@ -261,11 +268,11 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
   <div id="sitesList"></div>
   <h3 id="siteFormTitle">Ajouter un site</h3>
   <div id="pgeSearch" class="stack">
-    <button type="button" class="btn" id="pgeNear" style="width:100%">Décos autour de moi</button>
+    <button type="button" class="btn block" id="pgeNear">Décos autour de moi</button>
     <label for="pge-q">ou chercher un déco par son nom</label>
     <input id="pge-q" type="search" placeholder="Ex. Planfait, Sapenay…" autocomplete="off" enterkeyhint="search">
     <div id="pgeResults" class="pge-results"></div>
-    <p class="hint" id="pgeHint">« Ajouter » enregistre le déco tel quel ; toucher son nom remplit le formulaire pour vérifier l'altitude et le secteur avant. Les terrains de gonflage n'y sont pas, ils se saisissent à la main. Sites © <a href="https://www.paraglidingearth.com/" target="_blank" rel="noopener">ParaglidingEarth</a>, CC BY-SA.</p>
+    <p class="hint">« Ajouter » enregistre le déco tel quel ; toucher son nom remplit le formulaire pour vérifier l'altitude et le secteur avant. Les terrains de gonflage n'y sont pas, ils se saisissent à la main. Sites © <a href="https://www.paraglidingearth.com/" target="_blank" rel="noopener">ParaglidingEarth</a>, CC BY-SA.</p>
   </div>
   <form id="siteForm" class="stack" autocomplete="off">
     <input type="hidden" name="id">
@@ -279,7 +286,7 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
     </div>
     <div class="grid2">
       <div><label for="sf-alt">Altitude (m)</label><input id="sf-alt" name="alt" type="number" required></div>
-      <div style="align-self:end"><button type="button" class="btn" id="geoBtn" style="width:100%">Ma position</button></div>
+      <div class="end"><button type="button" class="btn block" id="geoBtn">Ma position</button></div>
     </div>
     <div class="grid2">
       <div><label for="sf-min">Vent favorable de (°)</label><input id="sf-min" name="secMin" type="number" min="0" max="359" required></div>
@@ -399,17 +406,21 @@ const LEVELS_G = {
   confirme: { minWind: 5, maxWind: 30, maxGust: 35, maxGustDelta: 12, maxAlt: 45, capeWarn: 700, capeStop: 1000 }
 };
 
-// Ce qui distingue un déco d'un terrain de gonflage ; `key` nomme ses limites dans state et localStorage
+// Ce qui distingue un déco d'un terrain de gonflage ; `key` nomme ses limites dans state et localStorage,
+// `dir` les phrases sur la direction du vent, partagées par la prévision et la balise
 const KINDS = {
   deco: {
-    key: "limits", defaults: DEFAULT_LIMITS, fields: LIMIT_FIELDS, evaluate,
+    key: "limits", fields: LIMIT_FIELDS, levels: LEVELS_VOL, evaluate,
     label: "Déco", place: "déco", here: "au déco", limitsTitle: "Mes limites de vol", kicker: "Vol",
-    titles: ["Favorable", "À surveiller", "Défavorable"], levels: LEVELS_VOL
+    titles: ["Favorable", "À surveiller", "Défavorable"],
+    dir: { ok: "dans l'axe du déco", cross: "travers au déco", out: "hors secteur : déco sous le vent possible", outLevel: 2 }
   },
   gonflage: {
-    key: "limitsG", defaults: DEFAULT_LIMITS_G, fields: LIMIT_FIELDS_G, evaluate: evaluateGonflage,
+    key: "limitsG", fields: LIMIT_FIELDS_G, levels: LEVELS_G, evaluate: evaluateGonflage,
     label: "Gonflage", place: "terrain", here: "sur le terrain", limitsTitle: "Mes limites de gonflage", kicker: "Gonflage face voile",
-    titles: ["Favorable", "À surveiller", "Défavorable"], levels: LEVELS_G
+    titles: ["Favorable", "À surveiller", "Défavorable"],
+    // Sur un terrain, un vent hors secteur passe par les haies et les arbres : turbulent, sans être un piège de déco
+    dir: { ok: "bien orienté sur le terrain", cross: "de travers sur le terrain", out: "hors secteur : turbulences d'obstacles possibles", outLevel: 1 }
   }
 };
 const kind = (s) => KINDS[s && s.type === "gonflage" ? "gonflage" : "deco"];
@@ -441,8 +452,17 @@ const state = {
 };
 
 store.set("sites", state.sites);
-// Les anciennes prévisions à un seul modèle (clés « fc: ») ne servent plus
-try { Object.keys(localStorage).filter((k) => k.startsWith("fc:")).forEach((k) => localStorage.removeItem(k)); } catch {}
+// Le cache ne garde que ce qui sert : prévisions des sites présents pour le modèle choisi, leurs balises.
+// Le reste (sites supprimés, autre modèle, anciennes clés « fc: ») s'accumulerait à ~40 Ko la prévision.
+function pruneCache() {
+  const fc = new Set(state.sites.map((s) => `fcm:${s.id}:${state.limits.model}`));
+  const piou = new Set(state.sites.filter((s) => s.piou).map((s) => `piou:${s.piou}`));
+  try {
+    Object.keys(localStorage).filter((k) => (/^fcm?:/.test(k) && !fc.has(k)) || (k.startsWith("piou:") && !piou.has(k)))
+      .forEach((k) => localStorage.removeItem(k));
+  } catch {}
+}
+pruneCache();
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -456,6 +476,8 @@ const CARD = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO"
 const cardinal = (d) => (d == null ? "–" : CARD[Math.round(((d % 360) + 360) % 360 / 22.5) % 16]);
 const inSector = (d, a, b) => (a <= b ? d >= a && d <= b : d >= a || d <= b);
 const angleGap = (x, y) => { const t = Math.abs(x - y) % 360; return t > 180 ? 360 - t : t; };
+// Distance en km, à plat : assez juste à l'échelle de quelques dizaines de km
+const km = (la1, lo1, la2, lo2) => 111.2 * Math.hypot(la2 - la1, (lo2 - lo1) * Math.cos(la1 * Math.PI / 180));
 function sectorGap(d, a, b) {
   if (inSector(d, a, b)) return 0;
   return Math.min(angleGap(d, a), angleGap(d, b));
@@ -489,12 +511,7 @@ function evaluate(h, s, L) {
   // Direction du vent au déco
   if (h.ws != null && h.wd != null) {
     if (h.ws < 6) flag(0, "Vent météo faible : la brise de pente devrait s'installer");
-    else {
-      const gap = sectorGap(h.wd, s.secMin, s.secMax);
-      if (gap === 0) flag(0, `Vent ${cardinal(h.wd)} dans l'axe du déco`);
-      else if (gap <= 30) flag(1, `Vent ${cardinal(h.wd)} travers au déco`, "vent travers");
-      else flag(2, `Vent ${cardinal(h.wd)} hors secteur : déco sous le vent possible`, "vent hors secteur");
-    }
+    else { const n = dirNote(h.wd, s); flag(n.l, n.msg, n.tag); }
   }
 
   // Force et rafales
@@ -502,10 +519,7 @@ function evaluate(h, s, L) {
     if (h.ws > L.maxWind) flag(2, `Vent moyen ${r0(h.ws)} km/h, au-dessus de ta limite`, "vent trop fort");
     else if (h.ws > L.maxWind * 0.8) flag(1, `Vent moyen ${r0(h.ws)} km/h, proche de ta limite`, "vent soutenu");
   }
-  if (h.wg != null) {
-    if (h.wg > L.maxGust) flag(2, `Rafales ${r0(h.wg)} km/h`, "rafales");
-    else if (h.ws != null && h.wg - h.ws > L.maxGustDelta) flag(1, `Vent irrégulier (rafales ${r0(h.wg)} km/h)`, "vent irrégulier");
-  }
+  flagGusts(h, L, flag);
 
   // Altitude
   if (h.w850 != null) {
@@ -516,11 +530,7 @@ function evaluate(h, s, L) {
     flag(h.w700 >= 40 ? 2 : 1, `Flux de sud vers 3000 m (${r0(h.w700)} km/h) : risque de foehn et de turbulences`, "flux de sud");
   }
 
-  // Instabilité
-  if (h.cape != null) {
-    if (h.cape >= L.capeStop) flag(2, `Masse d'air très instable (CAPE ${r0(h.cape)}) : risque orageux`, "risque orageux");
-    else if (h.cape >= L.capeWarn) flag(1, `Masse d'air instable (CAPE ${r0(h.cape)}) : thermiques musclés`, "masse d'air instable");
-  }
+  flagCape(h, L, flag, "thermiques musclés", "masse d'air instable");
 
   // Base des nuages (estimation par l'écart température / point de rosée)
   let base = null;
@@ -533,9 +543,30 @@ function evaluate(h, s, L) {
   return { level, reasons, base };
 }
 
+// Règles communes au vol et au gonflage
 function flagRain(h, flag) {
   if ((h.pr ?? 0) >= 0.3 || (h.pp ?? 0) >= 60) flag(2, `Pluie probable (${r0(h.pp)} %)`, "pluie");
   else if ((h.pp ?? 0) >= 30) flag(1, `Risque d'averse (${r0(h.pp)} %)`, "risque d'averse");
+}
+
+function flagGusts(h, L, flag) {
+  if (h.wg == null) return;
+  if (h.wg > L.maxGust) flag(2, `Rafales ${r0(h.wg)} km/h`, "rafales");
+  else if (h.ws != null && h.wg - h.ws > L.maxGustDelta) flag(1, `Vent irrégulier (rafales ${r0(h.wg)} km/h)`, "vent irrégulier");
+}
+
+function flagCape(h, L, flag, warnMsg, warnTag) {
+  if (h.cape == null) return;
+  if (h.cape >= L.capeStop) flag(2, `Masse d'air très instable (CAPE ${r0(h.cape)}) : risque orageux`, "risque orageux");
+  else if (h.cape >= L.capeWarn) flag(1, `Masse d'air instable (CAPE ${r0(h.cape)}) : ${warnMsg}`, warnTag);
+}
+
+// Le vent d'une direction donnée, rapporté au secteur du site (prévision comme mesure)
+function dirNote(wd, s) {
+  const D = kind(s).dir, gap = sectorGap(wd, s.secMin, s.secMax), c = cardinal(wd);
+  if (gap === 0) return { l: 0, msg: `Vent ${c} ${D.ok}` };
+  if (gap <= 30) return { l: 1, msg: `Vent ${c} ${D.cross}`, tag: "vent travers" };
+  return { l: D.outLevel, msg: `Vent ${c} ${D.out}`, tag: "vent hors secteur" };
 }
 
 // Gonflage face voile : trop peu de vent gêne, trop ou irrégulier fait traîner ; la base des nuages ne compte pas
@@ -551,23 +582,11 @@ function evaluateGonflage(h, s, L) {
     else if (h.ws > L.maxWind) flag(2, `Vent moyen ${r0(h.ws)} km/h, au-dessus de ta limite`, "vent trop fort");
     else if (h.ws > L.maxWind * 0.85) flag(1, `Vent moyen ${r0(h.ws)} km/h, proche de ta limite`, "vent soutenu");
     else flag(0, `Vent ${r0(h.ws)} km/h : bonne plage pour le face voile`);
-    // Sur un terrain, un vent hors secteur passe par les haies et les arbres : turbulent, sans être un piège de déco
-    if (h.wd != null && h.ws >= L.minWind) {
-      const gap = sectorGap(h.wd, s.secMin, s.secMax);
-      if (gap === 0) flag(0, `Vent ${cardinal(h.wd)} bien orienté sur le terrain`);
-      else if (gap <= 30) flag(1, `Vent ${cardinal(h.wd)} de travers sur le terrain`, "vent travers");
-      else flag(1, `Vent ${cardinal(h.wd)} hors secteur : turbulences d'obstacles possibles`, "vent hors secteur");
-    }
+    if (h.wd != null && h.ws >= L.minWind) { const n = dirNote(h.wd, s); flag(n.l, n.msg, n.tag); }
   }
-  if (h.wg != null) {
-    if (h.wg > L.maxGust) flag(2, `Rafales ${r0(h.wg)} km/h`, "rafales");
-    else if (h.ws != null && h.wg - h.ws > L.maxGustDelta) flag(1, `Vent irrégulier (rafales ${r0(h.wg)} km/h)`, "vent irrégulier");
-  }
+  flagGusts(h, L, flag);
   if (h.w850 != null && h.w850 > L.maxAlt) flag(1, `Vent fort vers 1500 m (${r0(h.w850)} km/h) : rafales possibles au sol`, "vent fort en altitude");
-  if (h.cape != null) {
-    if (h.cape >= L.capeStop) flag(2, `Masse d'air très instable (CAPE ${r0(h.cape)}) : risque orageux`, "risque orageux");
-    else if (h.cape >= L.capeWarn) flag(1, `Masse d'air instable (CAPE ${r0(h.cape)}) : thermiques et rafales irrégulières`, "thermiques");
-  }
+  flagCape(h, L, flag, "thermiques et rafales irrégulières", "thermiques");
   return { level, reasons, base: null };
 }
 
@@ -785,7 +804,7 @@ async function loadLive(s, force = false) {
     const live = {
       at: Date.now(), id: d.id, name: (d.meta && d.meta.name) || `Balise ${d.id}`,
       date: m.date ? Date.parse(m.date) : null,
-      ws: m.wind_speed_avg, wg: m.wind_speed_max, wmin: m.wind_speed_min, wd: m.wind_heading,
+      ws: m.wind_speed_avg, wg: m.wind_speed_max, wd: m.wind_heading,
       on: !d.status || d.status.state === "on", hist
     };
     store.set(key, live);
@@ -817,11 +836,8 @@ function liveNotes(lv, fc, s, L) {
   const out = [], g = kind(s) === KINDS.gonflage;
   if (g && lv.ws != null && lv.ws < L.minWind) out.push({ l: 1, msg: `Vent ${r0(lv.ws)} km/h : trop faible pour le face voile` });
   if (lv.wd != null && lv.ws >= 3) {
-    const gap = sectorGap(lv.wd, s.secMin, s.secMax);
-    if (gap === 0) out.push({ l: 0, msg: g ? `Vent ${cardinal(lv.wd)} bien orienté sur le terrain` : `Vent ${cardinal(lv.wd)} dans l'axe du déco` });
-    else if (gap <= 30) out.push({ l: 1, msg: g ? `Vent ${cardinal(lv.wd)} de travers sur le terrain` : `Vent ${cardinal(lv.wd)} travers au déco` });
-    else if (g) out.push({ l: 1, msg: `Vent ${cardinal(lv.wd)} hors secteur : turbulences d'obstacles possibles` });
-    else out.push({ l: 2, msg: `Vent ${cardinal(lv.wd)} hors secteur : déco sous le vent` });
+    const n = dirNote(lv.wd, s);
+    out.push({ l: n.l, msg: n.msg });
   } else if (!g) {
     out.push({ l: 0, msg: "Vent nul ou très faible à la balise" });
   }
@@ -914,7 +930,6 @@ function ingest(json, at, fromCache) {
 }
 
 // ---------- Rendering ----------
-const LEVEL_COLOR = ["var(--go)", "var(--warn)", "var(--stop)"];
 const DAY_SHORT = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -983,7 +998,7 @@ function liveCard() {
   return `<section class="live">${head(false)}
     <div class="cmp">${meas}${pred}</div>
     ${trendSvg(lv, L)}
-    <ul class="reasons" style="margin-top:10px">${notes.map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
+    <ul class="reasons">${reasonsHtml(notes)}</ul>
   </section>`;
 }
 
@@ -1001,56 +1016,42 @@ function renderChrome() {
   $("refreshBtn").classList.toggle("spin", ov ? state.loadingOv : state.loadingSite);
 }
 
-// Une pastille par modèle (Météo-France, ICON, ECMWF), creuse quand le modèle ne couvre pas ce jour
-const modelDots = (d) => (d.models ? `<span class="mdots" aria-hidden="true">${d.models.map((x) => `<i class="md ${x.level == null ? "none" : `l${x.level}`}"></i>`).join("")}</span>` : "");
+// Aides communes au tableau et à l'écran du site
+const mdot = (level) => `<i class="md ${level == null ? "none" : `l${level}`}"></i>`;
+const modelDots = (d) => (d.models ? `<span class="mdots" aria-hidden="true">${d.models.map((x) => mdot(x.level)).join("")}</span>` : "");
 const agreeText = (d) => (!d.agree || d.agree.n < 2 ? "" : d.agree.same ? `Les ${d.agree.n} modèles sont d'accord.` : "Les modèles divergent : à confirmer.");
-
 const winShort = (w) => (!w ? "" : w.from === w.to ? `${w.from} h` : `${w.from}–${w.to + 1}`);
+const reasonsHtml = (list) => list.map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("");
+
+// Écart en jours avec aujourd'hui (heure de Paris) : 0 aujourd'hui, 1 demain…
+const dayOffset = (date) => Math.round((Date.parse(`${date}T12:00Z`) - Date.parse(`${parisParts(Date.now()).date}T12:00Z`)) / 86400000);
+function dayLabel(date) {
+  const dt = new Date(`${date}T12:00`), today = dayOffset(date) === 0;
+  const full = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  return { short: today ? "Auj" : DAY_SHORT[dt.getDay()], num: dt.getDate(), full, aria: today ? `Aujourd'hui, ${full}` : full };
+}
+
+const bannerHtml = (fromCache) => (state.error
+  ? `<div class="banner">${esc(state.error)}${fromCache ? " Affichage des dernières prévisions enregistrées." : " Vérifie ta connexion puis actualise."}</div>` : "");
 
 function renderOverview() {
   const ov = state.ov;
   $("live").innerHTML = ""; $("days").innerHTML = "";
-  $("banner").innerHTML = state.error
-    ? `<div class="banner">${esc(state.error)}${ov && ov.fromCache ? " Affichage des dernières prévisions enregistrées." : " Vérifie ta connexion puis actualise."}</div>` : "";
+  $("banner").innerHTML = bannerHtml(ov && ov.fromCache);
   if (!ov) { $("main").innerHTML = `<p class="empty">Chargement des prévisions…</p>`; renderStatus(); return; }
-  if (!state.sites.length) {
-    $("main").innerHTML = `<section class="welcome">
-      <h2>Bienvenue</h2>
-      <p>Ajoute tes sites : l'appli te dira, jour par jour, où les conditions restent dans tes limites.</p>
-      <button class="btn primary" data-start="near">Décos autour de moi</button>
-      <button class="btn" data-start="search">Chercher un déco par son nom</button>
-      <button class="btn" data-start="manual">Saisir un site à la main</button>
-      <p class="hint">Les terrains de gonflage ne sont pas dans la liste des décos : saisis-les à la main, type « Terrain de gonflage ».</p>
-    </section>`;
-    renderStatus(); return;
-  }
+  if (!state.sites.length) { $("main").innerHTML = welcomeHtml(); renderStatus(); return; }
 
   // Colonnes : les dates connues d'au moins un site (Météo-France s'arrête plus tôt que les autres)
   const dates = [...new Set(ov.rows.flatMap((r) => r.days.map((d) => d.date)))].sort().slice(0, FORECAST_DAYS);
   if (!dates.length) { $("main").innerHTML = `<p class="empty">Aucune prévision pour l'instant. Actualise pour charger les données.</p>`; renderStatus(); return; }
-  const today = parisParts(Date.now()).date;
-  const fmt = (date) => new Date(date + "T12:00");
-  const head = dates.map((date) => {
-    const dt = fmt(date);
-    return `<div class="hd">${date === today ? "Auj" : DAY_SHORT[dt.getDay()]}<small>${dt.getDate()}</small></div>`;
-  }).join("");
+  const head = dates.map((date) => { const l = dayLabel(date); return `<div class="hd">${l.short}<small>${l.num}</small></div>`; }).join("");
 
   const groups = [KINDS.deco, KINDS.gonflage].map((K) => {
     const rows = ov.rows.filter((r) => kind(r.s) === K);
     if (!rows.length) return "";
-    return `<div class="grp">${WING_SVG}${K.kicker}</div>` + rows.map((r) => {
-      const name = esc(r.s.name);
-      const cells = dates.map((date, i) => {
-        const day = r.days.find((d) => d.date === date);
-        const full = fmt(date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-        if (!day) return `<span class="c none" aria-label="${name}, ${full} : pas de prévision">·</span>`;
-        if (day.verdict.level == null) return `<button class="c none" data-ov-site="${esc(r.s.id)}" data-ov-date="${date}" aria-label="${name}, ${full} : journée terminée">–</button>`;
-        const v = day.verdict, w = winShort(v.win), split = day.agree && day.agree.n > 1 && !day.agree.same;
-        return `<button class="c l${v.level}${i >= 3 ? " far" : ""}${split ? " split" : ""}" data-ov-site="${esc(r.s.id)}" data-ov-date="${date}"
-          aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}. ${agreeText(day)}">${modelDots(day)}<span>${w}</span></button>`;
-      }).join("");
-      return `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${name}</b><small>${r.s.alt} m</small></button>${cells}`;
-    }).join("");
+    return `<div class="grp kicker">${WING_SVG}${K.kicker}</div>` + rows.map((r) =>
+      `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${esc(r.s.name)}</b><small>${r.s.alt} m</small></button>`
+      + dates.map((date) => overviewCell(r, date)).join("")).join("");
   }).join("");
 
   $("main").innerHTML = `<div class="ov" style="--n:${dates.length}"><div></div>${head}${groups}</div>
@@ -1058,105 +1059,123 @@ function renderOverview() {
   renderStatus();
 }
 
+function overviewCell(r, date) {
+  const day = r.days.find((d) => d.date === date), name = esc(r.s.name), full = dayLabel(date).full;
+  const at = `data-ov-site="${esc(r.s.id)}" data-ov-date="${date}"`;
+  if (!day) return `<span class="c none" aria-label="${name}, ${full} : pas de prévision">·</span>`;
+  const v = day.verdict;
+  if (v.level == null) return `<button class="c none" ${at} aria-label="${name}, ${full} : journée terminée">–</button>`;
+  const w = winShort(v.win), split = day.agree && day.agree.n > 1 && !day.agree.same;
+  return `<button class="c l${v.level}${dayOffset(date) >= 3 ? " far" : ""}${split ? " split" : ""}" ${at}
+    aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}. ${agreeText(day)}">${modelDots(day)}<span>${w}</span></button>`;
+}
+
+const welcomeHtml = () => `<section class="welcome">
+    <h2>Bienvenue</h2>
+    <p>Ajoute tes sites : l'appli te dira, jour par jour, où les conditions restent dans tes limites.</p>
+    <button class="btn primary" data-start="near">Décos autour de moi</button>
+    <button class="btn" data-start="search">Chercher un déco par son nom</button>
+    <button class="btn" data-start="manual">Saisir un site à la main</button>
+    <p class="hint">Les terrains de gonflage ne sont pas dans la liste des décos : saisis-les à la main, type « Terrain de gonflage ».</p>
+  </section>`;
+
 function render() {
   renderChrome();
   if (state.view === "overview") { renderOverview(); return; }
   const s = site(), K = kind(s), L = limitsOf(s);
-
-  // Tabs
-  $("days").innerHTML = state.days.map((d, i) => {
-    const dt = new Date(d.date + "T12:00");
-    const full = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-    return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}" aria-label="${i === 0 ? `Aujourd'hui, ${full}` : full}">
-      <span class="pip" style="background:${LEVEL_COLOR[d.verdict.level] ?? "var(--line)"}"></span>
-      <span class="d1">${i === 0 ? "Auj" : DAY_SHORT[dt.getDay()]}</span><span class="d2">${dt.getDate()}</span></button>`;
-  }).join("");
-
+  renderTabs();
   $("live").innerHTML = liveCard();
-
-  $("banner").innerHTML = state.error
-    ? `<div class="banner">${esc(state.error)}${state.fromCache ? " Affichage des dernières prévisions enregistrées." : " Vérifie ta connexion puis actualise."}</div>` : "";
+  $("banner").innerHTML = bannerHtml(state.fromCache);
 
   const day = state.days[state.dayIdx];
   if (!day) { $("main").innerHTML = `<p class="empty">Aucune prévision pour l'instant. Actualise pour charger les données.</p>`; renderStatus(); return; }
-
-  const v = day.verdict;
   if (state.hourSel == null) {
     // Le milieu du créneau ; aujourd'hui sans créneau, l'heure en cours plutôt que 13 h déjà passé
-    const nowH = day.date === parisParts(Date.now()).date ? parisParts(Date.now()).hour : null;
+    const v = day.verdict, nowH = dayOffset(day.date) === 0 ? parisParts(Date.now()).hour : null;
     state.hourSel = v.win ? Math.round((v.win.from + v.win.to) / 2) : nowH != null && nowH >= 7 && nowH <= 20 ? nowH : 13;
   }
   const sel = day.hours.find((h) => h.hour === state.hourSel) || day.hours[0];
+  $("main").innerHTML = verdictHtml(s, K, day, sel) + detailHtml(s, K, sel) + hoursHtml(K, L, day, sel);
+  renderStatus();
+}
+
+function renderTabs() {
+  $("days").innerHTML = state.days.map((d, i) => {
+    const l = dayLabel(d.date);
+    return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}" aria-label="${l.aria}">
+      <span class="pip l${d.verdict.level}"></span><span class="d1">${l.short}</span><span class="d2">${l.num}</span></button>`;
+  }).join("");
+}
+
+function verdictHtml(s, K, day, sel) {
+  const v = day.verdict, off = dayOffset(day.date);
   const winTxt = v.level == null ? "Plus d'heure à juger aujourd'hui"
     : v.win ? (v.win.from === v.win.to ? `Créneau vers ${v.win.from} h` : `Créneau ${v.win.from} h – ${v.win.to + 1} h`) : "Pas de créneau favorable";
-  const why = v.level == null ? "Les heures de ta journée sont passées : regarde demain." : v.level === 0 ? (v.top.length ? `Hors créneau : ${v.top.join(", ")}.` : "Conditions dans tes limites sur la journée.")
+  const why = v.level == null ? "Les heures de ta journée sont passées : regarde demain."
+    : v.level === 0 ? (v.top.length ? `Hors créneau : ${v.top.join(", ")}.` : "Conditions dans tes limites sur la journée.")
     : (v.top.length ? `${cap(v.top.join(", "))}.` : "");
   const last = day.hours[day.hours.length - 1].hour;
   const caveat = [
-    state.dayIdx >= 3 ? `À J+${state.dayIdx}, c'est une tendance : à reconfirmer la veille.` : "",
+    off >= 3 ? `À J+${off}, c'est une tendance : à reconfirmer la veille.` : "",
     last < 20 ? `Ce modèle ne prévoit pas au-delà de ${last + 1} h ce jour-là.` : ""
   ].filter(Boolean).join(" ");
-
-  const ev = sel.ev;
-  const baseTxt = ev.base != null ? `${Math.round(ev.base / 50) * 50} m` : "–";
+  const models = day.models && v.level != null
+    ? `<p class="models">${day.models.map((x) => `<span>${mdot(x.level)}${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>` : "";
   // La flèche « balise » n'a de sens qu'en regard d'aujourd'hui, et seulement si la mesure est fraîche
   const lv = state.live;
-  const dialLive = lv && !lv.failed && lv.wd != null && lv.ws >= 3
-    && Date.now() - (lv.date || lv.at) <= PIOU_STALE
-    && day.date === parisParts(Date.now()).date ? lv : null;
-  const blhTxt = sel.blh != null ? `${Math.round((s.alt + sel.blh) / 100) * 100} m` : "–";
-
-  $("main").innerHTML = `
-    <section class="verdict l${v.level}" aria-live="polite">
+  const dialLive = lv && !lv.failed && lv.wd != null && lv.ws >= 3 && Date.now() - (lv.date || lv.at) <= PIOU_STALE && off === 0 ? lv : null;
+  return `<section class="verdict l${v.level}" aria-live="polite">
       <div>
-        <p class="kind">${WING_SVG}${K.kicker}</p>
+        <p class="kicker">${WING_SVG}${K.kicker}</p>
         <h1>${v.title}</h1>
         <p class="window">${winTxt}</p>
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
-        ${day.models && v.level != null ? `<p class="models">${day.models.map((x) => `<span><i class="md ${x.level == null ? "none" : `l${x.level}`}"></i>${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>` : ""}
+        ${models}
         ${caveat ? `<p class="why">${esc(caveat)}</p>` : ""}
       </div>
       <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
-    </section>
+    </section>`;
+}
 
-    <section class="detail">
+function detailHtml(s, K, sel) {
+  const ev = sel.ev;
+  const fact = (dt, dd) => `<div><dt>${dt}</dt><dd>${dd}</dd></div>`;
+  const specific = K === KINDS.gonflage
+    ? fact("Écart rafales", sel.ws != null && sel.wg != null ? `${r0(sel.wg - sel.ws)} km/h` : "–")
+      + fact("Pluie", sel.pp != null ? `${r0(sel.pp)} %` : `${r0(sel.pr)} mm`)
+    : fact("Base nuages", ev.base != null ? `${Math.round(ev.base / 50) * 50} m` : "–")
+      + fact("Plafond thermique", sel.blh != null ? `${Math.round((s.alt + sel.blh) / 100) * 100} m` : "–");
+  const ens = sel.ens
+    ? `<p class="ens">Vent / rafales à ${sel.hour} h selon les modèles : ${sel.ens.map((x) => `${esc(MODEL_SHORT[x.m])} ${x.ws == null ? "–" : `${r0(x.ws)} / ${r0(x.wg)}`}`).join(" · ")} km/h</p>` : "";
+  return `<section class="detail">
       <h2>${sel.hour} h</h2>
       <dl class="facts">
-        <div><dt>Vent au ${K.place}</dt><dd>${r0(sel.ws)} km/h ${cardinal(sel.wd)}</dd></div>
-        <div><dt>Rafales</dt><dd>${r0(sel.wg)} km/h</dd></div>
-        <div><dt>Vers 1500 m</dt><dd>${r0(sel.w850)} km/h ${cardinal(sel.d850)}</dd></div>
-        ${K === KINDS.gonflage
-          ? `<div><dt>Écart rafales</dt><dd>${sel.ws != null && sel.wg != null ? `${r0(sel.wg - sel.ws)} km/h` : "–"}</dd></div>
-        <div><dt>Pluie</dt><dd>${sel.pp != null ? `${r0(sel.pp)} %` : `${r0(sel.pr)} mm`}</dd></div>`
-          : `<div><dt>Base nuages</dt><dd>${baseTxt}</dd></div>
-        <div><dt>Plafond thermique</dt><dd>${blhTxt}</dd></div>`}
-        <div><dt>Température</dt><dd>${r0(sel.t)} °C</dd></div>
+        ${fact(`Vent au ${K.place}`, `${r0(sel.ws)} km/h ${cardinal(sel.wd)}`)}${fact("Rafales", `${r0(sel.wg)} km/h`)}
+        ${fact("Vers 1500 m", `${r0(sel.w850)} km/h ${cardinal(sel.d850)}`)}${specific}${fact("Température", `${r0(sel.t)} °C`)}
       </dl>
-      ${sel.ens ? `<p class="ens">Vent / rafales à ${sel.hour} h selon les modèles : ${sel.ens.map((x) => `${esc(MODEL_SHORT[x.m])} ${x.ws == null ? "–" : `${r0(x.ws)} / ${r0(x.wg)}`}`).join(" · ")} km/h</p>` : ""}
-      <ul class="reasons">${ev.reasons.sort((a, b) => b.l - a.l).map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
+      ${ens}
+      <ul class="reasons">${reasonsHtml(ev.reasons.slice().sort((a, b) => b.l - a.l))}</ul>
       ${s.note ? `<p class="site-note">${esc(s.note)}</p>` : ""}
-    </section>
+    </section>`;
+}
 
-    <div class="hours-head"><span>Heure</span><span>Vent / rafales</span><span>1500 m</span><span>Ciel</span><span></span></div>
-    <div class="hours">${day.hours.map((h) => {
-      const closed = !inPlay(h, L); // hors de ta journée, ou déjà passée
-      return `<button class="hour l${h.ev.level}${closed ? " closed" : ""}" aria-pressed="${h.hour === sel.hour}" data-hour="${h.hour}">
+function hoursHtml(K, L, day, sel) {
+  return `<div class="hours-head"><span>Heure</span><span>Vent / rafales</span><span>1500 m</span><span>Ciel</span><span></span></div>
+    <div class="hours">${day.hours.map((h) => `<button class="hour l${h.ev.level}${inPlay(h, L) ? "" : " closed"}" aria-pressed="${h.hour === sel.hour}" data-hour="${h.hour}">
         <span class="h">${h.hour} h</span>
         <span class="w">${arrowSvg(h.wd)}<span><b>${r0(h.ws)}</b> <small>/ ${r0(h.wg)}</small></span></span>
         <span class="w">${arrowSvg(h.d850)}<span>${r0(h.w850)}</span></span>
         <span class="sky">${skyText(h)}</span>
-        <span class="dot l${h.ev.level}" aria-label="${["favorable", "à surveiller", "défavorable"][h.ev.level]}"></span>
-      </button>`;
-    }).join("")}</div>`;
-  renderStatus();
+        <span class="dot l${h.ev.level}" aria-label="${K.titles[h.ev.level].toLowerCase()}"></span>
+      </button>`).join("")}</div>`;
 }
 
 function renderStatus() {
   const ov = state.view === "overview", at = ov ? state.ov && state.ov.fetchedAt : state.fetchedAt;
   const t = at ? new Date(at).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : null;
   $("status").innerHTML = `
-    <p>Données <a href="https://open-meteo.com/" style="color:inherit">Open-Meteo</a>${t ? `, mises à jour ${t}` : ""}. Verdict principal : modèle ${esc(MODELS[state.limits.model] || state.limits.model)} <button type="button" class="link" data-model>changer</button>. Vent en km/h, flèches dans le sens où souffle le vent.</p>
-    ${!ov && site() && site().piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(site().piou)}" style="color:inherit">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : ""}
+    <p>Données <a href="https://open-meteo.com/">Open-Meteo</a>${t ? `, mises à jour ${t}` : ""}. Verdict principal : modèle ${esc(MODELS[state.limits.model] || state.limits.model)} <button type="button" class="link" data-model>changer</button>. Vent en km/h, flèches dans le sens où souffle le vent.</p>
+    ${!ov && site() && site().piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(site().piou)}">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : ""}
     <p>Aide à la préparation : la décision se prend ${ov ? "sur place" : kind(site()).here}, avec la balise et la manche à air sous les yeux.</p>`;
 }
 
@@ -1359,8 +1378,6 @@ function pgeNear() {
     out.innerHTML = `<p class="hint">Position refusée ou introuvable : autorise la localisation, ou cherche par nom.</p>`;
   }, { timeout: 10000, maximumAge: 10 * 60 * 1000 });
 }
-
-const km = (la1, lo1, la2, lo2) => 111.2 * Math.hypot(la2 - la1, (lo2 - lo1) * Math.cos(la1 * Math.PI / 180));
 
 // La liste de toutes les balises pèse ~650 Ko : une seule fois par séance d'ajout
 let piouAll = null;
