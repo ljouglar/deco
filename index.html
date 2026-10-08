@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#15303F">
-<meta name="description" content="Conditions de vol parapente à J-1 et J-2 pour vos sites">
+<meta name="description" content="Conditions de vol parapente jusqu'à J+5 pour vos sites">
 <title>Déco</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -49,11 +49,11 @@ button { cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Day tabs */
-.days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0 14px; }
-.day { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 6px; text-align: center; position: relative; }
+.days { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 8px 0 14px; }
+.day { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 4px; text-align: center; position: relative; min-width: 0; }
 .day .d1 { display: block; font-weight: 600; font-size: .95rem; }
 .day .d2 { display: block; font-size: .8rem; color: var(--muted); }
-.day .pip { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; }
+.day .pip { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; }
 .day[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 
 /* Verdict */
@@ -252,6 +252,8 @@ const MODELS = {
   ecmwf_ifs025: "ECMWF"
 };
 
+const FORECAST_DAYS = 6; // aujourd'hui + 5 jours ; au-delà de J+2, c'est une tendance
+
 const HOURLY = [
   "temperature_2m", "dew_point_2m", "precipitation_probability", "precipitation",
   "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high",
@@ -437,7 +439,7 @@ async function loadForecast(s, force) {
     url.search = new URLSearchParams({
       latitude: s.lat, longitude: s.lon, elevation: s.alt,
       hourly: HOURLY.join(","), models: state.limits.model,
-      timezone: "Europe/Paris", forecast_days: 3, wind_speed_unit: "kmh"
+      timezone: "Europe/Paris", forecast_days: FORECAST_DAYS, wind_speed_unit: "kmh"
     });
     const res = await fetch(url, { cache: force ? "reload" : "default" });
     const json = await res.json();
@@ -541,11 +543,13 @@ function ingest(json, at, fromCache) {
     if (!byDate.has(h.date)) byDate.set(h.date, []);
     byDate.get(h.date).push(h);
   });
-  state.days = [...byDate.entries()].slice(0, 3).map(([date, hours]) => {
-    const day = { date, hours: hours.filter((h) => h.hour >= 7 && h.hour <= 20) };
+  // Sans vent prévu, l'heure est hors de portée du modèle (Météo-France s'arrête vers J+4) : on l'écarte
+  // plutôt que de la noter verte faute de règle déclenchée
+  state.days = [...byDate.entries()].slice(0, FORECAST_DAYS).map(([date, hours]) => {
+    const day = { date, hours: hours.filter((h) => h.hour >= 7 && h.hour <= 20 && h.ws != null) };
     day.verdict = dayVerdict(day, L);
     return day;
-  });
+  }).filter((d) => d.hours.length);
   state.fetchedAt = at; state.fromCache = fromCache;
   if (state.dayIdx >= state.days.length) state.dayIdx = 0;
   state.hourSel = null;
@@ -553,7 +557,7 @@ function ingest(json, at, fromCache) {
 
 // ---------- Rendering ----------
 const LEVEL_COLOR = ["var(--go)", "var(--warn)", "var(--stop)"];
-const DAY_NAMES = ["Aujourd'hui", "Demain"];
+const DAY_SHORT = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
 function arrowSvg(deg) {
@@ -635,10 +639,10 @@ function render() {
   // Tabs
   $("days").innerHTML = state.days.map((d, i) => {
     const dt = new Date(d.date + "T12:00");
-    const label = dt.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
-    return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}">
+    const full = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}" aria-label="${i === 0 ? `Aujourd'hui, ${full}` : full}">
       <span class="pip" style="background:${LEVEL_COLOR[d.verdict.level]}"></span>
-      <span class="d1">${i < 2 ? DAY_NAMES[i] : cap(dt.toLocaleDateString("fr-FR", { weekday: "long" }))}</span><span class="d2">${label}</span></button>`;
+      <span class="d1">${i === 0 ? "Auj" : DAY_SHORT[dt.getDay()]}</span><span class="d2">${dt.getDate()}</span></button>`;
   }).join("");
 
   $("live").innerHTML = liveCard();
@@ -658,6 +662,11 @@ function render() {
   const winTxt = v.win ? (v.win.from === v.win.to ? `Créneau vers ${v.win.from} h` : `Créneau ${v.win.from} h – ${v.win.to + 1} h`) : "Pas de créneau favorable";
   const why = v.level === 0 ? (v.top.length ? `Hors créneau : ${v.top.join(", ")}.` : "Conditions dans tes limites sur la journée.")
     : (v.top.length ? `${cap(v.top.join(", "))}.` : "");
+  const last = day.hours[day.hours.length - 1].hour;
+  const caveat = [
+    state.dayIdx >= 3 ? `À J+${state.dayIdx}, c'est une tendance : à reconfirmer la veille.` : "",
+    last < 20 ? `Ce modèle ne prévoit pas au-delà de ${last + 1} h ce jour-là.` : ""
+  ].filter(Boolean).join(" ");
 
   const ev = sel.ev;
   const baseTxt = ev.base != null ? `${Math.round(ev.base / 50) * 50} m` : "–";
@@ -674,6 +683,7 @@ function render() {
         <h1>${v.title}</h1>
         <p class="window">${winTxt}</p>
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
+        ${caveat ? `<p class="why">${esc(caveat)}</p>` : ""}
       </div>
       <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
     </section>

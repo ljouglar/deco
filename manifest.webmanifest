@@ -1,7 +1,7 @@
 {
   "name": "Déco – conditions de vol",
   "short_name": "Déco",
-  "description": "Conditions de vol parapente à J-1 et J-2 pour vos sites",
+  "description": "Conditions de vol parapente jusqu'à J+5 pour vos sites",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

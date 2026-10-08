@@ -1,4 +1,4 @@
-# Déco – conditions de vol à J-1 / J-2
+# Déco – conditions de vol jusqu'à J+5
 
 PWA sans dépendance : HTML + JS, prévisions Open-Meteo et mesures en temps réel
 des balises Pioupiou / OpenWindMap (gratuites, sans clé).
@@ -24,7 +24,7 @@ Une PWA doit être servie en HTTPS. Le plus simple, GitHub Pages :
 Alternative sans compte Git : glisser le dossier sur https://app.netlify.com/drop
 
 ## Mettre à jour
-Après une modification, incrémente `CACHE = "deco-v2"` dans `sw.js`,
+Après une modification, incrémente `CACHE` dans `sw.js` (`deco-v3` → `deco-v4`…),
 pousse, puis ferme et rouvre l'appli sur le téléphone.
 
 ## Balise Pioupiou : prévision vs mesure
@@ -52,6 +52,11 @@ Sites préréglés et leur balise :
 | Saint-Hilaire | 1000 m | NE à SE (45–135°) | 1333 – Décollage A5 / déco Nord |
 | Aiguebelette | 1120 m | SSO à NO (200–315°) | 1722 – Déco Aiguebelette 1121m |
 
+À Sapenay, la balise n'est pas au point de prévision : le site est réglé sur
+45.8109 / 5.8657, la balise 1446 est à 45.8268 / 5.8792, 2 km au
+nord-est. La comparaison mesure / modèle y porte donc sur deux points voisins,
+pas sur la même maille.
+
 Les sites livrés avec l'appli sont fusionnés au démarrage avec ceux déjà
 enregistrés sur le téléphone : tes réglages ne sont pas écrasés, seuls les sites
 absents sont ajoutés.
@@ -62,6 +67,8 @@ https://developers.pioupiou.fr/data-licensing
 ## Où modifier la logique
 Dans `index.html` :
 - `DEFAULT_SITES` : sites par défaut (Sapenay, Saint-Hilaire, Aiguebelette)
+- `FORECAST_DAYS` : horizon de prévision (6 = aujourd'hui + 5 jours ; Météo-France
+  ne va que jusqu'à J+4 vers 14 h, les heures sans vent prévu sont écartées)
 - `DEFAULT_LIMITS` : limites débutant (aussi réglables dans l'appli, « Mes limites »)
 - `evaluate()` : les règles vert / orange / rouge, heure par heure
 - `liveNotes()` : la lecture de la balise et la comparaison avec le modèle
