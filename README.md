@@ -40,6 +40,17 @@ heure »). La flèche jaune sur la rose des vents est la balise.
 Le bloc vit hors de `#main`, dans son conteneur `#live` : il ne dépend pas du jour
 sélectionné, c'est toujours « maintenant ».
 
+Sous la comparaison, une courbe des 2 dernières heures (historique
+`/v1/archive/<n°>`, une mesure toutes les ~5 min) : la moyenne en trait plein, les
+rafales en zone claire, la prévision du modèle en pointillés et ta limite de vent
+en rouge. La tendance se lit en comparant les 20 dernières minutes aux mêmes
+20 minutes une heure plus tôt :
+- « Le vent forcit : +6 km/h en 1 h » (orange si, à ce rythme, ta limite peut être
+  atteinte dans l'heure), « faiblit » ou « stable » ;
+- « Direction qui tourne : de S à O en 1 h, vers l'axe » (au-delà de 40°, et
+  seulement quand le vent dépasse 3 km/h) ;
+- « Rafales de plus en plus irrégulières » quand l'écart rafales / moyenne se creuse.
+
 La mesure est rafraîchie toutes les 4 min tant que l'appli est au premier plan,
 et au-delà de 45 min elle est signalée comme trop ancienne pour être comparée.
 
@@ -198,4 +209,5 @@ Dans `index.html` :
 - `buildDays()` / `dayVerdict()` : jours évalués d'un site et verdict du jour
 - `loadOverview()` / `renderOverview()` : le tableau « Où voler ? »
 - `liveNotes()` : la lecture de la balise et la comparaison avec le modèle
+- `liveTrend()` / `trendSvg()` : la tendance des 2 dernières heures et sa courbe
 - `HOURLY` : variables demandées à Open-Meteo (liste : https://open-meteo.com/en/docs)

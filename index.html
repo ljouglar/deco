@@ -108,6 +108,18 @@ button { cursor: pointer; }
 .live .col small { display: block; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
 .live .col.meas .val svg { color: var(--wing); }
 .live .stale { margin: 10px 0 0; font-size: .85rem; color: var(--muted); }
+.trend { margin: 10px 0 0; }
+.trend svg { display: block; width: 100%; height: 64px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.trend .area { fill: var(--wing); opacity: .25; }
+.trend .avg { fill: none; stroke: var(--wing); stroke-width: 2.2; stroke-linejoin: round; }
+.trend .fc { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; opacity: .7; }
+.trend .lim { stroke: var(--stop); stroke-width: 1; stroke-dasharray: 2 3; }
+.trend .axis { display: flex; justify-content: space-between; gap: 6px; margin-top: 3px; font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.trend .axis span:nth-child(2) { text-align: center; }
+.trend .k { display: inline-block; width: 10px; height: 0; vertical-align: middle; margin: 0 2px 0 4px; border-top: 2px solid var(--wing); }
+.trend .k.area { height: 7px; border: 0; background: var(--wing); opacity: .35; }
+.trend .k.fc { border-top: 1.5px dashed var(--ink); }
+.trend .k.lim { border-top: 1px dashed var(--stop); }
 
 /* Tableau « Où voler ? » : une ligne par site, une case par jour */
 .ov { display: grid; grid-template-columns: minmax(0, 2.4fr) repeat(var(--n, 6), minmax(0, 1fr)); gap: 4px; margin: 4px 0 0; }
@@ -659,6 +671,75 @@ const refresh = (force = false) => (state.view === "overview" ? loadOverview(for
 const PIOU_TTL = 3 * 60 * 1000;    // on ne redemande pas plus souvent (la balise émet toutes les ~4 min)
 const PIOU_STALE = 45 * 60 * 1000; // au-delà, la mesure ne reflète plus les conditions du moment
 
+// Historique des 2 dernières heures (une mesure toutes les ~5 min) : [instant, moyenne, rafale, direction]
+const HIST_SPAN = 2 * 3600 * 1000;
+async function loadHist(id) {
+  const start = new Date(Date.now() - HIST_SPAN - 10 * 60 * 1000).toISOString();
+  const res = await fetch(`https://api.pioupiou.fr/v1/archive/${encodeURIComponent(id)}?start=${start}&stop=now`, { cache: "no-store" });
+  const json = await res.json();
+  return (json.data || []).map((x) => [Date.parse(x[0]), x[4], x[5], x[6]]).filter((x) => x[1] != null);
+}
+
+// Ce qui a changé depuis une heure : les 20 dernières minutes contre la même durée une heure plus tôt
+function liveTrend(lv, s, L) {
+  const h = lv.hist, out = [];
+  if (!h || h.length < 6) return out;
+  const end = h[h.length - 1][0], MIN = 60000;
+  const win = (from, to) => h.filter((x) => x[0] > end - from * MIN && x[0] <= end - to * MIN);
+  const now = win(20, 0);
+  let past = win(80, 60);
+  if (!past.length) past = h.filter((x) => x[0] <= h[0][0] + 20 * MIN); // historique plus court : on prend son début
+  const mean = (a, f) => a.reduce((t, x) => t + f(x), 0) / a.length;
+  const span = (mean(now, (x) => x[0]) - mean(past, (x) => x[0])) / MIN;
+  if (!now.length || span < 30) return out;
+  const per = span >= 50 && span <= 80 ? "en 1 h" : `en ${Math.round(span / 5) * 5} min`;
+
+  const aNow = mean(now, (x) => x[1]), aPast = mean(past, (x) => x[1]), dA = aNow - aPast;
+  if (dA >= 4) {
+    const soon = aNow + dA * 60 / span > L.maxWind;
+    out.push({ l: soon ? 1 : 0, msg: `Le vent forcit : +${r0(dA)} km/h ${per}${soon ? ", ta limite peut être atteinte dans l'heure" : ""}` });
+  } else if (dA <= -4) out.push({ l: 0, msg: `Le vent faiblit : ${r0(dA)} km/h ${per}` });
+  else out.push({ l: 0, msg: "Vent stable sur la dernière heure" });
+
+  // Direction moyenne par vecteurs (sinon 350° et 10° donneraient 180°), seulement quand la girouette porte
+  const dir = (a) => { const v = a.filter((x) => x[1] >= 3 && x[3] != null); if (v.length < 2) return null;
+    const r = Math.PI / 180, sx = mean(v, (x) => Math.sin(x[3] * r)), cy = mean(v, (x) => Math.cos(x[3] * r));
+    return (Math.atan2(sx, cy) / r + 360) % 360; };
+  const dPast = dir(past), dNow = dir(now);
+  if (dPast != null && dNow != null && angleGap(dPast, dNow) > 40) {
+    const inA = inSector(dPast, s.secMin, s.secMax), inB = inSector(dNow, s.secMin, s.secMax);
+    out.push({ l: !inA && inB ? 0 : 1, msg: `Direction qui tourne : de ${cardinal(dPast)} à ${cardinal(dNow)} ${per}${!inA && inB ? ", vers l'axe" : inA && !inB ? ", hors de l'axe" : ""}` });
+  }
+
+  const gNow = mean(now, (x) => x[2] - x[1]), gPast = mean(past, (x) => x[2] - x[1]);
+  if (gNow - gPast >= 5 && gNow > L.maxGustDelta * 0.7) out.push({ l: 1, msg: `Rafales de plus en plus irrégulières : écart ${r0(gPast)} → ${r0(gNow)} km/h` });
+  return out;
+}
+
+// Courbe des 2 dernières heures : moyenne, zone des rafales, prévision en pointillés, limite de vent
+function trendSvg(lv, L) {
+  const h = lv.hist;
+  if (!h || h.length < 6) return "";
+  const end = h[h.length - 1][0], t0 = end - HIST_SPAN, W = 300, H = 64;
+  const pts = h.filter((x) => x[0] >= t0);
+  const fc = [];
+  for (let t = Math.ceil(t0 / 3600000) * 3600000; t <= end; t += 3600000) { const f = forecastAt(t); if (f && f.ws != null) fc.push([t, f.ws]); }
+  const top = Math.max(20, L.maxWind, ...pts.map((x) => x[2] ?? x[1]), ...fc.map((x) => x[1])) * 1.1;
+  const X = (t) => ((t - t0) / HIST_SPAN * W).toFixed(1), Y = (v) => (H - v / top * H).toFixed(1);
+  const line = (a, i) => a.map((x) => `${X(x[0])},${Y(x[i])}`).join(" ");
+  const area = `${line(pts, 1)} ${pts.slice().reverse().map((x) => `${X(x[0])},${Y(x[2] ?? x[1])}`).join(" ")}`;
+  const hh = (t) => `${parisParts(t).hour} h ${String(new Date(t).getMinutes()).padStart(2, "0")}`;
+  return `<div class="trend">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Vent mesuré sur les 2 dernières heures">
+      <line class="lim" x1="0" x2="${W}" y1="${Y(L.maxWind)}" y2="${Y(L.maxWind)}" vector-effect="non-scaling-stroke"/>
+      <polygon class="area" points="${area}"/>
+      ${fc.length > 1 ? `<polyline class="fc" points="${line(fc, 1)}" vector-effect="non-scaling-stroke"/>` : ""}
+      <polyline class="avg" points="${line(pts, 1)}" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <div class="axis"><span>${hh(t0)}</span><span><i class="k avg"></i>moyenne <i class="k area"></i>rafales${fc.length > 1 ? ` <i class="k fc"></i>prévu` : ""} <i class="k lim"></i>${r0(L.maxWind)} km/h</span><span>${hh(end)}</span></div>
+  </div>`;
+}
+
 async function loadLive(s, force = false) {
   state.live = null;
   if (!s || !s.piou) return;
@@ -666,7 +747,10 @@ async function loadLive(s, force = false) {
   const cached = store.get(key, null);
   if (cached && !force && Date.now() - cached.at < PIOU_TTL) { state.live = cached; return; }
   try {
-    const res = await fetch(`https://api.pioupiou.fr/v1/live/${encodeURIComponent(s.piou)}`, { cache: "no-store" });
+    const [res, hist] = await Promise.all([
+      fetch(`https://api.pioupiou.fr/v1/live/${encodeURIComponent(s.piou)}`, { cache: "no-store" }),
+      loadHist(s.piou).catch(() => null) // sans historique, on garde la mesure du moment
+    ]);
     const json = await res.json();
     const d = json && json.data;
     if (!res.ok || !d || !d.measurements) throw new Error("balise injoignable");
@@ -675,7 +759,7 @@ async function loadLive(s, force = false) {
       at: Date.now(), id: d.id, name: (d.meta && d.meta.name) || `Balise ${d.id}`,
       date: m.date ? Date.parse(m.date) : null,
       ws: m.wind_speed_avg, wg: m.wind_speed_max, wmin: m.wind_speed_min, wd: m.wind_heading,
-      on: !d.status || d.status.state === "on"
+      on: !d.status || d.status.state === "on", hist
     };
     store.set(key, live);
     state.live = live;
@@ -865,9 +949,10 @@ function liveCard() {
          <small>rafales ${r0(fc.wg)} km/h</small></div>`
     : `<div class="col"><span class="lbl">Prévu</span><span class="val">–</span><small>${state.days.length ? "hors plage horaire" : "pas de prévision"}</small></div>`;
 
-  const notes = liveNotes(lv, fc, s, L).sort((a, b) => b.l - a.l);
+  const notes = [...liveNotes(lv, fc, s, L), ...liveTrend(lv, s, L)].sort((a, b) => b.l - a.l);
   return `<section class="live">${head(false)}
     <div class="cmp">${meas}${pred}</div>
+    ${trendSvg(lv, L)}
     <ul class="reasons" style="margin-top:10px">${notes.map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
   </section>`;
 }
