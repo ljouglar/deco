@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Déco – conditions de vol",
   "short_name": "Déco",
   "description": "Conditions de vol et de gonflage parapente jusqu'à J+5 pour vos sites",
@@ -10,8 +11,37 @@
   "background_color": "#15303F",
   "theme_color": "#15303F",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/tableau.png",
+      "sizes": "824x1656",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Où voler ? : tous tes sites, jour par jour"
+    },
+    {
+      "src": "screenshots/deco.png",
+      "sizes": "824x1656",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Un déco : balise en direct, verdict et accord des modèles"
+    }
   ]
 }

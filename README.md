@@ -9,6 +9,7 @@ des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 - `fonts/` : Barlow et Barlow Condensed (sous-ensemble latin, licence SIL OFL dans
   `fonts/OFL.txt`), servies par le site : pas d'appel à Google, et l'appli s'ouvre
   hors ligne avec sa police dès le premier lancement
+- `screenshots/` : captures montrées par Android dans le dialogue d'installation
 - `js/` : le code, en modules ES natifs (pas d'outil de compilation), chargés depuis
   `js/main.js`. Chaque module importe ce qu'il utilise ; les dépendances vont
   toujours dans le même sens :
@@ -36,6 +37,12 @@ des balises Pioupiou / OpenWindMap (gratuites, sans clé).
 puis ouvre http://localhost:8000 dans Chrome.
 Astuce : outils de développement (F12), mode appareil, choisis un Pixel.
 
+## Sécurité
+Une politique de sécurité (CSP, en tête de `index.html`) n'autorise que les
+scripts, styles et polices du site, et les appels réseau vers Open-Meteo et
+Pioupiou. Aucun style écrit dans le HTML : ce qui doit varier passe par le CSSOM
+(par exemple le nombre de colonnes du tableau).
+
 ## Vérifier avant de commiter
     tools/verifier.sh
 
@@ -50,6 +57,7 @@ balise simulée). Il contrôle :
 - le réseau lent : Open-Meteo ne répond plus, l'appli doit retomber sur le cache ;
 - le service worker : chaque fichier de l'appli (modules, polices…) est dans
   `SHELL`, et `CACHE` a changé si l'appli a changé depuis le dernier commit.
+Toute violation de la CSP compte comme une erreur du parcours.
 
 Quand une règle change exprès, `tools/verifier.sh --accepter` réécrit
 `tools/attendu.txt` : `git diff tools/attendu.txt` montre alors quels sites, quels

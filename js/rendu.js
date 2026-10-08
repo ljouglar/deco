@@ -90,8 +90,10 @@ function renderOverview() {
       + dates.map((date) => overviewCell(r, date)).join("")).join("");
   }).join("");
 
-  $("main").innerHTML = `<div class="ov" style="--n:${dates.length}"><div></div>${head}${groups}</div>
+  $("main").innerHTML = `<div class="ov"><div></div>${head}${groups}</div>
     <p class="ov-legend">Chaque case : le verdict du jour selon les limites du site, et son meilleur créneau. Les trois pastilles : Météo-France, ICON et ECMWF ; bordure en pointillés quand ils ne sont pas d'accord. Au-delà de J+2, cases atténuées : c'est une tendance. Touche une case pour le détail heure par heure.</p>`;
+  // Le nombre de colonnes passe par le CSSOM : la politique de sécurité interdit les styles écrits dans le HTML
+  $("main").querySelector(".ov").style.setProperty("--n", dates.length);
   renderStatus();
 }
 

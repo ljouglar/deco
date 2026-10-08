@@ -77,6 +77,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
   const W = f.contentWindow, D = f.contentDocument;
   W.addEventListener("error", (e) => errors.push(e.message));
   W.addEventListener("unhandledrejection", (e) => errors.push(String(e.reason && e.reason.stack || e.reason)));
+  D.addEventListener("securitypolicyviolation", (e) => errors.push(`CSP ${e.violatedDirective} : ${e.blockedURI}`));
   await wait(1500);
   const deco = W.deco, t = (s) => [...D.querySelectorAll(s)].map((e) => e.textContent.replace(/\s+/g, " ").trim());
   const day = (n) => deco.state.ov.rows[0].days[n].date;

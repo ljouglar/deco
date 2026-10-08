@@ -10,10 +10,11 @@
 
 /* ---------- Thème ---------- */
 :root {
-  --bg: #EEF3F6; --surface: #FFFFFF; --ink: #15303F; --muted: #5E7684; --line: #D3DEE5;
+  --bg: #EEF3F6; --surface: #FFFFFF; --ink: #15303F; --muted: #556A77; --line: #D3DEE5;
   --action: #2459C6; --on-action: #FFFFFF; --wing: #F0B429;
   --go: #2E9D6A; --warn: #DE9418; --stop: #CF4436;
   --go-soft: #E2F3EA; --warn-soft: #FBF0DC; --stop-soft: #F8E3E0;
+  --go-ink: #237A52; --stop-ink: #B23A2E; /* vert et rouge pour du texte : contraste ≥ 4,5:1 sur les fonds */
   --sans: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --cond: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
   box-sizing: border-box;
@@ -24,6 +25,7 @@
   :root {
     --bg: #0F1E27; --surface: #172A35; --ink: #E6EEF2; --muted: #8FA6B2; --line: #26404D;
     --action: #7BA4F5; --on-action: #0F1E27; --go-soft: #173A2C; --warn-soft: #3D3018; --stop-soft: #43211E;
+    --go-ink: #55C792; --stop-ink: #EE7A6E;
   }
 }
 
@@ -52,7 +54,7 @@ button { cursor: pointer; }
 .reasons li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; }
 .btn { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 12px; font-weight: 600; }
 .btn.primary { background: var(--action); border-color: var(--action); color: var(--on-action); }
-.btn.danger { color: var(--stop); }
+.btn.danger { color: var(--stop-ink); }
 .btn.block { width: 100%; }
 .link { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
@@ -216,6 +218,6 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .pge-item { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
 .pge-pick { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 9px 2px; }
 .pge-pick small { display: block; color: var(--muted); font-size: .8rem; }
-.pge-done { flex: none; padding: 0 6px; font-size: .85rem; font-weight: 600; color: var(--go); }
+.pge-done { flex: none; padding: 0 6px; font-size: .85rem; font-weight: 600; color: var(--go-ink); }
 
 @media (prefers-reduced-motion: reduce) { .icon-btn.spin svg, .live h2 .pulse { animation: none; } }
