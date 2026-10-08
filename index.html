@@ -118,11 +118,21 @@ button { cursor: pointer; }
 .ov .nm { min-width: 0; align-self: center; background: none; border: 0; padding: 2px 0; text-align: left; }
 .ov .nm b { display: block; font: 700 1.05rem/1.1 var(--cond); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ov .nm small { display: block; color: var(--muted); font-size: .75rem; }
-.ov .c { min-width: 0; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); display: grid; place-items: center; padding: 2px 1px 5px; font: 500 .78rem/1 var(--cond); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ov .c { min-width: 0; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; padding: 2px 1px 5px; font: 500 .78rem/1 var(--cond); font-variant-numeric: tabular-nums; color: var(--ink); }
 .ov .c.l0 { background: var(--go-soft); border-color: var(--go); box-shadow: inset 0 -4px 0 var(--go); }
 .ov .c.l1 { background: var(--warn-soft); border-color: var(--warn); box-shadow: inset 0 -4px 0 var(--warn); }
 .ov .c.l2 { background: var(--stop-soft); border-color: var(--stop); box-shadow: inset 0 -4px 0 var(--stop); }
+.ov .c { flex-direction: column; gap: 4px; }
+.ov .c.split { border-style: dashed; }
 .ov .c.far { opacity: .6; }
+.mdots { display: inline-flex; gap: 2px; }
+.md { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: none; }
+.md.l0 { background: var(--go); } .md.l1 { background: var(--warn); } .md.l2 { background: var(--stop); }
+.md.none { background: none; box-shadow: inset 0 0 0 1px var(--muted); }
+.verdict .models { margin: 8px 0 0; font-size: .82rem; line-height: 1.5; }
+.verdict .models span { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; white-space: nowrap; }
+.verdict .models em { display: block; font-style: normal; color: var(--muted); }
+.ens { margin: 0 0 10px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ov .c.none { color: var(--muted); cursor: default; }
 .welcome { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 16px; margin-top: 8px; }
 .welcome h2 { margin: 0; font: 700 1.5rem var(--cond); }
@@ -317,6 +327,11 @@ const MODELS = {
 
 const FORECAST_DAYS = 6; // aujourd'hui + 5 jours ; au-delà de J+2, c'est une tendance
 
+// Les trois modèles comparés pour l'accord, toujours demandés avec le modèle choisi
+const ENSEMBLE = ["meteofrance_seamless", "icon_seamless", "ecmwf_ifs025"];
+const MODEL_SHORT = { meteofrance_seamless: "Météo-France", icon_seamless: "ICON", ecmwf_ifs025: "ECMWF" };
+const requestedModels = () => [...new Set([state.limits.model, ...ENSEMBLE])];
+
 const HOURLY = [
   "temperature_2m", "dew_point_2m", "precipitation_probability", "precipitation",
   "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high",
@@ -404,6 +419,8 @@ const state = {
 };
 
 store.set("sites", state.sites);
+// Les anciennes prévisions à un seul modèle (clés « fc: ») ne servent plus
+try { Object.keys(localStorage).filter((k) => k.startsWith("fc:")).forEach((k) => localStorage.removeItem(k)); } catch {}
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -573,7 +590,7 @@ async function load(force = false) {
 }
 
 const FC_FRESH = 10 * 60 * 1000; // une prévision chargée par le tableau resert telle quelle à l'ouverture du site
-const fcKey = (s) => `fc:${s.id}:${state.limits.model}`;
+const fcKey = (s) => `fcm:${s.id}:${state.limits.model}`; // « fcm » : réponse multi-modèles
 
 // Une seule requête pour plusieurs sites : Open-Meteo accepte des listes de coordonnées
 async function fetchForecasts(sites, force) {
@@ -581,7 +598,7 @@ async function fetchForecasts(sites, force) {
   url.search = new URLSearchParams({
     latitude: sites.map((s) => s.lat).join(","), longitude: sites.map((s) => s.lon).join(","),
     elevation: sites.map((s) => s.alt).join(","),
-    hourly: HOURLY.join(","), models: state.limits.model,
+    hourly: HOURLY.join(","), models: requestedModels().join(","),
     timezone: "Europe/Paris", forecast_days: FORECAST_DAYS, wind_speed_unit: "kmh"
   });
   const res = await fetch(url, { cache: force ? "reload" : "default" });
@@ -622,7 +639,7 @@ async function loadOverview(force = false) {
     const ats = ov.rows.map((r) => r.at).filter(Boolean);
     ov.fetchedAt = ats.length ? Math.min(...ats) : null;
   }
-  ov.rows.forEach((r) => { r.days = r.json ? buildDays(r.json, r.s) : []; });
+  ov.rows.forEach((r) => { r.days = r.json ? buildAll(r.json, r.s) : []; });
   state.ov = ov; state.loading = false;
   render();
 }
@@ -711,7 +728,35 @@ function liveNotes(lv, fc, s, L) {
   return out;
 }
 
-// Jours évalués d'un site, à partir d'une réponse Open-Meteo
+// Avec plusieurs modèles, Open-Meteo suffixe chaque variable (wind_speed_10m_icon_seamless) : on isole un modèle
+function modelJson(json, m) {
+  const H = json.hourly;
+  if (H.wind_speed_10m) return m === state.limits.model ? json : null; // réponse à un seul modèle (ancien cache)
+  if (!H[`wind_speed_10m_${m}`]) return null;
+  return { hourly: Object.fromEntries([["time", H.time], ...HOURLY.map((v) => [v, H[`${v}_${m}`] || null])]) };
+}
+
+// Jours du modèle choisi, avec pour chaque jour le verdict des trois modèles et, par heure, leur vent
+function buildAll(json, s) {
+  const main = modelJson(json, state.limits.model);
+  if (!main) return [];
+  const days = buildDays(main, s);
+  const ens = ENSEMBLE.map((m) => { const j = modelJson(json, m); return { m, days: j ? buildDays(j, s) : [] }; });
+  for (const d of days) {
+    d.models = ens.map(({ m, days: md }) => {
+      const x = md.find((y) => y.date === d.date);
+      return x ? { m, level: x.verdict.level, title: x.verdict.title, win: x.verdict.win, hours: x.hours } : { m, level: null };
+    });
+    const lv = d.models.filter((x) => x.level != null).map((x) => x.level);
+    d.agree = { n: lv.length, same: lv.length > 1 && lv.every((l) => l === lv[0]) };
+    for (const h of d.hours) {
+      h.ens = d.models.map((x) => { const y = x.hours && x.hours.find((z) => z.hour === h.hour); return { m: x.m, ws: y ? y.ws : null, wg: y ? y.wg : null }; });
+    }
+  }
+  return days;
+}
+
+// Jours évalués d'un site, à partir d'une réponse Open-Meteo à un modèle
 function buildDays(json, s) {
   const H = json.hourly, K = kind(s), L = limitsOf(s);
   const pick = (k, i) => (H[k] ? H[k][i] : null);
@@ -741,7 +786,8 @@ function buildDays(json, s) {
 }
 
 function ingest(json, at, fromCache) {
-  state.days = buildDays(json, site());
+  state.fcJson = json;
+  state.days = buildAll(json, site());
   state.fetchedAt = at; state.fromCache = fromCache;
   // Arrivée depuis le tableau : on ouvre le jour touché
   if (state.wantDate) {
@@ -840,6 +886,10 @@ function renderChrome() {
   $("refreshBtn").classList.toggle("spin", state.loading);
 }
 
+// Une pastille par modèle (Météo-France, ICON, ECMWF), creuse quand le modèle ne couvre pas ce jour
+const modelDots = (d) => (d.models ? `<span class="mdots" aria-hidden="true">${d.models.map((x) => `<i class="md ${x.level == null ? "none" : `l${x.level}`}"></i>`).join("")}</span>` : "");
+const agreeText = (d) => (!d.agree || d.agree.n < 2 ? "" : d.agree.same ? `Les ${d.agree.n} modèles sont d'accord.` : "Les modèles divergent : à confirmer.");
+
 const winShort = (w) => (!w ? "" : w.from === w.to ? `${w.from} h` : `${w.from}–${w.to + 1}`);
 
 function renderOverview() {
@@ -879,16 +929,16 @@ function renderOverview() {
         const day = r.days.find((d) => d.date === date);
         const full = fmt(date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
         if (!day) return `<span class="c none" aria-label="${name}, ${full} : pas de prévision">·</span>`;
-        const v = day.verdict, w = winShort(v.win);
-        return `<button class="c l${v.level}${i >= 3 ? " far" : ""}" data-ov-site="${esc(r.s.id)}" data-ov-date="${date}"
-          aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}">${w}</button>`;
+        const v = day.verdict, w = winShort(v.win), split = day.agree && day.agree.n > 1 && !day.agree.same;
+        return `<button class="c l${v.level}${i >= 3 ? " far" : ""}${split ? " split" : ""}" data-ov-site="${esc(r.s.id)}" data-ov-date="${date}"
+          aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}. ${agreeText(day)}">${modelDots(day)}<span>${w}</span></button>`;
       }).join("");
       return `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${name}</b><small>${r.s.alt} m</small></button>${cells}`;
     }).join("");
   }).join("");
 
   $("main").innerHTML = `<div class="ov" style="--n:${dates.length}"><div></div>${head}${groups}</div>
-    <p class="ov-legend">Chaque case : le verdict du jour selon les limites du site, et son meilleur créneau. Au-delà de J+2, cases atténuées : c'est une tendance. Touche une case pour le détail heure par heure.</p>`;
+    <p class="ov-legend">Chaque case : le verdict du jour selon les limites du site, et son meilleur créneau. Les trois pastilles : Météo-France, ICON et ECMWF ; bordure en pointillés quand ils ne sont pas d'accord. Au-delà de J+2, cases atténuées : c'est une tendance. Touche une case pour le détail heure par heure.</p>`;
   renderStatus();
 }
 
@@ -945,6 +995,7 @@ function render() {
         <h1>${v.title}</h1>
         <p class="window">${winTxt}</p>
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
+        ${day.models ? `<p class="models">${day.models.map((x) => `<span><i class="md ${x.level == null ? "none" : `l${x.level}`}"></i>${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>` : ""}
         ${caveat ? `<p class="why">${esc(caveat)}</p>` : ""}
       </div>
       <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
@@ -963,6 +1014,7 @@ function render() {
         <div><dt>Plafond thermique</dt><dd>${blhTxt}</dd></div>`}
         <div><dt>Température</dt><dd>${r0(sel.t)} °C</dd></div>
       </dl>
+      ${sel.ens ? `<p class="ens">Vent / rafales à ${sel.hour} h selon les modèles : ${sel.ens.map((x) => `${esc(MODEL_SHORT[x.m])} ${x.ws == null ? "–" : `${r0(x.ws)} / ${r0(x.wg)}`}`).join(" · ")} km/h</p>` : ""}
       <ul class="reasons">${ev.reasons.sort((a, b) => b.l - a.l).map((r) => `<li><span class="dot l${r.l}"></span><span>${esc(r.msg)}</span></li>`).join("")}</ul>
       ${s.note ? `<p class="site-note">${esc(s.note)}</p>` : ""}
     </section>
@@ -1040,11 +1092,12 @@ $("limitsForm").addEventListener("submit", () => {
 
 function reevaluate() {
   if (state.view === "overview") {
-    state.ov && state.ov.rows.forEach((r) => { if (r.json) r.days = buildDays(r.json, r.s); });
+    state.ov && state.ov.rows.forEach((r) => { if (r.json) r.days = buildAll(r.json, r.s); });
     return;
   }
-  const s = site(), K = kind(s), L = limitsOf(s);
-  state.days.forEach((d) => { d.hours.forEach((h) => { h.ev = K.evaluate(h, s, L); }); d.verdict = dayVerdict(d, L, K); });
+  // Tout est recalculé depuis la réponse : les verdicts des trois modèles suivent les nouvelles limites
+  if (state.fcJson) state.days = buildAll(state.fcJson, site());
+  if (state.dayIdx >= state.days.length) state.dayIdx = 0;
   state.hourSel = null;
 }
 

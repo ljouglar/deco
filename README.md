@@ -67,6 +67,20 @@ nouveau téléphone démarre sans site (voir « Premier lancement »).
 Données balises : © contributeurs du réseau OpenWindMap,
 https://developers.pioupiou.fr/data-licensing
 
+## Accord entre modèles
+Chaque requête demande, en plus du modèle choisi, Météo-France (AROME/ARPEGE),
+ICON et ECMWF (Open-Meteo suffixe alors chaque variable par le nom du modèle).
+Le verdict reste celui du modèle choisi ; les trois autres sont évalués avec les
+mêmes règles et les mêmes limites, pour voir s'ils sont d'accord :
+- dans le tableau, trois pastilles par case (Météo-France, ICON, ECMWF), et une
+  bordure en pointillés quand leurs verdicts diffèrent ;
+- sur l'écran du site, le verdict de chacun sous le verdict principal, puis
+  « Les 3 modèles sont d'accord » ou « Les modèles divergent : à confirmer » ;
+- dans le détail de l'heure, vent et rafales selon chaque modèle.
+
+Météo-France s'arrête vers J+4 14 h (pastille creuse au-delà) et ne donne pas la
+probabilité de pluie : il ne voit la pluie qu'à sa quantité prévue.
+
 ## Premier lancement
 Un téléphone qui n'a encore aucun site arrive sur un écran d'accueil :
 - **Décos autour de moi** : les 12 décos ParaglidingEarth les plus proches (à moins
