@@ -41,6 +41,9 @@ const mock = (fx) => `<base href="${new URL("..", location.href)}"><script>
   const NOON = new Date(FX[0].hourly.time[12] + ":00+02:00").getTime();
   Date.now = () => NOON;
   if (navigator.serviceWorker) navigator.serviceWorker.register = () => Promise.resolve();
+  // Les animations n'avancent pas dans le temps virtuel : on se déclare « mouvements réduits », l'appli défile sans animation
+  const mm = window.matchMedia.bind(window);
+  window.matchMedia = (q) => (q.includes("prefers-reduced-motion") ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : mm(q));
   window.__requetes = [];
   const real = window.fetch.bind(window);
   const json = (o) => Promise.resolve(new Response(JSON.stringify(o), { headers: { "Content-Type": "application/json" } }));
@@ -128,8 +131,13 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(fv("name") === "Sapenay (pass)" && fv("secMin") === "248" && fv("secMax") === "292", "formulaire rempli", `${fv("name")} ${fv("secMin")}–${fv("secMax")}`);
       D.getElementById("siteSubmit").click(); await wait(800);
       check(t(".ov .nm b").length === 8, "ajout par le formulaire", t(".ov .nm b").join(", "));
-      D.getElementById("sitesBtn").click(); D.querySelector('#sitesList [data-edit="marennes"]').click();
+      f.style.height = "800px"; // hauteur d'un téléphone : le formulaire est sous la liste, hors de la feuille visible
+      D.getElementById("sitesBtn").click(); D.querySelector('#sitesList [data-edit="marennes"]').click(); await wait(1500);
       check(D.getElementById("sf-type").value === "gonflage" && D.getElementById("pgeSearch").hidden, "modifier un terrain");
+      const sheet = D.getElementById("sitesDlg"), dlg = sheet.getBoundingClientRect(), titre = D.getElementById("siteFormTitle").getBoundingClientRect();
+      check(sheet.scrollTop > 0 && titre.top >= dlg.top && titre.bottom <= dlg.bottom, "« Modifier » descend jusqu'au formulaire",
+        `${t("#siteFormTitle")} à ${Math.round(titre.top - dlg.top)} px du haut de la feuille, défilement ${Math.round(sheet.scrollTop)} px`);
+      f.style.height = "";
       D.getElementById("siteCancel").click();
       // Sauvegarde : on intercepte le fichier exporté pour le réimporter après tout avoir supprimé
       let exported = null;

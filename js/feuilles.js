@@ -288,7 +288,11 @@ $("pgeNear").addEventListener("click", pgeNear);
 $("sitesList").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.use) { $("sitesDlg").close(); openSite(b.dataset.use); }
-  if (b.dataset.edit) resetSiteForm(state.sites.find((s) => s.id === b.dataset.edit));
+  if (b.dataset.edit) {
+    resetSiteForm(state.sites.find((s) => s.id === b.dataset.edit));
+    // Le formulaire est sous la liste des sites, souvent hors de l'écran : on y descend pour montrer qu'il est rempli
+    $("siteFormTitle").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }
   if (b.dataset.del) {
     const s = state.sites.find((x) => x.id === b.dataset.del);
     if (s && confirm(`Supprimer ${s.name} ?`)) {

@@ -1,6 +1,6 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v19";
+const CACHE = "deco-v20";
 const NET_WAIT = 3000; // au-delà, la copie en cache plutôt que d'attendre un réseau lent
 // En développement (python3 -m http.server sur localhost), toujours le réseau : chaque rechargement voit tes modifications
 const DEV = self.location.hostname === "localhost";
