@@ -175,6 +175,10 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .btn.danger { color: var(--stop); }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 .hint { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
+.levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.levels button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 4px; font-weight: 600; font-size: .92rem; }
+.levels button[aria-pressed="true"] { border-color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink); }
+#levelHint { margin: 6px 0 10px; }
 .pge-results:not(:empty) { margin-top: 4px; border-top: 1px solid var(--line); }
 .pge-item { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
 .pge-pick { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 9px 2px; }
@@ -345,17 +349,30 @@ const LIMIT_FIELDS_G = [
   ["endHour", "Fin de journée", "heure"]
 ];
 
+// Repères par niveau, à ajuster avec son moniteur ; le seuil d'orage ne bouge pas, il ne dépend pas du pilote
+const LEVEL_NAMES = { debutant: "Débutant", inter: "Intermédiaire", confirme: "Confirmé" };
+const LEVELS_VOL = {
+  debutant: { maxWind: 20, maxGust: 25, maxGustDelta: 10, maxAlt: 25, capeWarn: 400, capeStop: 1000, minBase: 500 },
+  inter: { maxWind: 25, maxGust: 30, maxGustDelta: 12, maxAlt: 30, capeWarn: 600, capeStop: 1000, minBase: 400 },
+  confirme: { maxWind: 30, maxGust: 35, maxGustDelta: 15, maxAlt: 40, capeWarn: 800, capeStop: 1000, minBase: 300 }
+};
+const LEVELS_G = {
+  debutant: { minWind: 8, maxWind: 20, maxGust: 25, maxGustDelta: 8, maxAlt: 35, capeWarn: 300, capeStop: 1000 },
+  inter: { minWind: 6, maxWind: 25, maxGust: 30, maxGustDelta: 10, maxAlt: 40, capeWarn: 500, capeStop: 1000 },
+  confirme: { minWind: 5, maxWind: 30, maxGust: 35, maxGustDelta: 12, maxAlt: 45, capeWarn: 700, capeStop: 1000 }
+};
+
 // Ce qui distingue un déco d'un terrain de gonflage ; `key` nomme ses limites dans state et localStorage
 const KINDS = {
   deco: {
     key: "limits", defaults: DEFAULT_LIMITS, fields: LIMIT_FIELDS, evaluate,
     label: "Déco", place: "déco", here: "au déco", limitsTitle: "Mes limites de vol", kicker: "Vol",
-    titles: ["Volable", "À surveiller", "Non volable"]
+    titles: ["Favorable", "À surveiller", "Défavorable"], levels: LEVELS_VOL
   },
   gonflage: {
     key: "limitsG", defaults: DEFAULT_LIMITS_G, fields: LIMIT_FIELDS_G, evaluate: evaluateGonflage,
     label: "Gonflage", place: "terrain", here: "sur le terrain", limitsTitle: "Mes limites de gonflage", kicker: "Gonflage face voile",
-    titles: ["Bon pour gonfler", "À surveiller", "Pas de gonflage"]
+    titles: ["Favorable", "À surveiller", "Défavorable"], levels: LEVELS_G
   }
 };
 const kind = (s) => KINDS[s && s.type === "gonflage" ? "gonflage" : "deco"];
@@ -980,18 +997,36 @@ function openLimits(K) {
   limitsKind = K;
   const L = state[K.key];
   $("limitsTitle").textContent = K.limitsTitle;
-  $("limitsForm").innerHTML = K.fields.map(([k, label, sub]) =>
+  $("limitsForm").innerHTML = `<div class="levels" role="group" aria-label="Niveau">${Object.entries(LEVEL_NAMES).map(([k, n]) =>
+      `<button type="button" data-level="${k}" aria-pressed="false">${n}</button>`).join("")}</div>
+    <p class="hint" id="levelHint"></p>` + K.fields.map(([k, label, sub]) =>
     `<label class="field"><span>${label}<small>${sub}</small></span><input type="number" name="${k}" value="${L[k]}" inputmode="numeric"></label>`
   ).join("") + `
     <label class="field wide"><span>Modèle météo<small>compare-les pour voir s'ils sont d'accord</small></span>
       <select name="model">${Object.entries(MODELS).map(([k, n]) => `<option value="${k}"${k === state.limits.model ? " selected" : ""}>${n}</option>`).join("")}</select></label>
     <div class="actions">
-      <button type="button" class="btn" id="limitsReset">Valeurs débutant</button>
       <button type="submit" class="btn primary">Enregistrer</button>
     </div>`;
-  $("limitsReset").onclick = () => { state[K.key] = { ...K.defaults }; store.set(K.key, state[K.key]); $("limitsDlg").close(); refresh(); };
+  markLevel();
   $("limitsDlg").showModal();
 }
+
+// Le niveau dont les valeurs sont celles du formulaire, sinon « personnalisé »
+function markLevel() {
+  const f = $("limitsForm"), levels = limitsKind.levels;
+  const cur = Object.keys(levels).find((k) => Object.entries(levels[k]).every(([n, v]) => +el(f, n).value === v));
+  f.querySelectorAll("[data-level]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.level === cur)));
+  $("levelHint").textContent = (cur ? `Repères ${LEVEL_NAMES[cur].toLowerCase()}` : "Réglages personnalisés")
+    + ", indicatifs : ajuste-les avec ton moniteur. Rien n'est pris en compte avant « Enregistrer ».";
+}
+
+$("limitsForm").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-level]"); if (!b) return;
+  const f = $("limitsForm");
+  Object.entries(limitsKind.levels[b.dataset.level]).forEach(([n, v]) => { el(f, n).value = v; });
+  markLevel();
+});
+$("limitsForm").addEventListener("input", (e) => { if (e.target.type === "number") markLevel(); });
 
 $("limitsForm").addEventListener("submit", () => {
   const fd = new FormData($("limitsForm")), K = limitsKind;

@@ -139,6 +139,37 @@ site affiché) ; le modèle météo est commun aux deux.
 Sources : ParaglidingEarth, fil « Gonflage près de Lyon » sur parapentiste.info.
 Marennes est un terrain de club : se renseigner avant d'y aller.
 
+## Niveaux et verdicts
+Le verdict s'écrit **Favorable / À surveiller / Défavorable**, pour le vol comme
+pour le gonflage (le type de site est écrit au-dessus) : il dit si les conditions
+prévues restent dans tes limites, pas si tu peux voler.
+
+En tête de « Mes limites », trois boutons remplissent les champs avec des repères
+par niveau ; rien n'est pris en compte avant « Enregistrer », et toute retouche
+passe en « Réglages personnalisés ». Ces repères sont indicatifs, à ajuster avec
+son moniteur.
+
+| Vol | Débutant | Intermédiaire | Confirmé |
+| --- | --- | --- | --- |
+| Vent moyen max (km/h) | 20 | 25 | 30 |
+| Rafales max (km/h) | 25 | 30 | 35 |
+| Écart rafales / vent (km/h) | 10 | 12 | 15 |
+| Vent vers 1500 m (km/h) | 25 | 30 | 40 |
+| CAPE vigilance (J/kg) | 400 | 600 | 800 |
+| Base des nuages mini (m au-dessus du déco) | 500 | 400 | 300 |
+
+| Gonflage | Débutant | Intermédiaire | Confirmé |
+| --- | --- | --- | --- |
+| Vent moyen mini (km/h) | 8 | 6 | 5 |
+| Vent moyen max (km/h) | 20 | 25 | 30 |
+| Rafales max (km/h) | 25 | 30 | 35 |
+| Écart rafales / vent (km/h) | 8 | 10 | 12 |
+| Vent vers 1500 m (km/h) | 35 | 40 | 45 |
+| CAPE vigilance (J/kg) | 300 | 500 | 700 |
+
+Le seuil d'orage (CAPE 1000) est le même à tous les niveaux : il ne dépend pas du
+pilote. Les heures de début et de fin de journée ne changent pas non plus.
+
 ## Où modifier la logique
 Dans `index.html` :
 - `DEFAULT_SITES` / `withPresets()` : mes six sites préréglés, et la règle qui ne les
@@ -147,6 +178,7 @@ Dans `index.html` :
   ne va que jusqu'à J+4 vers 14 h, les heures sans vent prévu sont écartées)
 - `DEFAULT_LIMITS` / `DEFAULT_LIMITS_G` : limites débutant, vol et gonflage (aussi
   réglables dans l'appli, « Mes limites »)
+- `LEVELS_VOL` / `LEVELS_G` : repères débutant, intermédiaire, confirmé
 - `KINDS` : ce qui distingue un déco d'un terrain (libellés, limites, évaluation)
 - `evaluate()` / `evaluateGonflage()` : les règles vert / orange / rouge, heure par heure
 - `buildDays()` / `dayVerdict()` : jours évalués d'un site et verdict du jour
