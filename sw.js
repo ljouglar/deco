@@ -1,14 +1,14 @@
 // Service worker : l'appli s'ouvre même sans réseau.
 // Les prévisions sont mises en cache par l'appli elle-même (dernier chargement réussi).
-const CACHE = "deco-v22";
+const CACHE = "deco-v23";
 const NET_WAIT = 3000; // au-delà, la copie en cache plutôt que d'attendre un réseau lent
 // En développement (python3 -m http.server sur localhost), toujours le réseau : chaque rechargement voit tes modifications
 const DEV = self.location.hostname === "localhost";
 const SHELL = ["./", "./index.html", "./style.css", "./manifest.webmanifest", "./sites-fr.json",
   "./js/main.js", "./js/outils.js", "./js/config.js", "./js/etat.js", "./js/regles.js", "./js/donnees.js",
-  "./js/balise.js", "./js/rendu.js", "./js/chargement.js", "./js/feuilles.js", "./js/maj.js",
+  "./js/balise.js", "./js/rendu.js", "./js/chargement.js", "./js/feuilles.js", "./js/maj.js", "./js/vol.js",
   "./fonts/barlow-400.woff2", "./fonts/barlow-500.woff2", "./fonts/barlow-600.woff2",
-  "./fonts/barlow-condensed-500.woff2", "./fonts/barlow-condensed-700.woff2",
+  "./fonts/barlow-condensed-500.woff2", "./fonts/barlow-condensed-700.woff2", "./fonts/barlow-condensed-800-italic.woff2",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png"];
 
 self.addEventListener("install", (e) => {

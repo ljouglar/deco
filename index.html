@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#EEF3F6">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F1E27">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#1B56C2">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B1532">
 <!-- Politique de sécurité : scripts, styles et polices du site seul ; appels réseau limités à Open-Meteo et Pioupiou.
      Les noms venus de ParaglidingEarth ou des balises sont déjà échappés ; c'est un second verrou. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://api.pioupiou.fr; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
@@ -12,17 +12,44 @@
 <title>Déco</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
-<!-- Les cinq graisses dès le départ (21 Ko chacune) : une police arrivée après le premier affichage décale l'écran -->
+<!-- Les six graisses dès le départ (21 Ko chacune) : une police arrivée après le premier affichage décale l'écran -->
 <link rel="preload" href="fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-condensed-800-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app" id="app" data-loading>
-  <header class="top">
+  <header class="top sky">
+    <!-- Le ciel, ses nuages et une voile qui plane : décor seul, sans information -->
+    <svg class="clouds" viewBox="0 0 400 160" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+      <path d="M28 52 a14 14 0 0 1 26 -6 a18 18 0 0 1 32 4 a12 12 0 0 1 4 22 h-60 a11 11 0 0 1 -2 -20z"/>
+      <path class="far" d="M290 22 a10 10 0 0 1 19 -4 a13 13 0 0 1 23 3 a9 9 0 0 1 3 16 h-44 a8 8 0 0 1 -1 -15z"/>
+      <path class="far" d="M196 92 a8 8 0 0 1 15 -3 a10 10 0 0 1 18 2 a7 7 0 0 1 2 12 h-34 a6 6 0 0 1 -1 -11z"/>
+    </svg>
+    <div class="wing" aria-hidden="true">
+      <svg class="glider" viewBox="0 0 200 150">
+        <defs><linearGradient id="voile-ombre" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B1F3A" stop-opacity="0"/><stop offset="1" stop-color="#0B1F3A" stop-opacity=".28"/></linearGradient></defs>
+        <path class="suspentes" d="M14.5 77.0 L48.9 99.0 M26.3 65.5 L48.9 99.0 M33.7 60.7 L48.9 99.0 M48.9 99.0 L93.5 124.0 M42.2 56.6 L66.4 78.6 M51.6 53.2 L66.4 78.6 M61.6 50.4 L66.4 78.6 M66.4 78.6 L93.5 124.0 M72.2 48.4 L86.8 70.4 M83.1 47.0 L86.8 70.4 M94.4 46.3 L86.8 70.4 M86.8 70.4 L93.5 124.0 M105.6 46.3 L113.2 70.4 M116.9 47.0 L113.2 70.4 M127.8 48.4 L113.2 70.4 M113.2 70.4 L106.5 124.0 M138.4 50.4 L133.6 78.6 M148.4 53.2 L133.6 78.6 M157.8 56.6 L133.6 78.6 M133.6 78.6 L106.5 124.0 M166.3 60.7 L151.1 99.0 M173.7 65.5 L151.1 99.0 M185.5 77.0 L151.1 99.0 M151.1 99.0 L106.5 124.0"/>
+        <path class="freins" d="M26.7 49.4 L91 131 M173.3 49.4 L109 131"/>
+        <path class="stabilo" d="M12 64 Q13 70 20 71 L14.5 77 Q11 71 12 64 Z M188 64 Q187 70 180 71 L185.5 77 Q189 71 188 64 Z"/>
+        <g class="aile"><path class="m" d="M12.0 64.0 L15.0 60.1 L18.4 56.4 L26.3 65.5 L23.0 68.2 L20.0 71.0Z"/><path class="m" d="M18.4 56.4 L22.2 52.9 L26.4 49.7 L33.7 60.7 L29.9 63.0 L26.3 65.5Z"/><path class="m" d="M26.4 49.7 L30.8 46.7 L35.5 43.9 L42.2 56.6 L37.9 58.6 L33.7 60.7Z"/><path class="y" d="M35.5 43.9 L40.5 41.4 L45.8 39.2 L51.6 53.2 L46.8 54.8 L42.2 56.6Z"/><path class="w" d="M45.8 39.2 L51.3 37.1 L56.9 35.3 L61.6 50.4 L56.5 51.7 L51.6 53.2Z"/><path class="c" d="M56.9 35.3 L62.8 33.8 L68.7 32.5 L72.2 48.4 L66.8 49.3 L61.6 50.4Z"/><path class="c" d="M68.7 32.5 L74.8 31.4 L81.1 30.6 L83.1 47.0 L77.6 47.6 L72.2 48.4Z"/><path class="w" d="M81.1 30.6 L87.3 30.0 L93.7 29.6 L94.4 46.3 L88.7 46.6 L83.1 47.0Z"/><path class="c" d="M93.7 29.6 L100.0 29.5 L106.3 29.6 L105.6 46.3 L100.0 46.2 L94.4 46.3Z"/><path class="w" d="M106.3 29.6 L112.7 30.0 L118.9 30.6 L116.9 47.0 L111.3 46.6 L105.6 46.3Z"/><path class="c" d="M118.9 30.6 L125.2 31.4 L131.3 32.5 L127.8 48.4 L122.4 47.6 L116.9 47.0Z"/><path class="c" d="M131.3 32.5 L137.2 33.8 L143.1 35.3 L138.4 50.4 L133.2 49.3 L127.8 48.4Z"/><path class="w" d="M143.1 35.3 L148.7 37.1 L154.2 39.2 L148.4 53.2 L143.5 51.7 L138.4 50.4Z"/><path class="y" d="M154.2 39.2 L159.5 41.4 L164.5 43.9 L157.8 56.6 L153.2 54.8 L148.4 53.2Z"/><path class="m" d="M164.5 43.9 L169.2 46.7 L173.6 49.7 L166.3 60.7 L162.1 58.6 L157.8 56.6Z"/><path class="m" d="M173.6 49.7 L177.8 52.9 L181.6 56.4 L173.7 65.5 L170.1 63.0 L166.3 60.7Z"/><path class="m" d="M181.6 56.4 L185.0 60.1 L188.0 64.0 L180.0 71.0 L177.0 68.2 L173.7 65.5Z"/></g>
+        <path class="ombre" d="M12.0 64.0 C44.0 18.0 156.0 18.0 188.0 64.0 L180.0 71.0 C148.0 38.0 52.0 38.0 20.0 71.0 Z"/>
+        <path class="nervures" d="M18.4 56.4 L26.3 65.5 M26.4 49.7 L33.7 60.7 M35.5 43.9 L42.2 56.6 M45.8 39.2 L51.6 53.2 M56.9 35.3 L61.6 50.4 M68.7 32.5 L72.2 48.4 M81.1 30.6 L83.1 47.0 M93.7 29.6 L94.4 46.3 M106.3 29.6 L105.6 46.3 M118.9 30.6 L116.9 47.0 M131.3 32.5 L127.8 48.4 M143.1 35.3 L138.4 50.4 M154.2 39.2 L148.4 53.2 M164.5 43.9 L157.8 56.6 M173.6 49.7 L166.3 60.7 M181.6 56.4 L173.7 65.5"/>
+        <path class="bouches" d="M21.0 68.7 L25.1 65.2 M27.5 63.3 L32.3 60.2 M35.2 58.6 L40.6 56.0 M43.8 54.6 L49.8 52.5 M53.3 51.3 L59.7 49.6 M63.5 48.7 L70.2 47.4 M74.1 46.8 L81.1 45.9 M85.2 45.5 L92.3 45.1 M96.4 45.0 L103.6 45.0 M107.7 45.1 L114.8 45.5 M118.9 45.9 L125.9 46.8 M129.8 47.4 L136.5 48.7 M140.3 49.6 L146.7 51.3 M150.2 52.5 L156.2 54.6 M159.4 56.0 L164.8 58.6 M167.7 60.2 L172.5 63.3 M174.9 65.2 L179.0 68.7"/>
+        <g class="pilote">
+          <path class="selle" d="M90 129 Q100 125 110 129 L111 139 Q100 146 89 139 Z"/>
+          <path class="corps" d="M94.5 124 Q100 121 105.5 124 L104.5 133 L95.5 133 Z"/>
+          <path class="bras" d="M95.5 126 L91 131 M104.5 126 L109 131"/>
+          <circle class="casque" cx="100" cy="120.5" r="4.3"/>
+          <path class="visiere" d="M96.3 121.4 Q100 123.6 103.7 121.4"/>
+        </g>
+      </svg>
+    </div>
+    <div class="row">
     <button class="icon-btn" id="backBtn" aria-label="Retour au tableau de tous les sites" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
@@ -33,9 +60,8 @@
     <button class="icon-btn" id="refreshBtn" aria-label="Actualiser les prévisions">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
     </button>
+    </div>
   </header>
-
-  <div id="live"></div>
 
   <nav class="days" id="days" role="tablist" aria-label="Jour"></nav>
   <div id="banner"></div>

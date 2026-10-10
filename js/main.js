@@ -7,7 +7,9 @@ import { render } from "./rendu.js";
 import { load, loadOverview, openSite, refresh, refreshLive } from "./chargement.js";
 import { openLimits, openModel, openSites, pgeNear } from "./feuilles.js";
 import { initUpdates } from "./maj.js";
+import { flyHeader } from "./vol.js";
 
+flyHeader(document.querySelector(".sky .wing"));
 pruneCache();
 if (state.sites.length) protectStorage();
 
@@ -30,7 +32,8 @@ $("main").addEventListener("click", (e) => {
   if (o) { openSite(o.dataset.ovSite, o.dataset.ovDate || null); return; }
   const b = e.target.closest("[data-hour]"); if (!b) return;
   state.hourSel = +b.dataset.hour; render();
-  document.querySelector(".verdict")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  // Choisie dans la liste du bas, l'heure remonte au verdict ; choisie dans la bande, on y est déjà
+  if (b.closest(".hours")) document.querySelector(".verdict")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 });
 
 $("refreshBtn").addEventListener("click", () => refresh(true));

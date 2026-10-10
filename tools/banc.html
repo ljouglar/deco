@@ -14,7 +14,7 @@
 //   #verdicts            verdicts de tous les sites, heure par heure (comparés à tools/attendu.txt)
 //   #parcours            les gestes courants, avec leurs contrôles
 //   #lent                Open-Meteo ne répond plus : l'appli doit retomber sur le cache
-//   #tableau, #deco…     un écran, pour les captures
+//   #tableau, #deco, #accueil…  un écran, pour les captures
 // Le banc efface le stockage local : publié avec l'appli sur GitHub Pages, il viderait tes sites.
 // Il ne tourne donc qu'en local.
 if (!["localhost", "127.0.0.1"].includes(location.hostname)) {
@@ -33,6 +33,7 @@ const SITES = [
 localStorage.clear();
 localStorage.setItem("sites", JSON.stringify(SITES));
 localStorage.setItem("presets", JSON.stringify(SITES.map((s) => s.id)));
+if (location.hash === "#accueil") localStorage.setItem("sites", "[]"); // premier lancement, pour les captures
 
 // Injecté en tête de la page de l'appli : heure figée à midi, réseau simulé, pas de service worker.
 // window.__lent fait pendre Open-Meteo jusqu'à l'abandon par l'appli (délai de fetchT).
@@ -102,6 +103,8 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       D.querySelector(`.ov .c[data-ov-site="sapenay"][data-ov-date="${day(1)}"]`).click(); await wait(800);
       check(deco.state.view === "site" && t("#siteName")[0] === "Sapenay", "ouvrir une case", t("#siteName").join());
       check(deco.state.days[deco.state.dayIdx].date === day(1), "jour de la case", t('.day[aria-selected="true"] .d1').join());
+      check(!D.querySelector(".live"), "pas de balise un autre jour qu'aujourd'hui");
+      D.querySelector('.day[data-day="0"]').click();
       check(!!D.querySelector("#live .trend svg") && t("#live .reasons li").some((x) => x.includes("forcit")), "balise et tendance", t("#live .reasons li").join(" / "));
       D.querySelector('.day[data-day="4"]').click();
       check(t(".verdict .why").some((x) => x.includes("J+4")), "tendance à J+4", t(".verdict .why").join(" / "));
@@ -113,7 +116,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(deco.state.limits.maxWind === 30 && JSON.parse(localStorage.getItem("limits")).maxWind === 30, "limites enregistrées");
       D.getElementById("limitsBtn").click(); D.querySelector('[data-level="debutant"]').click(); D.querySelector("#limitsForm [type=submit]").click(); await wait(200);
       D.getElementById("backBtn").click(); await wait(800);
-      check(deco.state.view === "overview" && D.getElementById("live").innerHTML === "", "retour au tableau");
+      check(deco.state.view === "overview" && !D.querySelector(".live"), "retour au tableau");
       D.querySelector("[data-model]").click(); D.querySelector('#modelForm input[value="icon_seamless"]').checked = true;
       D.querySelector("#modelForm [type=submit]").click(); await wait(800);
       const last = W.__requetes.filter((u) => u.includes("/v1/forecast")).at(-1);

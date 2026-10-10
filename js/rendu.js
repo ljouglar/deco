@@ -4,11 +4,28 @@ import { FORECAST_DAYS, kind, KINDS, MODEL_SHORT, MODELS } from "./config.js";
 import { limitsOf, site, state } from "./etat.js";
 import { inPlay } from "./regles.js";
 import { liveCard, PIOU_STALE } from "./balise.js";
+import { flyWelcome } from "./vol.js";
 
 const DAY_SHORT = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
 
 // Petite voile, pour marquer le type de site au-dessus du verdict
+// Voile miniature aux couleurs de l'en-tête, à côté d'un créneau favorable
+const MINI_WING = `<svg viewBox="0 0 26 22" aria-hidden="true"><path class="m" d="M1 9 Q13 -3 25 9 L23 11 Q13 2 3 11 Z"/><path class="y" d="M9 4.2 Q13 3 17 4.2 L16.4 6.5 Q13 5.6 9.6 6.5 Z"/><path stroke="currentColor" stroke-width=".8" fill="none" d="M3 11 L13 20 L23 11 M9.6 6.5 L13 20 L16.4 6.5"/></svg>`;
+
 const WING_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10 Q12 2 22 10"/><path d="M2 10 L12 21 L22 10 M8 7.2 L12 21 L16 7.2"/></svg>`;
+
+// Manche à air vue du dessus, l'embouchure au mât, la queue sous le vent. Comme les vraies, cinq anneaux :
+// chacun se gonfle par tranche d'environ 5,5 km/h (3 nœuds), toute droite vers 28 km/h.
+function sockSvg(deg, ws) {
+  if (deg == null || ws == null) return "";
+  const full = Math.max(0, Math.min(5, Math.round(ws / 5.5)));
+  const seg = Array.from({ length: 5 }, (_, i) => {
+    const limp = i >= full, k = limp ? .5 : 1;
+    const w0 = (8 - i * 1) * k, w1 = (8 - (i + 1) * 1) * k, y0 = 3 + i * 9, y1 = y0 + 9;
+    return `<path class="${i % 2 ? "b" : "r"}${limp ? " limp" : ""}" d="M${-w0} ${y0} L${w0} ${y0} L${w1} ${y1} L${-w1} ${y1} Z"/>`;
+  }).join("");
+  return `<g class="sock" transform="rotate(${deg})">${seg}</g><circle class="mast" r="3.2"/>`;
+}
 
 function dialSvg(s, h, lv) {
   const p = (deg, r) => { const a = deg * Math.PI / 180; return [r * Math.sin(a), -r * Math.cos(a)].map((v) => v.toFixed(2)).join(" "); };
@@ -16,12 +33,13 @@ function dialSvg(s, h, lv) {
   const sector = `M0 0 L${p(s.secMin, 50)} A50 50 0 ${span > 180 ? 1 : 0} 1 ${p(s.secMax, 50)} Z`;
   const arrow = (deg, cls, len) => deg == null ? "" :
     `<g transform="rotate(${deg})"><line class="${cls}" x1="0" y1="${-len}" x2="0" y2="${len - 8}"/><path class="${cls}" d="M-6 ${len - 15} L0 ${len - 7} L6 ${len - 15}" fill="none"/></g>`;
-  return `<svg class="dial" viewBox="-62 -62 124 124" role="img" aria-label="Secteur favorable du site et direction du vent">
+  return `<svg class="dial" viewBox="-62 -62 124 124" role="img" aria-label="Secteur favorable du site, et manche à air orientée et gonflée selon le vent prévu">
+    <circle class="face" r="50"/>
     <path class="sector" d="${sector}"/>
     <circle class="ring" r="50"/>
     ${["N", "E", "S", "O"].map((c, i) => `<text class="card" x="${p(i * 90, 57).split(" ")[0]}" y="${p(i * 90, 57).split(" ")[1]}">${c}</text>`).join("")}
     ${h ? arrow(h.d850, "w850", 34) : ""}
-    ${h ? arrow(h.wd, "w10", 42) : ""}
+    ${h ? sockSvg(h.wd, h.ws) : ""}
     ${lv ? arrow(lv.wd, "wlive", 50) : ""}
   </svg>`;
 }
@@ -56,6 +74,27 @@ const modelDots = (d) => (d.models ? `<span class="mdots" aria-hidden="true">${d
 
 const agreeText = (d) => (!d.agree || d.agree.n < 2 ? "" : d.agree.same ? `Les ${d.agree.n} modèles sont d'accord.` : "Les modèles divergent : à confirmer.");
 
+// Bande horaire : une case par heure de la journée (tes heures de début et de fin), teinte selon le verdict.
+// La clarté porte le verdict (favorable foncé, à surveiller hachuré, défavorable pâle) : lisible sans les couleurs.
+// Un trait sous l'heure quand les modèles ne s'accordent pas sur son côté favorable : c'est là que le désaccord
+// change quelque chose (entre « à surveiller » et « défavorable », il ne ferait que du bruit).
+function hourSplit(day, hour) {
+  if (!day.models) return false;
+  const lv = day.models.map((x) => x.hours && x.hours.find((h) => h.hour === hour)).filter(Boolean).map((h) => h.ev.level);
+  return lv.length > 1 && lv.includes(0) && !lv.every((l) => l === 0);
+}
+
+function bandSlots(day, L) {
+  const slots = [];
+  for (let hour = L.startHour; hour <= L.endHour; hour++) {
+    const h = day.hours.find((x) => x.hour === hour);
+    slots.push({ hour, h, cls: !h ? "nodata" : `l${h.ev.level}${h.past ? " past" : ""}${hourSplit(day, hour) ? " split" : ""}` });
+  }
+  return slots;
+}
+
+const bandHtml = (day, L) => `<span class="band" aria-hidden="true">${bandSlots(day, L).map((x) => `<i class="${x.cls}"></i>`).join("")}</span>`;
+
 const winShort = (w) => (!w ? "" : w.from === w.to ? `${w.from} h` : `${w.from}–${w.to + 1}`);
 
 // Écart en jours avec aujourd'hui (heure de Paris) : 0 aujourd'hui, 1 demain…
@@ -70,28 +109,41 @@ function dayLabel(date) {
 const bannerHtml = (fromCache) => (state.error
   ? `<div class="banner">${esc(state.error)}${fromCache ? " Affichage des dernières prévisions enregistrées." : " Vérifie ta connexion puis actualise."}</div>` : "");
 
+let unfolded = false;
+
 function renderOverview() {
   const ov = state.ov;
-  $("live").innerHTML = ""; $("days").innerHTML = "";
+  $("app").classList.remove("first");
+  $("days").innerHTML = "";
   $("banner").innerHTML = bannerHtml(ov && ov.fromCache);
   if (!ov) { $("main").innerHTML = `<p class="empty">Chargement des prévisions…</p>`; renderStatus(); return; }
-  if (!state.sites.length) { $("main").innerHTML = welcomeHtml(); renderStatus(); return; }
+  if (!state.sites.length) {
+    $("main").innerHTML = welcomeHtml(); $("app").classList.add("first");
+    flyWelcome($("main").querySelector(".welcome-sky .wing"));
+    renderStatus(); return;
+  }
 
   // Colonnes : les dates connues d'au moins un site (Météo-France s'arrête plus tôt que les autres)
   const dates = [...new Set(ov.rows.flatMap((r) => r.days.map((d) => d.date)))].sort().slice(0, FORECAST_DAYS);
   if (!dates.length) { $("main").innerHTML = `<p class="empty">Aucune prévision pour l'instant. Actualise pour charger les données.</p>`; renderStatus(); return; }
-  const head = dates.map((date) => { const l = dayLabel(date); return `<div class="hd">${l.short}<small>${l.num}</small></div>`; }).join("");
+  // Au-delà de J+2, la colonne le dit en toutes lettres plutôt que d'affadir ses bandes (le vert pâlirait)
+  const head = dates.map((date) => { const l = dayLabel(date); return `<div class="hd">${l.short} <small>${l.num}</small><em>${dayOffset(date) >= 3 ? "tendance" : ""}</em></div>`; }).join("");
 
   const groups = [KINDS.deco, KINDS.gonflage].map((K) => {
     const rows = ov.rows.filter((r) => kind(r.s) === K);
     if (!rows.length) return "";
-    return `<div class="grp kicker">${WING_SVG}${K.kicker}</div>` + rows.map((r) =>
-      `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${esc(r.s.name)}</b><small>${r.s.alt} m</small></button>`
+    return `<h2 class="grp">${K.kicker}</h2>` + rows.map((r) =>
+      `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${esc(r.s.name)}</b> <small>${r.s.alt} m</small></button>`
       + dates.map((date) => overviewCell(r, date)).join("")).join("");
   }).join("");
 
-  $("main").innerHTML = `<div class="ov"><div></div>${head}${groups}</div>
-    <p class="ov-legend">Chaque case : le verdict du jour selon les limites du site, et son meilleur créneau. Les trois pastilles : Météo-France, ICON et ECMWF ; bordure en pointillés quand ils ne sont pas d'accord. Au-delà de J+2, cases atténuées : c'est une tendance. Touche une case pour le détail heure par heure.</p>`;
+  $("main").innerHTML = `<div class="ov">${head}${groups}</div>
+    <div class="ov-legend">
+      <p class="keys"><span><i class="sw l0"></i>Favorable</span><span><i class="sw l1"></i>À surveiller</span><span><i class="sw l2"></i>Défavorable</span><span><i class="sw split"></i>Modèles en désaccord</span></p>
+      <p>Chaque bande, c'est ta journée heure par heure, de ta première à ta dernière heure de vol. Au-delà de J+2, c'est une tendance, à reconfirmer la veille. Touche une bande pour le détail.</p>
+    </div>`;
+  // Au premier tableau de l'ouverture, les bandes se déplient comme la journée qui se déroule ; ensuite plus d'animation
+  if (!unfolded) { unfolded = true; $("main").classList.add("unfold"); setTimeout(() => $("main").classList.remove("unfold"), 2000); }
   // Le nombre de colonnes passe par le CSSOM : la politique de sécurité interdit les styles écrits dans le HTML
   $("main").querySelector(".ov").style.setProperty("--n", dates.length);
   renderStatus();
@@ -100,15 +152,17 @@ function renderOverview() {
 function overviewCell(r, date) {
   const day = r.days.find((d) => d.date === date), name = esc(r.s.name), full = dayLabel(date).full;
   const at = `data-ov-site="${esc(r.s.id)}" data-ov-date="${date}"`;
-  if (!day) return `<span class="c none" aria-label="${name}, ${full} : pas de prévision">·</span>`;
+  if (!day) return `<span class="c none" aria-label="${name}, ${full} : pas de prévision"></span>`;
   const v = day.verdict;
-  if (v.level == null) return `<button class="c none" ${at} aria-label="${name}, ${full} : journée terminée">–</button>`;
-  const w = winShort(v.win), split = day.agree && day.agree.n > 1 && !day.agree.same;
-  return `<button class="c l${v.level}${dayOffset(date) >= 3 ? " far" : ""}${split ? " split" : ""}" ${at}
-    aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}. ${agreeText(day)}">${modelDots(day)}<span>${w}</span></button>`;
+  if (v.level == null) return `<button class="c over" ${at} aria-label="${name}, ${full} : journée terminée">${bandHtml(day, limitsOf(r.s))}<span class="win">fini</span></button>`;
+  const w = winShort(v.win), icon = v.level === 0 ? MINI_WING : "";
+  return `<button class="c" ${at}
+    aria-label="${name}, ${full} : ${esc(v.title)}${w ? `, créneau ${w} h` : ""}. ${agreeText(day)}">${bandHtml(day, limitsOf(r.s))}<span class="win">${icon}${w}</span></button>`;
 }
 
-const welcomeHtml = () => `<section class="welcome">
+// La grande voile de l'accueil reprend celle de l'en-tête
+const welcomeHtml = () => `<div class="welcome-sky" aria-hidden="true"><div class="wing">${document.querySelector(".sky .wing").innerHTML}</div></div>
+  <section class="welcome">
     <h2>Bienvenue</h2>
     <p>Ajoute tes sites : l'appli te dira, jour par jour, où les conditions restent dans tes limites.</p>
     <button class="btn primary" data-start="near">Décos autour de moi</button>
@@ -122,8 +176,7 @@ export function render() {
   renderChrome();
   if (state.view === "overview") { renderOverview(); return; }
   const s = site(), K = kind(s), L = limitsOf(s);
-  renderTabs();
-  $("live").innerHTML = liveCard();
+  renderTabs(L);
   $("banner").innerHTML = bannerHtml(state.fromCache);
 
   const day = state.days[state.dayIdx];
@@ -134,19 +187,21 @@ export function render() {
     state.hourSel = v.win ? Math.round((v.win.from + v.win.to) / 2) : nowH != null && nowH >= 7 && nowH <= 20 ? nowH : 13;
   }
   const sel = day.hours.find((h) => h.hour === state.hourSel) || day.hours[0];
-  $("main").innerHTML = verdictHtml(s, K, day, sel) + detailHtml(s, K, sel) + hoursHtml(K, L, day, sel);
+  // La balise dit ce qui se passe maintenant : elle n'a sa place qu'aujourd'hui, juste sous le verdict
+  const live = dayOffset(day.date) === 0 ? liveCard() : "";
+  $("main").innerHTML = verdictHtml(s, K, L, day, sel) + (live ? `<div id="live">${live}</div>` : "") + detailHtml(s, K, sel) + hoursHtml(K, L, day, sel);
   renderStatus();
 }
 
-function renderTabs() {
+function renderTabs(L) {
   $("days").innerHTML = state.days.map((d, i) => {
     const l = dayLabel(d.date);
-    return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}" aria-label="${l.aria}">
-      <span class="pip l${d.verdict.level}"></span><span class="d1">${l.short}</span><span class="d2">${l.num}</span></button>`;
+    return `<button class="day" role="tab" aria-selected="${i === state.dayIdx}" data-day="${i}" aria-label="${l.aria} : ${esc(d.verdict.title.toLowerCase())}">
+      <span class="d1">${l.short}</span> <span class="d2">${l.num}</span>${bandHtml(d, L)}</button>`;
   }).join("");
 }
 
-function verdictHtml(s, K, day, sel) {
+function verdictHtml(s, K, L, day, sel) {
   const v = day.verdict, off = dayOffset(day.date);
   const winTxt = v.level == null ? "Plus d'heure à juger aujourd'hui"
     : v.win ? (v.win.from === v.win.to ? `Créneau vers ${v.win.from} h` : `Créneau ${v.win.from} h – ${v.win.to + 1} h`) : "Pas de créneau favorable";
@@ -158,21 +213,30 @@ function verdictHtml(s, K, day, sel) {
     off >= 3 ? `À J+${off}, c'est une tendance : à reconfirmer la veille.` : "",
     last < 20 ? `Ce modèle ne prévoit pas au-delà de ${last + 1} h ce jour-là.` : ""
   ].filter(Boolean).join(" ");
-  const models = day.models && v.level != null
-    ? `<p class="models">${day.models.map((x) => `<span>${mdot(x.level)}${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>` : "";
+  // Modèles d'accord : une ligne suffit ; sinon le verdict de chacun
+  const names = day.models ? day.models.filter((x) => x.level != null).map((x) => MODEL_SHORT[x.m]) : [];
+  const models = !day.models || v.level == null ? ""
+    : day.agree.same ? `<p class="models">${modelDots(day)} ${esc(names.length > 1 ? `${names.slice(0, -1).join(", ")} et ${names.at(-1)}` : names.join(""))} sont d'accord.</p>`
+    : `<p class="models split">${day.models.map((x) => `<span>${mdot(x.level)}${esc(MODEL_SHORT[x.m])} ${x.level == null ? "–" : esc(x.title.toLowerCase())}</span>`).join("")}<em>${esc(agreeText(day))}</em></p>`;
+  const band = `<div class="dayband" role="group" aria-label="Heures de la journée">${bandSlots(day, L).map((x) => x.h
+      ? `<button class="${x.cls}" data-hour="${x.hour}" aria-pressed="${x.hour === sel.hour}" aria-label="${x.hour} h : ${esc(K.titles[x.h.ev.level].toLowerCase())}"><span>${x.hour}</span></button>`
+      : `<span class="nodata"><span>${x.hour}</span></span>`).join("")}</div>`;
   // La flèche « balise » n'a de sens qu'en regard d'aujourd'hui, et seulement si la mesure est fraîche
   const lv = state.live;
   const dialLive = lv && !lv.failed && lv.wd != null && lv.ws >= 3 && Date.now() - (lv.date || lv.at) <= PIOU_STALE && off === 0 ? lv : null;
   return `<section class="verdict l${v.level}" aria-live="polite">
-      <div>
-        <p class="kicker">${WING_SVG}${K.kicker}</p>
-        <h1>${v.title}</h1>
-        <p class="window">${winTxt}</p>
-        ${why ? `<p class="why">${esc(why)}</p>` : ""}
-        ${models}
-        ${caveat ? `<p class="why">${esc(caveat)}</p>` : ""}
+      <div class="vhead">
+        <div>
+          <p class="kind">${WING_SVG}${K.kicker}</p>
+          <h1>${v.title}</h1>
+          <p class="window">${winTxt}</p>
+        </div>
+        <div class="rose">${dialSvg(s, sel, dialLive)}<div class="dial-legend"><span><i class="sock"></i>manche à ${sel.hour} h</span> <span><i class="alt"></i>1500 m</span>${dialLive ? ` <span><i class="bal"></i>balise</span>` : ""}</div></div>
       </div>
-      <div>${dialSvg(s, sel, dialLive)}<div class="dial-legend"><i></i>sol <i class="alt"></i>1500 m${dialLive ? ` <i class="bal"></i>balise` : ""}</div></div>
+      ${band}
+      ${why ? `<p class="why">${esc(why)}</p>` : ""}
+      ${models}
+      ${caveat ? `<p class="why">${esc(caveat)}</p>` : ""}
     </section>`;
 }
 
@@ -205,7 +269,7 @@ function hoursHtml(K, L, day, sel) {
         <span class="w">${arrowSvg(h.wd)}<span><b>${r0(h.ws)}</b> <small>/ ${r0(h.wg)}</small></span></span>
         <span class="w">${arrowSvg(h.d850)}<span>${r0(h.w850)}</span></span>
         <span class="sky">${skyText(h)}</span>
-        <span class="dot l${h.ev.level}" aria-label="${K.titles[h.ev.level].toLowerCase()}"></span>
+        <i class="sw l${h.ev.level}${hourSplit(day, h.hour) ? " split" : ""}" role="img" aria-label="${K.titles[h.ev.level].toLowerCase()}"></i>
       </button>`).join("")}</div>`;
 }
 
