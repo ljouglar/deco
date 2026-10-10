@@ -132,6 +132,14 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       D.getElementById("limitsBtn").click(); D.querySelector('[data-level="debutant"]').click(); D.querySelector("#limitsForm [type=submit]").click(); await wait(200);
       D.getElementById("backBtn").click(); await wait(800);
       check(deco.state.view === "overview" && !D.querySelector(".live"), "retour au tableau");
+      // Depuis la liste des sites : aujourd'hui en pleine journée, demain une fois la journée finie
+      deco.openSite("sapenay"); await wait(800);
+      check(deco.state.days[deco.state.dayIdx].date === day(0) && !!D.querySelector("#live .live"), "à midi, un site s'ouvre sur aujourd'hui et sa balise", t('.day[aria-selected="true"] .d1').join());
+      const midi = W.Date.now(); W.Date.now = () => midi + 8 * 3600 * 1000;
+      deco.openSite("sapenay"); await wait(800);
+      check(deco.state.days[deco.state.dayIdx].date === day(1), "à 20 h, il s'ouvre sur demain", t('.day[aria-selected="true"] .d1').join());
+      W.Date.now = () => midi;
+      D.getElementById("backBtn").click(); await wait(800);
       D.querySelector("[data-model]").click(); D.querySelector('#modelForm input[value="icon_seamless"]').checked = true;
       D.querySelector("#modelForm [type=submit]").click(); await wait(800);
       const last = W.__requetes.filter((u) => u.includes("/v1/forecast")).at(-1);

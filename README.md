@@ -96,6 +96,10 @@ quand il est connu) et la bande du jour, dont chaque heure se touche ; puis, pou
 aujourd'hui, la balise en direct ; le détail de l'heure choisie (dont le vent selon
 chaque modèle et à l'atterro), enfin la liste des heures.
 
+Ouvert depuis la liste des sites, l'écran montre aujourd'hui tant qu'il reste des
+heures dans ta journée (on est au déco, la balise compte), demain ensuite (on prépare
+la sortie). Depuis le tableau, il s'ouvre sur le jour touché.
+
 Au centre de chaque rose, une **manche à air** suit le vent prévu à l'heure choisie :
 orientée sous le vent, elle se gonfle d'un anneau par tranche d'environ 5,5 km/h
 (3 nœuds), toute droite vers 28 km/h, comme les vraies.

@@ -1,7 +1,7 @@
 // Chargements et navigation : seul le chargement le plus récent s'applique
-import { store } from "./outils.js";
-import { site, state } from "./etat.js";
-import { buildAll } from "./regles.js";
+import { parisParts, store } from "./outils.js";
+import { limitsOf, site, state } from "./etat.js";
+import { buildAll, inPlay } from "./regles.js";
 import { fcKey, fetchError, fetchForecasts, loadForecast } from "./donnees.js";
 import { loadLive } from "./balise.js";
 import { render, renderChrome } from "./rendu.js";
@@ -50,8 +50,8 @@ export async function loadOverview(force = false) {
 
 export function openSite(id, date = null) {
   state.siteId = id; store.set("siteId", id);
-  state.view = "site"; state.wantDate = date; state.hourSel = null;
-  if (!date) state.dayIdx = 1;
+  // Sans jour demandé, le jour se choisit à l'arrivée de la prévision (voir ingest)
+  state.view = "site"; state.wantDate = date || "auto"; state.hourSel = null;
   window.scrollTo(0, 0);
   load();
 }
@@ -72,6 +72,13 @@ function ingest(json, at, fromCache) {
   state.fcJson = json;
   state.days = buildAll(json, site());
   state.fetchedAt = at; state.fromCache = fromCache;
+  // Ouverture depuis la liste : aujourd'hui tant qu'il reste des heures à jouer (on est au déco, la balise
+  // compte), demain sinon (on prépare la sortie)
+  if (state.wantDate === "auto") {
+    const today = state.days[0], L = limitsOf(site());
+    state.dayIdx = today && today.date === parisParts(Date.now()).date && today.hours.some((h) => inPlay(h, L)) ? 0 : 1;
+    state.wantDate = null;
+  }
   // Arrivée depuis le tableau : on ouvre le jour touché
   if (state.wantDate) {
     const i = state.days.findIndex((d) => d.date === state.wantDate);
