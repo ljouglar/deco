@@ -268,7 +268,7 @@ function hoursHtml(K, L, day, sel) {
         <span class="h">${h.hour} h</span>
         <span class="w">${arrowSvg(h.wd)}<span><b>${r0(h.ws)}</b> <small>/ ${r0(h.wg)}</small></span></span>
         <span class="w">${arrowSvg(h.d850)}<span>${r0(h.w850)}</span></span>
-        <span class="sky">${skyText(h)}</span>
+        <span class="nebu">${skyText(h)}</span>
         <i class="sw l${h.ev.level}${hourSplit(day, h.hour) ? " split" : ""}" role="img" aria-label="${K.titles[h.ev.level].toLowerCase()}"></i>
       </button>`).join("")}</div>`;
 }

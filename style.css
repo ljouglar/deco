@@ -262,7 +262,7 @@ button { cursor: pointer; }
 .hour .w svg { width: 18px; height: 18px; flex: none; }
 .hour .w b { font-weight: 600; }
 .hour small { color: var(--muted); font-size: .8rem; }
-.hour .sky { font-size: .85rem; }
+.hour .nebu { font-size: .85rem; } /* nébulosité ; pas « sky », réservé au ciel de l'en-tête */
 
 /* ---------- Barre du bas et pied de page ---------- */
 .bar { display: flex; gap: 8px; margin-top: 18px; }
