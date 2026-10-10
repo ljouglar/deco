@@ -27,18 +27,20 @@ function sockSvg(deg, ws) {
   return `<g class="sock" transform="rotate(${deg})">${seg}</g><circle class="mast" r="3.2"/>`;
 }
 
-function dialSvg(s, h, lv) {
+// Rose d'un point : secteur favorable (le déco ; l'atterro n'en a pas, on s'y pose face au vent),
+// manche à air pour le vent prévu, flèche pointillée du vent vers 1500 m, flèche de la balise
+function dialSvg(sec, h, lv, label) {
   const p = (deg, r) => { const a = deg * Math.PI / 180; return [r * Math.sin(a), -r * Math.cos(a)].map((v) => v.toFixed(2)).join(" "); };
-  const span = (s.secMax - s.secMin + 360) % 360;
-  const sector = `M0 0 L${p(s.secMin, 50)} A50 50 0 ${span > 180 ? 1 : 0} 1 ${p(s.secMax, 50)} Z`;
+  const span = sec ? (sec.secMax - sec.secMin + 360) % 360 : 0;
+  const sector = sec ? `<path class="sector" d="M0 0 L${p(sec.secMin, 50)} A50 50 0 ${span > 180 ? 1 : 0} 1 ${p(sec.secMax, 50)} Z"/>` : "";
   const arrow = (deg, cls, len) => deg == null ? "" :
     `<g transform="rotate(${deg})"><line class="${cls}" x1="0" y1="${-len}" x2="0" y2="${len - 8}"/><path class="${cls}" d="M-6 ${len - 15} L0 ${len - 7} L6 ${len - 15}" fill="none"/></g>`;
-  return `<svg class="dial" viewBox="-62 -62 124 124" role="img" aria-label="Secteur favorable du site, et manche à air orientée et gonflée selon le vent prévu">
+  return `<svg class="dial" viewBox="-62 -62 124 124" role="img" aria-label="${label}">
     <circle class="face" r="50"/>
-    <path class="sector" d="${sector}"/>
+    ${sector}
     <circle class="ring" r="50"/>
     ${["N", "E", "S", "O"].map((c, i) => `<text class="card" x="${p(i * 90, 57).split(" ")[0]}" y="${p(i * 90, 57).split(" ")[1]}">${c}</text>`).join("")}
-    ${h ? arrow(h.d850, "w850", 34) : ""}
+    ${h && h.d850 != null ? arrow(h.d850, "w850", 34) : ""}
     ${h ? sockSvg(h.wd, h.ws) : ""}
     ${lv ? arrow(lv.wd, "wlive", 50) : ""}
   </svg>`;
@@ -222,8 +224,17 @@ function verdictHtml(s, K, L, day, sel) {
       ? `<button class="${x.cls}" data-hour="${x.hour}" aria-pressed="${x.hour === sel.hour}" aria-label="${x.hour} h : ${esc(K.titles[x.h.ev.level].toLowerCase())}"><span>${x.hour}</span></button>`
       : `<span class="nodata"><span>${x.hour}</span></span>`).join("")}</div>`;
   // La flèche « balise » n'a de sens qu'en regard d'aujourd'hui, et seulement si la mesure est fraîche
-  const lv = state.live;
-  const dialLive = lv && !lv.failed && lv.wd != null && lv.ws >= 3 && Date.now() - (lv.date || lv.at) <= PIOU_STALE && off === 0 ? lv : null;
+  const fresh = (lv) => (lv && !lv.failed && lv.wd != null && lv.ws >= 3 && Date.now() - (lv.date || lv.at) <= PIOU_STALE && off === 0 ? lv : null);
+  const dialLive = fresh(state.live), landLive = fresh(state.liveLand);
+  const decoRose = dialSvg(s, sel, dialLive, "Secteur favorable du déco, et manche à air orientée et gonflée selon le vent prévu");
+  const legend = `<div class="dial-legend"><span><i class="sock"></i>manche à ${sel.hour} h</span> <span><i class="alt"></i>1500 m</span>${dialLive || landLive ? ` <span><i class="bal"></i>balise</span>` : ""}</div>`;
+  // Atterro connu : deux roses côte à côte, sous le verdict ; sinon la rose du déco à droite du verdict
+  const landAlt = state.fcJson && state.fcJson.land && state.fcJson.land.elevation;
+  const roses = s.land ? `<div class="roses">
+      <figure class="rose">${decoRose}<figcaption><b>Déco</b> ${s.alt} m</figcaption></figure>
+      <figure class="rose land">${dialSvg(null, sel.land, landLive, "Atterro : manche à air orientée et gonflée selon le vent prévu")}
+        <figcaption><b>Atterro</b>${landAlt != null ? ` ${Math.round(landAlt)} m` : ""}${sel.land && sel.land.ws != null ? `<br>${r0(sel.land.ws)} km/h ${cardinal(sel.land.wd)}, raf. ${r0(sel.land.wg)}` : "<br>pas de prévision"}</figcaption></figure>
+    </div>${legend}` : "";
   return `<section class="verdict l${v.level}" aria-live="polite">
       <div class="vhead">
         <div>
@@ -231,8 +242,9 @@ function verdictHtml(s, K, L, day, sel) {
           <h1>${v.title}</h1>
           <p class="window">${winTxt}</p>
         </div>
-        <div class="rose">${dialSvg(s, sel, dialLive)}<div class="dial-legend"><span><i class="sock"></i>manche à ${sel.hour} h</span> <span><i class="alt"></i>1500 m</span>${dialLive ? ` <span><i class="bal"></i>balise</span>` : ""}</div></div>
+        ${s.land ? "" : `<div class="rose">${decoRose}${legend}</div>`}
       </div>
+      ${roses}
       ${band}
       ${why ? `<p class="why">${esc(why)}</p>` : ""}
       ${models}
@@ -255,6 +267,7 @@ function detailHtml(s, K, sel) {
       <dl class="facts">
         ${fact(`Vent au ${K.place}`, `${r0(sel.ws)} km/h ${cardinal(sel.wd)}`)}${fact("Rafales", `${r0(sel.wg)} km/h`)}
         ${fact("Vers 1500 m", `${r0(sel.w850)} km/h ${cardinal(sel.d850)}`)}${specific}${fact("Température", `${r0(sel.t)} °C`)}
+        ${sel.land && sel.land.ws != null ? fact("Vent à l'atterro", `${r0(sel.land.ws)} km/h ${cardinal(sel.land.wd)}`) + fact("Rafales atterro", `${r0(sel.land.wg)} km/h`) : ""}
       </dl>
       ${ens}
       <ul class="reasons">${reasonsHtml(ev.reasons.slice().sort((a, b) => b.l - a.l))}</ul>

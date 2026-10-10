@@ -18,7 +18,7 @@ export const state = {
   limitsG: { ...DEFAULT_LIMITS_G, ...store.get("limitsG", {}) }, // gonflage
   siteId: store.get("siteId", "sapenay"),
   dayIdx: 1, hourSel: null, days: [], fcJson: null, fetchedAt: null, fromCache: false, error: null,
-  loadingSite: false, loadingOv: false, live: null,
+  loadingSite: false, loadingOv: false, live: null, liveLand: null,
   view: "overview", ov: null, wantDate: null // l'appli s'ouvre sur le tableau « Où voler ? »
 };
 

@@ -29,10 +29,12 @@ def fetch(iso):
 def row(f):
     p, (lon, lat) = f["properties"], f["geometry"]["coordinates"][:2]
     alt = p.get("takeoff_altitude")
-    # Une ligne par déco : nom, lat, lon, altitude, orientations N→NO (2 principale, 1 possible, 0 non), n° PGE
+    # Une ligne par déco : nom, lat, lon, altitude, orientations N→NO (2 principale, 1 possible, 0 non), n° PGE,
+    # puis la position de l'atterro quand ParaglidingEarth la connaît (environ un site sur deux)
+    land = [round(float(p[k]), 5) for k in ("landing_lat", "landing_lng") if p.get(k) not in (None, "")]
     return [p["name"].strip(), round(float(lat), 5), round(float(lon), 5),
             int(float(alt)) if alt not in (None, "") else None,
-            "".join(str(p.get(d) or "0") for d in DIRS), int(p["pge_site_id"])]
+            "".join(str(p.get(d) or "0") for d in DIRS), int(p["pge_site_id"])] + (land if len(land) == 2 else [])
 
 
 def main(isos):

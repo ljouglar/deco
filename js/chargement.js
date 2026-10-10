@@ -14,12 +14,13 @@ export async function load(force = false) {
   const s = site();
   if (!s) return;
   const gen = ++siteGen;
-  state.loadingSite = true; state.error = null; state.live = null; renderChrome();
-  const [fc, live] = await Promise.all([loadForecast(s, force), loadLive(s, force)]);
+  state.loadingSite = true; state.error = null; state.live = null; state.liveLand = null; renderChrome();
+  // L'atterro a sa balise à lui (loadLive lit son numéro dans s.land.piou)
+  const [fc, live, liveLand] = await Promise.all([loadForecast(s, force), loadLive(s, force), loadLive(s.land, force)]);
   if (gen !== siteGen) return;
   state.error = fc.error;
   if (fc.json) ingest(fc.json, fc.at, fc.fromCache);
-  state.live = live;
+  state.live = live; state.liveLand = liveLand;
   state.loadingSite = false;
   render();
 }
@@ -60,10 +61,10 @@ export const refresh = (force = false) => (state.view === "overview" ? loadOverv
 
 export async function refreshLive(force = false) {
   const s = site();
-  if (!s || !s.piou) return;
-  const live = await loadLive(s, force);
+  if (!s || !(s.piou || (s.land && s.land.piou))) return;
+  const [live, liveLand] = await Promise.all([loadLive(s, force), loadLive(s.land, force)]);
   if (state.view !== "site" || site() !== s) return; // on a changé d'écran entre-temps
-  state.live = live;
+  state.live = live; state.liveLand = liveLand;
   render();
 }
 

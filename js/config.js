@@ -1,13 +1,17 @@
 // Configuration : sites préréglés, limites et niveaux, modèles météo, ce qui distingue un déco d'un terrain
-// Préréglages de l'auteur, livrés aux seuls téléphones qui avaient déjà des sites (voir withPresets)
+// Préréglages de l'auteur, livrés aux seuls téléphones qui avaient déjà des sites (voir withPresets).
+// `land` : l'atterro (position, balise facultative), d'après ParaglidingEarth
 export const DEFAULT_SITES = [{
   id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315, piou: 1446,
+  land: { lat: 45.8283, lon: 5.82917, piou: null },
   note: "Déco ouest. Approche de Chambéry-Aix : ne pas monter à plus de 300 m au-dessus du déco. Vent d'est = déco sous le vent."
 }, {
   id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, piou: 1333,
+  land: { lat: 45.302, lon: 5.90612, piou: null },
   note: "Déco est au-dessus de Lumbin. Deux décos : le Nord (tapis, confortable) peut se retrouver sous le vent de la brise, le Sud (herbe) prend mieux la brise de face. Atterro officiel à Lumbin."
 }, {
   id: "aiguebelette", name: "Aiguebelette", lat: 45.6016, lon: 5.8073, alt: 1120, secMin: 200, secMax: 315, piou: 1722,
+  land: { lat: 45.5765, lon: 5.8012, piou: null },
   note: "Déco des Provinces (l'Épine), face ouest sur le lac. La brise monte souvent après 13 h : la balise mesure surtout cette brise, pas le vent météo."
 }, {
   id: "marennes", type: "gonflage", name: "Marennes", lat: 45.6154, lon: 4.9038, alt: 230, secMin: 315, secMax: 45, piou: 2229,
@@ -28,6 +32,8 @@ export const DEFAULT_LIMITS = {
   capeWarn: 400,    // J/kg : instable
   capeStop: 1000,   // J/kg : risque orageux
   minBase: 500,     // base des nuages mini au-dessus du déco (m)
+  maxWindLand: 18,  // vent moyen max à l'atterro (km/h) : la brise de vallée s'y renforce l'après-midi
+  maxGustLand: 25,  // rafales max à l'atterro (km/h)
   startHour: 9, endHour: 18, model: "best_match"
 };
 
@@ -59,6 +65,9 @@ export const HOURLY = [
   "cape", "boundary_layer_height"
 ];
 
+// À l'atterro, seul le vent compte (la pluie et les nuages sont ceux du déco, à quelques km)
+export const HOURLY_LAND = ["wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"];
+
 const LIMIT_FIELDS = [
   ["maxWind", "Vent moyen max", "au déco, km/h"],
   ["maxGust", "Rafales max", "km/h"],
@@ -67,6 +76,8 @@ const LIMIT_FIELDS = [
   ["capeWarn", "Instabilité : vigilance", "CAPE, J/kg"],
   ["capeStop", "Instabilité : orage", "CAPE, J/kg"],
   ["minBase", "Base des nuages mini", "m au-dessus du déco"],
+  ["maxWindLand", "Vent moyen max à l'atterro", "km/h, pour les sites dont l'atterro est connu"],
+  ["maxGustLand", "Rafales max à l'atterro", "km/h"],
   ["startHour", "Début de journée", "heure"],
   ["endHour", "Fin de journée", "heure"]
 ];
@@ -87,9 +98,9 @@ const LIMIT_FIELDS_G = [
 export const LEVEL_NAMES = { debutant: "Débutant", inter: "Intermédiaire", confirme: "Confirmé" };
 
 const LEVELS_VOL = {
-  debutant: { maxWind: 20, maxGust: 25, maxGustDelta: 10, maxAlt: 25, capeWarn: 400, capeStop: 1000, minBase: 500 },
-  inter: { maxWind: 25, maxGust: 30, maxGustDelta: 12, maxAlt: 30, capeWarn: 600, capeStop: 1000, minBase: 400 },
-  confirme: { maxWind: 30, maxGust: 35, maxGustDelta: 15, maxAlt: 40, capeWarn: 800, capeStop: 1000, minBase: 300 }
+  debutant: { maxWind: 20, maxGust: 25, maxGustDelta: 10, maxAlt: 25, capeWarn: 400, capeStop: 1000, minBase: 500, maxWindLand: 18, maxGustLand: 25 },
+  inter: { maxWind: 25, maxGust: 30, maxGustDelta: 12, maxAlt: 30, capeWarn: 600, capeStop: 1000, minBase: 400, maxWindLand: 22, maxGustLand: 30 },
+  confirme: { maxWind: 30, maxGust: 35, maxGustDelta: 15, maxAlt: 40, capeWarn: 800, capeStop: 1000, minBase: 300, maxWindLand: 28, maxGustLand: 35 }
 };
 
 const LEVELS_G = {

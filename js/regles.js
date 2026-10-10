@@ -1,7 +1,7 @@
 // Les règles : évaluation heure par heure (vol, gonflage), verdict du jour, accord entre modèles.
 // Aucun accès au DOM ni au réseau : ce module se teste seul.
 import { cardinal, parisParts, r0, sectorGap } from "./outils.js";
-import { ENSEMBLE, FORECAST_DAYS, HOURLY, kind } from "./config.js";
+import { ENSEMBLE, FORECAST_DAYS, HOURLY, HOURLY_LAND, kind } from "./config.js";
 import { limitsOf, state } from "./etat.js";
 
 function evaluate(h, s, L) {
@@ -34,6 +34,7 @@ function evaluate(h, s, L) {
   }
 
   flagCape(h, L, flag, "thermiques musclés", "masse d'air instable");
+  flagLand(h, L, flag);
 
   // Base des nuages (estimation par l'écart température / point de rosée)
   let base = null;
@@ -62,6 +63,17 @@ function flagCape(h, L, flag, warnMsg, warnTag) {
   if (h.cape == null) return;
   if (h.cape >= L.capeStop) flag(2, `Masse d'air très instable (CAPE ${r0(h.cape)}) : risque orageux`, "risque orageux");
   else if (h.cape >= L.capeWarn) flag(1, `Masse d'air instable (CAPE ${r0(h.cape)}) : ${warnMsg}`, warnTag);
+}
+
+// L'atterro : on s'y pose face au vent, d'où qu'il vienne ; ce qui compte, c'est sa force et ses rafales
+function flagLand(h, L, flag) {
+  const a = h.land;
+  if (!a || a.ws == null) return;
+  const where = `${r0(a.ws)} km/h${a.wd != null ? ` ${cardinal(a.wd)}` : ""}`;
+  if (a.ws > L.maxWindLand) flag(2, `Vent fort à l'atterro (${where})`, "vent fort à l'atterro");
+  else if (a.ws > L.maxWindLand * 0.8) flag(1, `Vent soutenu à l'atterro (${where})`, "vent soutenu à l'atterro");
+  else flag(0, `Atterro : ${where}`);
+  if (a.wg != null && a.wg > L.maxGustLand) flag(2, `Rafales à l'atterro (${r0(a.wg)} km/h)`, "rafales à l'atterro");
 }
 
 // Le vent d'une direction donnée, rapporté au secteur du site (prévision comme mesure)
@@ -129,19 +141,22 @@ function dayVerdict(day, L, K) {
 }
 
 // Avec plusieurs modèles, Open-Meteo suffixe chaque variable (wind_speed_10m_icon_seamless) : on isole un modèle
-function modelJson(json, m) {
-  const H = json.hourly;
+function modelJson(json, m, vars = HOURLY) {
+  const H = json && json.hourly;
+  if (!H) return null;
   if (H.wind_speed_10m) return m === state.limits.model ? json : null; // réponse à un seul modèle (ancien cache)
   if (!H[`wind_speed_10m_${m}`]) return null;
-  return { hourly: Object.fromEntries([["time", H.time], ...HOURLY.map((v) => [v, H[`${v}_${m}`] || null])]) };
+  return { hourly: Object.fromEntries([["time", H.time], ...vars.map((v) => [v, H[`${v}_${m}`] || null])]) };
 }
 
 // Jours du modèle choisi, avec pour chaque jour le verdict des trois modèles et, par heure, leur vent
 export function buildAll(json, s) {
   const main = modelJson(json, state.limits.model);
   if (!main) return [];
-  const days = buildDays(main, s);
-  const ens = ENSEMBLE.map((m) => { const j = modelJson(json, m); return { m, days: j ? buildDays(j, s) : [] }; });
+  // Chaque modèle juge l'atterro avec son propre vent, comme le déco
+  const land = (m) => (s.land ? modelJson(json.land, m, HOURLY_LAND) : null);
+  const days = buildDays(main, s, land(state.limits.model));
+  const ens = ENSEMBLE.map((m) => { const j = modelJson(json, m); return { m, days: j ? buildDays(j, s, land(m)) : [] }; });
   for (const d of days) {
     d.models = ens.map(({ m, days: md }) => {
       const x = md.find((y) => y.date === d.date);
@@ -157,9 +172,12 @@ export function buildAll(json, s) {
 }
 
 // Jours évalués d'un site, à partir d'une réponse Open-Meteo à un modèle
-function buildDays(json, s) {
+function buildDays(json, s, land) {
   const H = json.hourly, K = kind(s), L = limitsOf(s), now = parisParts(Date.now());
   const pick = (k, i) => (H[k] ? H[k][i] : null);
+  const LH = land && land.hourly, at = LH ? new Map(LH.time.map((t, i) => [t, i])) : null;
+  const landAt = (t) => { const i = at && at.get(t); return i == null ? null
+    : { ws: LH.wind_speed_10m ? LH.wind_speed_10m[i] : null, wd: LH.wind_direction_10m ? LH.wind_direction_10m[i] : null, wg: LH.wind_gusts_10m ? LH.wind_gusts_10m[i] : null }; };
   const byDate = new Map();
   H.time.forEach((t, i) => {
     const h = {
@@ -171,7 +189,8 @@ function buildDays(json, s) {
       ws: pick("wind_speed_10m", i), wd: pick("wind_direction_10m", i), wg: pick("wind_gusts_10m", i),
       w850: pick("wind_speed_850hPa", i), d850: pick("wind_direction_850hPa", i),
       w700: pick("wind_speed_700hPa", i), d700: pick("wind_direction_700hPa", i),
-      cape: pick("cape", i), blh: pick("boundary_layer_height", i)
+      cape: pick("cape", i), blh: pick("boundary_layer_height", i),
+      land: K.id === "deco" ? landAt(t) : null
     };
     h.ev = EVALUATE[K.id](h, s, L);
     if (!byDate.has(h.date)) byDate.set(h.date, []);

@@ -134,6 +134,16 @@
     <label for="sf-piou">Balise Pioupiou (numéro, facultatif)</label>
     <input id="sf-piou" name="piou" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 1446">
     <p class="hint">Numéro de la station sur <a href="https://www.openwindmap.org/" target="_blank" rel="noopener">openwindmap.org</a> : il apparaît dans l'adresse de la balise (PIOU_1446).</p>
+    <fieldset class="land-fields" id="sf-land">
+      <legend>Atterro (facultatif)</legend>
+      <div class="grid2">
+        <div><label for="sf-llat">Latitude</label><input id="sf-llat" name="landLat" type="number" step="any"></div>
+        <div><label for="sf-llon">Longitude</label><input id="sf-llon" name="landLon" type="number" step="any"></div>
+      </div>
+      <label for="sf-lpiou">Balise de l'atterro (numéro, facultatif)</label>
+      <input id="sf-lpiou" name="landPiou" type="number" inputmode="numeric" min="1" step="1">
+      <p class="hint">Avec l'atterro, le verdict tient compte du vent en bas et l'écran du site montre sa rose. Pas d'altitude à saisir : elle vient du relief.</p>
+    </fieldset>
     <label for="sf-note">Note (règles du site, plafond…)</label>
     <input id="sf-note" name="note">
     <div class="actions">

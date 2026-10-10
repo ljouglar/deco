@@ -5,7 +5,7 @@ import { protectStorage, site, state } from "./etat.js";
 import { pruneCache } from "./donnees.js";
 import { render } from "./rendu.js";
 import { load, loadOverview, openSite, refresh, refreshLive } from "./chargement.js";
-import { openLimits, openModel, openSites, pgeNear } from "./feuilles.js";
+import { addKnownLandings, openLimits, openModel, openSites, pgeNear } from "./feuilles.js";
 import { initUpdates } from "./maj.js";
 import { flyHeader } from "./vol.js";
 
@@ -69,3 +69,6 @@ initUpdates();
 window.deco = { state, site, load, loadOverview, openSite, refresh };
 
 loadOverview();
+
+// Sites d'avant les atterros : on complète ceux que ParaglidingEarth ou les préréglages connaissent, puis on recharge
+addKnownLandings().then((changed) => { if (changed) refresh(); }).catch(() => {});

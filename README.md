@@ -33,18 +33,21 @@ sur le téléphone.
 
 ## Fonctionnalités
 
-- **Où voler ?** : un tableau de tous vos sites, une case par jour, colorée selon le
-  verdict et portant le meilleur créneau.
+- **Où voler ?** : un tableau de tous vos sites, une bande horaire par jour : le
+  créneau favorable se voit d'un coup d'œil.
 - **Vol et gonflage** : chaque site est un déco ou un terrain de gonflage face
   voile, jugé avec ses propres règles et ses propres limites.
 - **Trois modèles comparés** : Météo-France (AROME/ARPEGE), ICON et ECMWF ; un vert
   qu'un seul modèle annonce se repère d'un coup d'œil.
+- **Déco et atterro** : quand l'atterro est connu, son vent compte dans le verdict et
+  l'écran du site montre sa rose, à côté de celle du déco.
 - **Balise en direct** : la mesure du moment face à la prévision, et la tendance des
   deux dernières heures (le vent forcit, faiblit, tourne).
 - **Limites par niveau** : repères débutant, intermédiaire et confirmé, entièrement
   réglables.
 - **Ajout de sites en deux gestes** : les décos autour de soi ou par leur nom
-  (base ParaglidingEarth), avec la balise la plus proche.
+  (base ParaglidingEarth), avec leur atterro quand il est connu et la balise la plus
+  proche.
 - **Hors ligne** : l'appli s'ouvre sans réseau et tient avec une 3G faible.
 - **Vos données restent chez vous** : rien n'est envoyé nulle part ; export et import
   des sites pour changer de téléphone.
@@ -75,22 +78,27 @@ remplit le formulaire pour vérifier l'altitude et le secteur avant d'enregistre
 
 ### Le tableau « Où voler ? »
 
-L'écran d'accueil : une ligne par site (vol, puis gonflage), une colonne par jour.
+L'écran d'accueil : un bloc par site (vol, puis gonflage), une colonne par jour.
 
-- **Couleur** : verdict du jour selon les limites du site ; le créneau favorable le
-  plus long est indiqué dans la case (« 10–16 »).
-- **Trois pastilles** : le verdict de Météo-France, d'ICON et d'ECMWF ; **bordure en
-  pointillés** quand ils ne sont pas d'accord.
-- **Cases atténuées** au-delà de J+2 : c'est une tendance.
-- **« · »** : le modèle ne couvre pas ce jour ; **« – »** : la journée est terminée.
+- **Bande horaire** : la journée heure par heure, de votre première à votre dernière
+  heure. La clarté porte le verdict : **foncé et plein** favorable, **hachuré** à
+  surveiller, **pâle** défavorable ; lisible même sans voir les couleurs.
+- **Créneau** : le plus long créneau favorable est écrit sous la bande (« 10–16 »).
+- **Trait sous une heure** : les modèles ne s'accordent pas sur son côté favorable.
+- **« tendance »** au-delà de J+2 ; **« fini »** : la journée est terminée.
 
-Toucher une case ouvre l'écran du site sur ce jour.
+Toucher une bande ouvre l'écran du site sur ce jour.
 
 ### L'écran d'un site
 
-De haut en bas : la balise en direct (si le site en a une), les jours, le verdict
-avec la rose des vents et le verdict de chaque modèle, le détail de l'heure choisie
-(dont le vent selon chaque modèle), puis la liste des heures.
+De haut en bas : les jours, le verdict avec la rose des vents (et celle de l'atterro
+quand il est connu) et la bande du jour, dont chaque heure se touche ; puis, pour
+aujourd'hui, la balise en direct ; le détail de l'heure choisie (dont le vent selon
+chaque modèle et à l'atterro), enfin la liste des heures.
+
+Au centre de chaque rose, une **manche à air** suit le vent prévu à l'heure choisie :
+orientée sous le vent, elle se gonfle d'un anneau par tranche d'environ 5,5 km/h
+(3 nœuds), toute droite vers 28 km/h, comme les vraies.
 
 ### Réglages
 
@@ -120,6 +128,13 @@ comptent.
 | Flux de sud vers 3000 m | ≥ 25 km/h (foehn) | ≥ 40 km/h |
 | Instabilité (CAPE) | ≥ seuil de vigilance | ≥ seuil d'orage |
 | Base des nuages (nuages bas ≥ 50 %) | sous le minimum | à moins de 200 m du déco |
+| Vent moyen à l'atterro (s'il est connu) | > 80 % de la limite | > limite |
+| Rafales à l'atterro | | > limite |
+
+À l'atterro, la direction n'est pas jugée : on s'y pose face au vent, d'où qu'il
+vienne. Son vent vient d'une seconde requête, plus légère ; son altitude, du relief
+d'Open-Meteo. Le déco et l'atterro sont souvent à quelques kilomètres : Météo-France
+(AROME) et ICON les distinguent, ECMWF (maille de 9 km) beaucoup moins.
 
 Sous 6 km/h de vent météo, la direction n'est pas jugée : la brise de pente devrait
 s'installer.
@@ -150,6 +165,8 @@ dépend pas du pilote et reste le même à tous les niveaux.
 | Vent vers 1500 m (km/h) | 25 | 30 | 40 |
 | CAPE vigilance (J/kg) | 400 | 600 | 800 |
 | Base des nuages mini (m au-dessus du déco) | 500 | 400 | 300 |
+| Vent moyen max à l'atterro (km/h) | 18 | 22 | 28 |
+| Rafales max à l'atterro (km/h) | 25 | 30 | 35 |
 
 | Gonflage | Débutant | Intermédiaire | Confirmé |
 | --- | --- | --- | --- |
@@ -245,14 +262,14 @@ js/                   modules ES, chargés depuis main.js
 sw.js                 service worker : cache de l'appli, ouverture hors ligne
 manifest.webmanifest  installation (icônes dans icons/, captures dans screenshots/)
 fonts/                polices Barlow, servies par le site
-sites-fr.json         instantané des décos ParaglidingEarth (recherche par nom)
+sites-fr.json         instantané des décos ParaglidingEarth et de leurs atterros (recherche par nom)
 tools/                vérificateur, banc d'essai, mise à jour de sites-fr.json
 ```
 
 Les modules dépendent les uns des autres dans un seul sens, sans boucle :
 
 ```
-outils → config → etat → regles → donnees → balise → rendu → chargement → feuilles → maj → main
+outils → config → etat → regles → donnees → balise → vol → rendu → chargement → feuilles → maj → main
 ```
 
 | Module | Rôle |
@@ -261,9 +278,10 @@ outils → config → etat → regles → donnees → balise → rendu → charg
 | `config.js` | sites préréglés, limites et niveaux, modèles, `KINDS` (déco ou terrain) |
 | `etat.js` | état de l'appli (`state`), préréglages, stockage persistant |
 | `regles.js` | évaluation heure par heure, verdict du jour, accord des modèles ; ni DOM ni réseau |
-| `donnees.js` | prévisions Open-Meteo et cache local |
+| `donnees.js` | prévisions Open-Meteo (sites, et vent de leurs atterros) et cache local |
 | `balise.js` | balise Pioupiou : mesure, historique, tendance, bloc « En direct » |
-| `rendu.js` | en-tête, tableau, écran d'un site, pied de page |
+| `vol.js` | la voile qui arrive en vol dans le ciel de l'en-tête : trajectoire, balancier, vol de pente |
+| `rendu.js` | en-tête, tableau, écran d'un site (roses du déco et de l'atterro), pied de page |
 | `chargement.js` | chargements et navigation : seul le chargement le plus récent s'applique |
 | `feuilles.js` | limites, modèle météo, mes sites, sauvegarde, recherche de décos |
 | `maj.js` | service worker : enregistrement, recherche de mise à jour, avis « Nouvelle version », numéro de version |

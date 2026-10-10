@@ -1,6 +1,6 @@
 // Feuilles : limites, modèle météo, mes sites et recherche ParaglidingEarth
 import { $, cardinal, el, esc, fetchT, fold, km, parisParts, store } from "./outils.js";
-import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
+import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, DEFAULT_SITES, kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
 import { protectStorage, site, state, storageProtected } from "./etat.js";
 import { nearestPiou } from "./balise.js";
 import { render } from "./rendu.js";
@@ -93,7 +93,7 @@ function exportSites() {
 }
 
 // Un fichier venu d'ailleurs : on ne garde que les champs connus, et des nombres là où il en faut
-const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"];
+const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "note", "land"];
 const NUM = ["lat", "lon", "alt", "secMin", "secMax"];
 function cleanSite(s) {
   if (!s || typeof s.id !== "string" || typeof s.name !== "string" || !NUM.every((k) => Number.isFinite(s[k]))) return null;
@@ -101,8 +101,13 @@ function cleanSite(s) {
   out.type = s.type === "gonflage" ? "gonflage" : "deco";
   out.piou = Number.isFinite(s.piou) ? s.piou : null;
   out.note = typeof s.note === "string" ? s.note : "";
+  if (s.land !== undefined) out.land = cleanLand(s.land, out.type); // absent : addKnownLandings le cherchera
   return out;
 }
+
+// L'atterro d'un déco : une position, et le numéro de sa balise s'il y en a une
+const cleanLand = (l, type) => (type === "deco" && l && Number.isFinite(l.lat) && Number.isFinite(l.lon)
+  ? { lat: l.lat, lon: l.lon, piou: Number.isFinite(l.piou) ? l.piou : null } : null);
 const cleanLimits = (l, defaults) => ({ ...defaults, ...Object.fromEntries(Object.entries(l && typeof l === "object" ? l : {})
   .filter(([k, v]) => k in defaults && (k === "model" ? v in MODELS : Number.isFinite(v)))) });
 
@@ -128,7 +133,7 @@ $("importFile").addEventListener("change", (e) => { const f = e.target.files[0];
 function renderSitesList() {
   $("sitesList").innerHTML = state.sites.map((s) => `
     <div class="site-row">
-      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}</small></button>
+      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}${s.land ? " · atterro" : ""}</small></button>
       <button class="btn" data-edit="${esc(s.id)}">Modifier</button>
       <button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>
     </div>`).join("");
@@ -140,6 +145,8 @@ function resetSiteForm(s) {
   el(f, "id").value = s ? s.id : "";
   if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
   el(f, "type").value = s && s.type === "gonflage" ? "gonflage" : "deco";
+  if (s && s.land) { el(f, "landLat").value = s.land.lat; el(f, "landLon").value = s.land.lon; el(f, "landPiou").value = s.land.piou ?? ""; }
+  landFieldsShown();
   $("pgeSearch").hidden = !!s;
   $("pge-q").value = ""; $("pgeResults").innerHTML = ""; $("pgeStatus")?.remove();
   $("siteFormTitle").textContent = s ? `Modifier ${s.name}` : "Ajouter un site";
@@ -147,7 +154,8 @@ function resetSiteForm(s) {
 }
 
 // Instantané embarqué (tools/pge_snapshot.py) : l'API n'a ni recherche par nom ni CORS.
-// Une ligne : [nom, lat, lon, altitude, orientations N→NO (2 principale, 1 possible), n° PGE]
+// Une ligne : [nom, lat, lon, altitude, orientations N→NO (2 principale, 1 possible), n° PGE, puis lat et lon
+// de l'atterro quand ParaglidingEarth le connaît]
 const PGE_DIRS = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
 
 let pgeRows = null;
@@ -210,10 +218,11 @@ function pgeRender(hits, none) {
 
 // Un déco ParaglidingEarth devenu site : secteur des orientations principales, les autres dans la note
 function pgeSite(r) {
-  const [name, lat, lon, alt, o, id] = r, sec = pgeSector(o);
+  const [name, lat, lon, alt, o, id, llat, llon] = r, sec = pgeSector(o);
   return { sec, site: {
     id: `pge${id}`, type: "deco", name, lat, lon, alt: alt ?? "", secMin: sec ? sec.min : "", secMax: sec ? sec.max : "", piou: null,
-    note: sec && sec.others.length ? `ParaglidingEarth donne aussi : ${sec.others.join(", ")}.` : ""
+    note: sec && sec.others.length ? `ParaglidingEarth donne aussi : ${sec.others.join(", ")}.` : "",
+    land: llat != null ? { lat: llat, lon: llon, piou: null } : null
   } };
 }
 
@@ -222,6 +231,7 @@ async function pgeQuickAdd(id, btn) {
   const { site: s } = pgeSite(r);
   btn.disabled = true; btn.textContent = "…";
   try { const b = await nearestPiou(s.lat, s.lon); if (b) s.piou = b.id; } catch {}
+  try { const b = s.land && await nearestPiou(s.land.lat, s.land.lon); if (b && b.id !== s.piou) s.land.piou = b.id; } catch {}
   state.sites.push(s); store.set("sites", state.sites); protectStorage();
   renderSitesList();
   if (state.view === "overview") loadOverview(); // le tableau se met à jour derrière la feuille
@@ -254,15 +264,19 @@ async function pgeFill(id) {
   const { site: s, sec } = pgeSite(r), { name, lat, lon } = s, f = $("siteForm"), pick = ++pgePick;
   resetSiteForm();
   ["name", "lat", "lon", "alt", "secMin", "secMax", "note"].forEach((k) => { el(f, k).value = s[k]; });
+  if (s.land) { el(f, "landLat").value = s.land.lat; el(f, "landLon").value = s.land.lon; }
   const status = document.createElement("p");
   status.className = "hint"; status.id = "pgeStatus";
-  status.textContent = `${name} : ${sec ? "secteur repris des orientations principales" : "pas d'orientation connue, secteur à saisir"}. Recherche d'une balise…`;
+  status.textContent = `${name} : ${sec ? "secteur repris des orientations principales" : "pas d'orientation connue, secteur à saisir"}${s.land ? ", atterro connu" : ", atterro inconnu (facultatif)"}. Recherche d'une balise…`;
   $("pgeSearch").after(status);
   status.scrollIntoView({ block: "start" });
   try {
     const b = await nearestPiou(lat, lon);
     if (pick !== pgePick) return;
     if (b) el(f, "piou").value = b.id;
+    const bl = s.land && await nearestPiou(s.land.lat, s.land.lon).catch(() => null);
+    if (pick !== pgePick) return;
+    if (bl && (!b || bl.id !== b.id)) el(f, "landPiou").value = bl.id;
     status.textContent = status.textContent.replace("Recherche d'une balise…",
       b ? `Balise n° ${b.id}${b.name ? ` « ${b.name.trim()} »` : ""} à ${b.d.toFixed(1).replace(".", ",")} km.` : "Aucune balise en service à moins de 3 km.");
   } catch {
@@ -316,6 +330,8 @@ $("siteForm").addEventListener("submit", (e) => {
     piou: el(f, "piou").value.trim() ? Math.round(+el(f, "piou").value) : null,
     note: el(f, "note").value.trim()
   };
+  const ll = el(f, "landLat").value.trim(), lo = el(f, "landLon").value.trim(), lp = el(f, "landPiou").value.trim();
+  s.land = cleanLand({ lat: ll ? +ll : NaN, lon: lo ? +lo : NaN, piou: lp ? Math.round(+lp) : null }, s.type);
   const i = state.sites.findIndex((x) => x.id === s.id);
   if (i >= 0) state.sites[i] = s; else state.sites.push(s);
   store.set("sites", state.sites); protectStorage();
@@ -348,3 +364,23 @@ document.querySelectorAll("dialog").forEach((d) => d.addEventListener("click", (
   const r = d.getBoundingClientRect();
   if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
 }));
+
+// Un terrain de gonflage n'a pas d'atterro : c'est le terrain lui-même
+function landFieldsShown() { $("sf-land").hidden = el($("siteForm"), "type").value === "gonflage"; }
+$("sf-type").addEventListener("change", landFieldsShown);
+
+// Sites ajoutés avant que l'appli connaisse les atterros : on reprend celui de ParaglidingEarth (sites « pge… »)
+// ou du préréglage, une seule fois (un atterro effacé à la main reste effacé : land vaut alors null)
+export async function addKnownLandings() {
+  const todo = state.sites.filter((s) => kind(s) === KINDS.deco && s.land === undefined);
+  if (!todo.length) return false;
+  let rows = [];
+  if (todo.some((s) => /^pge\d+$/.test(s.id))) try { rows = await pgeLoad(); } catch { return false; }
+  for (const s of todo) {
+    const preset = DEFAULT_SITES.find((d) => d.id === s.id);
+    const m = /^pge(\d+)$/.exec(s.id), hit = m && rows.find((x) => x.r[5] === +m[1]);
+    s.land = preset && preset.land ? { ...preset.land } : hit ? pgeSite(hit.r).site.land : null;
+  }
+  store.set("sites", state.sites);
+  return todo.some((s) => s.land);
+}

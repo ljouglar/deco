@@ -219,7 +219,13 @@ button { cursor: pointer; }
 .dayband .split::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: -5px; height: 2px; background: var(--ink); }
 .dayband [aria-pressed="true"] { outline: 2.5px solid var(--ink); outline-offset: 1px; z-index: 1; }
 .dayband [aria-pressed="true"] > span { color: var(--ink); font-weight: 700; }
-.rose { width: 124px; }
+.rose { width: 124px; margin: 0; }
+/* Déco et atterro côte à côte, sous le verdict */
+.roses { display: flex; justify-content: space-around; gap: 8px; margin: 12px 0 0; }
+.roses .rose { width: 132px; text-align: center; }
+.roses .dial { width: 132px; height: 132px; }
+.roses figcaption { font-size: .8rem; line-height: 1.3; color: var(--muted); font-variant-numeric: tabular-nums; }
+.roses figcaption b { color: var(--ink); font: 700 .95rem var(--cond); }
 .dial { width: 124px; height: 124px; display: block; }
 /* La rose a son propre disque : elle se détache du fond teinté du verdict, dans les deux thèmes */
 .dial .face { fill: var(--dial-face); }
@@ -307,6 +313,8 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .grid2 .end { align-self: end; }
 .stack label { display: block; font-size: .8rem; color: var(--muted); margin-top: 8px; }
 .stack input, .stack select { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.land-fields { margin: 14px 0 0; padding: 2px 12px 10px; border: 1px solid var(--line); border-radius: 12px; }
+.land-fields legend { padding: 0 4px; font: 700 1rem var(--cond); }
 .pge-results:not(:empty) { margin-top: 4px; border-top: 1px solid var(--line); }
 .pge-item { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
 .pge-pick { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 9px 2px; }
