@@ -67,6 +67,7 @@ export const HOURLY = [
 
 // À l'atterro, seul le vent compte (la pluie et les nuages sont ceux du déco, à quelques km)
 export const HOURLY_LAND = ["wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"];
+export const DAILY = ["sunset"]; // la même heure pour tous les modèles : on lit la première
 
 const LIMIT_FIELDS = [
   ["maxWind", "Vent moyen max", "au déco, km/h"],

@@ -8,7 +8,7 @@ export const $ = (id) => document.getElementById(id);
 
 // Au déco, une barre de 3G peut laisser une requête pendue des minutes : passé ce délai on abandonne,
 // et l'appli retombe sur ce qu'elle a en cache plutôt que de tourner indéfiniment
-export const NET_TIMEOUT = 8000;
+export const NET_TIMEOUT = 12000; // une première requête à froid vers Open-Meteo a déjà dépassé 8 s
 export const fetchT = (url, opts = {}, ms = NET_TIMEOUT) => fetch(url, { ...opts, signal: AbortSignal.timeout(ms) });
 
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

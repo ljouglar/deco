@@ -67,7 +67,10 @@ const mock = (fx) => `<base href="${new URL("..", location.href)}"><script>
         });
         return json(list.length === 1 ? list[0] : list);
       }
-      const list = url.searchParams.get("latitude").split(",").map((la) => FX[SITES.findIndex((s) => String(s.lat) === la)]);
+      // Coucher du soleil fixé à 19 h 05 chaque jour, sous la clé suffixée d'un modèle comme dans les vraies réponses
+      const sun = (H) => { const d = [...new Set(H.time.map((t) => t.slice(0, 10)))]; return { time: d, sunset_best_match: d.map((x) => x + "T19:05") }; };
+      const list = url.searchParams.get("latitude").split(",").map((la) => FX[SITES.findIndex((s) => String(s.lat) === la)])
+        .map((x) => (url.searchParams.get("daily") ? { ...x, daily: sun(x.hourly) } : x));
       return json(list.length === 1 ? list[0] : list);
     }
     if (url.pathname.startsWith("/v1/live/")) return json({ data: { id: 1446, meta: { name: "Déco SAPENAY 901m" }, status: { state: "on" },
@@ -128,6 +131,9 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       D.querySelector(".hour[data-hour='15']").click();
       check(t(".detail h2")[0] === "15 h" && t(".ens").length === 1, "détail de l'heure", t(".ens").join());
       check(t(".facts dt").includes("Vent à l'atterro"), "vent de l'atterro dans le détail", t(".facts dt").join(", "));
+      const soir = (hr) => deco.state.days[deco.state.dayIdx].hours.find((h) => h.hour === hr).ev.reasons.map((r) => r.tag).filter((x) => x && x.includes("coucher"));
+      check(t(".verdict .sun")[0] === "Coucher du soleil 19 h 05" && soir(19).join() === "coucher du soleil" && soir(20).join() === "après le coucher du soleil" && !soir(18).length,
+        "coucher du soleil", `${t(".verdict .sun")} ; 19 h : ${soir(19)} ; 20 h : ${soir(20)}`);
       D.getElementById("limitsBtn").click(); D.querySelector('[data-level="confirme"]').click();
       check(t("#levelHint")[0].startsWith("Repères confirmé"), "niveau dans la feuille", t("#levelHint").join());
       D.querySelector("#limitsForm [type=submit]").click(); await wait(200);
@@ -151,6 +157,13 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(t("#homeNow span")[0] === "Chez toi : Grenoble Isère" && D.getElementById("homeSearch").hidden && JSON.parse(localStorage.getItem("home")).name === "Grenoble", "commune enregistrée", t("#homeNow span").join());
       check(t("#sitesList .info b").slice(0, 3).join() === "Saint-Hilaire,Aiguebelette,Sapenay", "liste classée par distance", t("#sitesList .info small").join(" / "));
       check(t("#pgeHome")[0] === "Autour de Grenoble", "décos autour de chez moi", t("#pgeHome").join());
+      // Coordonnées collées d'un bloc, comme depuis Google Maps : les deux champs et l'altitude se remplissent
+      const colle = (id, texte) => { const dt = new W.DataTransfer(); dt.setData("text/plain", texte);
+        D.getElementById(id).dispatchEvent(new W.ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); };
+      colle("sf-lat", "45.7936, 4.9578"); colle("sf-llon", `45°47'37.0"N 4°57'28.1"E`); await wait(300);
+      const fv0 = (k) => D.getElementById("siteForm").elements.namedItem(k).value;
+      check(fv0("lat") === "45.7936" && fv0("lon") === "4.9578" && fv0("alt") === "500" && fv0("landLat") === "45.79361" && fv0("landLon") === "4.95781",
+        "coller des coordonnées", `${fv0("lat")}, ${fv0("lon")}, ${fv0("alt")} m ; atterro ${fv0("landLat")}, ${fv0("landLon")}`);
       D.getElementById("sitesDlg").close();
       check(t(".ov .nm b").join() === "Saint-Hilaire,Aiguebelette,Sapenay,Marennes,Miribel-Jonage,Le Rebat" && t(".ov .nm small")[0] === "1000 m · ≈ 18 km",
         "tableau classé par distance", t(".ov .nm").join(" / "));
@@ -216,7 +229,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
   if (step === "lent") {
     W.__lent = true;
     D.getElementById("refreshBtn").click();
-    await wait(9000); // le délai de fetchT (8 s) s'écoule
+    await wait(13000); // le délai de fetchT (12 s) s'écoule
     check(t(".banner").some((x) => x.includes("Réseau trop lent") && x.includes("dernières prévisions")), "bannière réseau lent", t(".banner").join());
     check(t(".ov .nm b").length === 6, "le tableau reste affiché depuis le cache", `${t(".ov .nm b").length} lignes`);
     check(!D.getElementById("refreshBtn").classList.contains("spin"), "le chargement s'arrête");

@@ -11,8 +11,8 @@ sapenay 2026-10-08 15h rouge  · base 940 m · rouge Pluie probable (98 %) ; ora
 sapenay 2026-10-08 16h rouge  · base 1102 m · rouge Pluie probable (93 %) ; orange Vent NNO travers au déco ; rouge Rafales 39 km/h ; orange Vent soutenu vers 1500 m (24 km/h) ; orange Vent soutenu à l'atterro (16 km/h NNE) ; rouge Rafales à l'atterro (43 km/h) ; orange Nuages bas vers 1100 m · vents 11/38 9/36 8/19
 sapenay 2026-10-08 17h rouge  · base 1040 m · rouge Pluie probable (88 %) ; rouge Vent N hors secteur : déco sous le vent possible ; orange Vent moyen 18 km/h, proche de ta limite ; rouge Rafales 52 km/h ; orange Vent soutenu vers 1500 m (21 km/h) ; rouge Vent fort à l'atterro (25 km/h NNE) ; rouge Rafales à l'atterro (57 km/h) ; rouge Nuages bas vers 1050 m · vents 16/36 16/46 7/19
 sapenay 2026-10-08 18h rouge  · base 1078 m · rouge Pluie probable (73 %) ; rouge Vent N hors secteur : déco sous le vent possible ; rouge Vent moyen 22 km/h, au-dessus de ta limite ; rouge Rafales 61 km/h ; rouge Vent fort à l'atterro (31 km/h NE) ; rouge Rafales à l'atterro (67 km/h) ; rouge Nuages bas vers 1100 m · vents 14/31 22/53 6/18
-sapenay 2026-10-08 19h rouge  · base 1115 m · rouge Pluie probable (60 %) ; rouge Vent N hors secteur : déco sous le vent possible ; rouge Vent moyen 21 km/h, au-dessus de ta limite ; rouge Rafales 62 km/h ; rouge Vent fort vers 1500 m (27 km/h NNE) ; rouge Vent fort à l'atterro (30 km/h NE) ; rouge Rafales à l'atterro (69 km/h) ; orange Nuages bas vers 1100 m · vents 12/31 24/63 6/18
-sapenay 2026-10-08 20h rouge  · base 1202 m · rouge Vent NNE hors secteur : déco sous le vent possible ; orange Vent moyen 18 km/h, proche de ta limite ; rouge Rafales 49 km/h ; rouge Vent fort vers 1500 m (31 km/h NNE) ; rouge Vent fort à l'atterro (25 km/h NE) ; rouge Rafales à l'atterro (53 km/h) ; orange Nuages bas vers 1200 m · vents 13/27 18/56 6/18
+sapenay 2026-10-08 19h rouge  · base 1115 m · rouge Pluie probable (60 %) ; rouge Vent N hors secteur : déco sous le vent possible ; rouge Vent moyen 21 km/h, au-dessus de ta limite ; rouge Rafales 62 km/h ; rouge Vent fort vers 1500 m (27 km/h NNE) ; rouge Vent fort à l'atterro (30 km/h NE) ; rouge Rafales à l'atterro (69 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; orange Nuages bas vers 1100 m · vents 12/31 24/63 6/18
+sapenay 2026-10-08 20h rouge  · base 1202 m · rouge Vent NNE hors secteur : déco sous le vent possible ; orange Vent moyen 18 km/h, proche de ta limite ; rouge Rafales 49 km/h ; rouge Vent fort vers 1500 m (31 km/h NNE) ; rouge Vent fort à l'atterro (25 km/h NE) ; rouge Rafales à l'atterro (53 km/h) ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1200 m · vents 13/27 18/56 6/18
 sapenay 2026-10-09 JOUR orange À surveiller · pas de créneau · rafales à l'atterro, rafales, vent fort en altitude · MF:orange ICON:orange ECMWF:orange · accord
 sapenay 2026-10-09 07h rouge  · base 1378 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 37 km/h ; rouge Vent fort vers 1500 m (31 km/h NNE) ; vert Atterro : 12 km/h NE ; rouge Rafales à l'atterro (41 km/h) ; orange Nuages bas vers 1400 m · vents 6/19 8/36 3/12
 sapenay 2026-10-09 08h rouge  · base 1340 m · rouge Vent NNE hors secteur : déco sous le vent possible ; rouge Rafales 37 km/h ; rouge Vent fort vers 1500 m (34 km/h NE) ; vert Atterro : 10 km/h ENE ; rouge Rafales à l'atterro (40 km/h) ; orange Nuages bas vers 1350 m · vents 6/17 6/34 3/10
@@ -26,8 +26,8 @@ sapenay 2026-10-09 15h rouge  · base 1402 m · vert Vent NO dans l'axe du déco
 sapenay 2026-10-09 16h orange · base 1402 m · vert Vent NO dans l'axe du déco ; orange Vent irrégulier (rafales 19 km/h) ; vert Atterro : 10 km/h N · vents 7/21 6/21 6/17
 sapenay 2026-10-09 17h orange · base 1415 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) ; vert Atterro : 9 km/h NNO · vents 7/19 6/18 6/17
 sapenay 2026-10-09 18h orange · base 1390 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) ; vert Atterro : 8 km/h NO · vents 7/19 4/17 5/14
-sapenay 2026-10-09 19h vert   · base 1240 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 6 km/h O · vents 5/17 3/11 2/12
-sapenay 2026-10-09 20h orange · base 1290 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 8 km/h O ; orange Nuages bas vers 1300 m · vents 3/11 3/8 2/9
+sapenay 2026-10-09 19h orange · base 1240 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 6 km/h O ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 5/17 3/11 2/12
+sapenay 2026-10-09 20h rouge  · base 1290 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 8 km/h O ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1300 m · vents 3/11 3/8 2/9
 sapenay 2026-10-10 JOUR orange À surveiller · pas de créneau · nuages bas, vent irrégulier, risque d'averse · MF:orange ICON:orange ECMWF:orange · accord
 sapenay 2026-10-10 07h rouge  · base 1115 m · rouge Pluie probable (48 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) ; orange Vent soutenu vers 1500 m (22 km/h) ; vert Atterro : 4 km/h OSO ; orange Nuages bas vers 1100 m · vents 2/2 2/16 1/5
 sapenay 2026-10-10 08h rouge  · base 1065 m · rouge Pluie probable (53 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) ; orange Vent soutenu vers 1500 m (24 km/h) ; vert Atterro : 5 km/h ONO ; rouge Nuages bas vers 1050 m · vents 2/3 2/16 1/6
@@ -41,8 +41,8 @@ sapenay 2026-10-10 15h orange · base 1128 m · vert Vent O dans l'axe du déco 
 sapenay 2026-10-10 16h orange · base 1215 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 21 km/h) ; vert Atterro : 10 km/h ONO ; orange Nuages bas vers 1200 m · vents 8/17 5/18 3/15
 sapenay 2026-10-10 17h orange · base 1178 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 19 km/h) ; vert Atterro : 9 km/h ONO · vents 6/19 4/17 2/14
 sapenay 2026-10-10 18h orange · base 1202 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 15 km/h) ; vert Atterro : 7 km/h O · vents 6/15 3/14 2/12
-sapenay 2026-10-10 19h vert   · base 1202 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h ONO · vents 7/14 3/9 2/9
-sapenay 2026-10-10 20h orange · base 1127 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 6 km/h O ; orange Nuages bas vers 1150 m · vents 7/16 3/8 2/7
+sapenay 2026-10-10 19h orange · base 1202 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h ONO ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 7/14 3/9 2/9
+sapenay 2026-10-10 20h rouge  · base 1127 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 6 km/h O ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1150 m · vents 7/16 3/8 2/7
 sapenay 2026-10-11 JOUR vert   Favorable · 9–11 h · vent hors secteur, vent irrégulier · MF:vert ICON:vert ECMWF:vert · accord
 sapenay 2026-10-11 07h vert   · base 990 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 6 km/h ENE · vents 5/6 3/8 1/6
 sapenay 2026-10-11 08h vert   · base 1002 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h ENE · vents 5/6 5/11 2/5
@@ -56,8 +56,8 @@ sapenay 2026-10-11 15h rouge  · base 1778 m · rouge Vent N hors secteur : déc
 sapenay 2026-10-11 16h rouge  · base 1828 m · rouge Vent N hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 18 km/h) ; vert Atterro : 11 km/h NE · vents 4/15 7/18 5/17
 sapenay 2026-10-11 17h vert   · base 1828 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 10 km/h NE · vents 6/12 6/16 4/15
 sapenay 2026-10-11 18h rouge  · base 1790 m · rouge Vent N hors secteur : déco sous le vent possible ; vert Atterro : 10 km/h NE · vents 7/14 7/14 2/13
-sapenay 2026-10-11 19h vert   · base 1490 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 9 km/h N · vents 7/14 5/15 0/9
-sapenay 2026-10-11 20h vert   · base 1315 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h NNE · vents 8/12 4/11 2/6
+sapenay 2026-10-11 19h orange · base 1490 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 9 km/h N ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 7/14 5/15 0/9
+sapenay 2026-10-11 20h rouge  · base 1315 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h NNE ; rouge Après le coucher du soleil (19 h 05) · vents 8/12 4/11 2/6
 sapenay 2026-10-12 JOUR orange À surveiller · pas de créneau · vent hors secteur, rafales à l'atterro, vent irrégulier · MF:orange ICON:orange ECMWF:vert · désaccord (3 modèles)
 sapenay 2026-10-12 07h rouge  · base 1015 m · rouge Vent NE hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 22 km/h) ; vert Atterro : 10 km/h ENE · vents 7/10 7/22 2/7
 sapenay 2026-10-12 08h rouge  · base 1040 m · rouge Vent NE hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 23 km/h) ; vert Atterro : 10 km/h E · vents 7/11 7/23 2/7
@@ -71,8 +71,8 @@ sapenay 2026-10-12 15h rouge  · base 2002 m · rouge Vent N hors secteur : déc
 sapenay 2026-10-12 16h rouge  · base 2178 m · rouge Vent NNE hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 21 km/h) ; vert Atterro : 10 km/h NE · vents 8/22 6/20 3/15
 sapenay 2026-10-12 17h orange · base 2178 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 19 km/h) ; vert Atterro : 9 km/h ENE · vents 8/20 5/18 4/15
 sapenay 2026-10-12 18h orange · base 1940 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) ; vert Atterro : 8 km/h E · vents 9/19 4/16 3/15
-sapenay 2026-10-12 19h vert   · base 1578 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 8 km/h ENE · vents 8/18 4/13 2/15
-sapenay 2026-10-12 20h vert   · base 1340 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h ENE · vents 8/17 4/12 0/14
+sapenay 2026-10-12 19h orange · base 1578 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 8 km/h ENE ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 8/18 4/13 2/15
+sapenay 2026-10-12 20h rouge  · base 1340 m · vert Vent météo faible : la brise de pente devrait s'installer ; vert Atterro : 7 km/h ENE ; rouge Après le coucher du soleil (19 h 05) · vents 8/17 4/12 0/14
 sapenay 2026-10-13 JOUR vert   Favorable · 10–12 h · vent hors secteur, vent irrégulier, nuages bas · MF:– ICON:vert ECMWF:vert · accord
 sapenay 2026-10-13 07h rouge  · base 1228 m · rouge Vent NNE hors secteur : déco sous le vent possible ; vert Atterro : 11 km/h ENE · vents - 7/16 2/9
 sapenay 2026-10-13 08h rouge  · base 1228 m · rouge Vent NNE hors secteur : déco sous le vent possible ; vert Atterro : 11 km/h ENE · vents - 7/16 2/9
@@ -86,8 +86,8 @@ sapenay 2026-10-13 15h orange · base 1465 m · vert Vent météo faible : la br
 sapenay 2026-10-13 16h orange · base 1428 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 21 km/h) ; vert Atterro : 7 km/h N · vents - 4/7 5/14
 sapenay 2026-10-13 17h orange · base 1378 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 21 km/h) ; vert Atterro : 6 km/h N ; orange Nuages bas vers 1400 m · vents - 3/7 5/14
 sapenay 2026-10-13 18h orange · base 1315 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 19 km/h) ; vert Atterro : 4 km/h NNO ; orange Nuages bas vers 1300 m · vents - 3/7 4/15
-sapenay 2026-10-13 19h orange · base 1202 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 17 km/h) ; vert Atterro : 4 km/h O ; orange Nuages bas vers 1200 m · vents - 4/8 1/16
-sapenay 2026-10-13 20h orange · base 1152 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) ; vert Atterro : 4 km/h OSO ; orange Nuages bas vers 1150 m · vents - 4/8 1/16
+sapenay 2026-10-13 19h orange · base 1202 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 17 km/h) ; vert Atterro : 4 km/h O ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; orange Nuages bas vers 1200 m · vents - 4/8 1/16
+sapenay 2026-10-13 20h rouge  · base 1152 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) ; vert Atterro : 4 km/h OSO ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1150 m · vents - 4/8 1/16
 sthilaire 2026-10-08 JOUR rouge  Défavorable · pas de créneau · pluie, rafales, nuages bas · MF:rouge ICON:rouge ECMWF:rouge · accord
 sthilaire 2026-10-08 07h rouge  passée · base 1488 m · rouge Pluie probable (93 %) ; rouge Vent SO hors secteur : déco sous le vent possible ; rouge Rafales 42 km/h ; orange Vent soutenu vers 1500 m (23 km/h) ; orange Nuages bas vers 1500 m · vents 10/31 8/42 3/30
 sthilaire 2026-10-08 08h rouge  passée · base 1200 m · rouge Pluie probable (100 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 33 km/h ; orange Nuages bas vers 1200 m · vents 11/28 4/33 2/28
@@ -101,8 +101,8 @@ sthilaire 2026-10-08 15h rouge  · base 1138 m · rouge Pluie probable (100 %) ;
 sthilaire 2026-10-08 16h rouge  · base 1200 m · rouge Pluie probable (100 %) ; vert Vent NE dans l'axe du déco ; rouge Rafales 31 km/h ; orange Vent soutenu vers 1500 m (20 km/h) ; orange Nuages bas vers 1200 m · vents 9/18 8/31 7/32
 sthilaire 2026-10-08 17h rouge  · base 1138 m · rouge Pluie probable (100 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 35 km/h ; orange Vent soutenu vers 1500 m (23 km/h) ; rouge Nuages bas vers 1150 m · vents 6/14 5/35 8/35
 sthilaire 2026-10-08 18h rouge  · base 1238 m · rouge Pluie probable (100 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 34 km/h ; orange Vent soutenu vers 1500 m (19 km/h) ; orange Nuages bas vers 1250 m · vents 4/11 4/34 8/36
-sthilaire 2026-10-08 19h rouge  · base 1262 m · rouge Pluie probable (100 %) ; orange Vent NE travers au déco ; rouge Rafales 36 km/h ; rouge Vent fort vers 1500 m (26 km/h N) ; orange Nuages bas vers 1250 m · vents 2/13 8/36 8/37
-sthilaire 2026-10-08 20h rouge  · base 1325 m · rouge Pluie probable (100 %) ; orange Vent NNE travers au déco ; rouge Rafales 34 km/h ; orange Vent soutenu vers 1500 m (23 km/h) ; orange Nuages bas vers 1350 m · vents 2/14 8/34 8/37
+sthilaire 2026-10-08 19h rouge  · base 1262 m · rouge Pluie probable (100 %) ; orange Vent NE travers au déco ; rouge Rafales 36 km/h ; rouge Vent fort vers 1500 m (26 km/h N) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; orange Nuages bas vers 1250 m · vents 2/13 8/36 8/37
+sthilaire 2026-10-08 20h rouge  · base 1325 m · rouge Pluie probable (100 %) ; orange Vent NNE travers au déco ; rouge Rafales 34 km/h ; orange Vent soutenu vers 1500 m (23 km/h) ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1350 m · vents 2/14 8/34 8/37
 sthilaire 2026-10-09 JOUR orange À surveiller · pas de créneau · rafales, vent fort en altitude, nuages bas · MF:orange ICON:orange ECMWF:rouge · désaccord (3 modèles)
 sthilaire 2026-10-09 07h rouge  · base 1362 m · rouge Vent NNE hors secteur : déco sous le vent possible ; rouge Rafales 33 km/h ; rouge Vent fort vers 1500 m (27 km/h NNE) ; orange Nuages bas vers 1350 m · vents 7/19 10/33 7/32
 sthilaire 2026-10-09 08h rouge  · base 1312 m · orange Vent NNE travers au déco ; rouge Rafales 34 km/h ; rouge Vent fort vers 1500 m (26 km/h NNE) ; orange Nuages bas vers 1300 m · vents 8/18 10/34 7/32
@@ -116,8 +116,8 @@ sthilaire 2026-10-09 15h rouge  · base 1375 m · vert Vent ENE dans l'axe du d�
 sthilaire 2026-10-09 16h rouge  · base 1375 m · vert Vent ENE dans l'axe du déco ; rouge Rafales 25 km/h ; orange Vent soutenu vers 1500 m (20 km/h) ; orange Nuages bas vers 1400 m · vents 11/30 14/25 6/26
 sthilaire 2026-10-09 17h orange · base 1362 m · vert Vent ENE dans l'axe du déco ; orange Vent irrégulier (rafales 25 km/h) ; orange Vent soutenu vers 1500 m (20 km/h) ; orange Nuages bas vers 1350 m · vents 9/27 12/24 6/26
 sthilaire 2026-10-09 18h orange · base 1262 m · vert Vent ENE dans l'axe du déco ; orange Vent irrégulier (rafales 25 km/h) ; orange Vent soutenu vers 1500 m (20 km/h) ; orange Nuages bas vers 1250 m · vents 7/22 6/24 5/25
-sthilaire 2026-10-09 19h rouge  · base 1300 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 25 km/h ; orange Vent soutenu vers 1500 m (22 km/h) ; orange Nuages bas vers 1300 m · vents 6/16 4/25 5/24
-sthilaire 2026-10-09 20h rouge  · base 1350 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 28 km/h ; orange Vent soutenu vers 1500 m (24 km/h) ; orange Nuages bas vers 1350 m · vents 4/15 5/28 5/24
+sthilaire 2026-10-09 19h rouge  · base 1300 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 25 km/h ; orange Vent soutenu vers 1500 m (22 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; orange Nuages bas vers 1300 m · vents 6/16 4/25 5/24
+sthilaire 2026-10-09 20h rouge  · base 1350 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 28 km/h ; orange Vent soutenu vers 1500 m (24 km/h) ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1350 m · vents 4/15 5/28 5/24
 sthilaire 2026-10-10 JOUR orange À surveiller · pas de créneau · nuages bas, pluie, vent irrégulier · MF:vert ICON:orange ECMWF:orange · désaccord (3 modèles)
 sthilaire 2026-10-10 07h orange · base 1362 m · orange Risque d'averse (43 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 23 km/h) ; orange Nuages bas vers 1350 m · vents 3/8 4/23 3/22
 sthilaire 2026-10-10 08h orange · base 1262 m · orange Risque d'averse (58 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 23 km/h) ; orange Nuages bas vers 1250 m · vents 3/6 0/23 4/21
@@ -131,8 +131,8 @@ sthilaire 2026-10-10 15h rouge  · base 1175 m · vert Vent météo faible : la 
 sthilaire 2026-10-10 16h rouge  · base 1162 m · vert Vent ENE dans l'axe du déco ; orange Vent irrégulier (rafales 19 km/h) ; rouge Nuages bas vers 1150 m · vents 5/15 7/19 5/22
 sthilaire 2026-10-10 17h orange · base 1225 m · vert Vent NE dans l'axe du déco ; orange Vent irrégulier (rafales 21 km/h) ; orange Nuages bas vers 1200 m · vents 2/12 8/21 4/21
 sthilaire 2026-10-10 18h orange · base 1200 m · vert Vent NE dans l'axe du déco ; orange Vent irrégulier (rafales 20 km/h) · vents 4/10 8/22 3/20
-sthilaire 2026-10-10 19h orange · base 1312 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) · vents 5/16 6/19 2/19
-sthilaire 2026-10-10 20h orange · base 1425 m · vert Vent E dans l'axe du déco ; orange Nuages bas vers 1450 m · vents 7/16 8/19 2/18
+sthilaire 2026-10-10 19h orange · base 1312 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 5/16 6/19 2/19
+sthilaire 2026-10-10 20h rouge  · base 1425 m · vert Vent E dans l'axe du déco ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1450 m · vents 7/16 8/19 2/18
 sthilaire 2026-10-11 JOUR orange À surveiller · pas de créneau · vent irrégulier, vent travers, vent soutenu en altitude · MF:orange ICON:orange ECMWF:orange · accord
 sthilaire 2026-10-11 07h rouge  · base 1362 m · rouge Vent N hors secteur : déco sous le vent possible · vents 12/14 9/18 4/17
 sthilaire 2026-10-11 08h rouge  · base 1350 m · rouge Vent N hors secteur : déco sous le vent possible · vents 11/13 9/20 4/17
@@ -146,8 +146,8 @@ sthilaire 2026-10-11 15h orange · base 1662 m · vert Vent NE dans l'axe du dé
 sthilaire 2026-10-11 16h orange · base 1662 m · vert Vent NE dans l'axe du déco ; orange Vent irrégulier (rafales 22 km/h) · vents 7/19 9/24 5/21
 sthilaire 2026-10-11 17h orange · base 1625 m · vert Vent NE dans l'axe du déco ; orange Vent irrégulier (rafales 21 km/h) · vents 8/19 10/22 4/20
 sthilaire 2026-10-11 18h orange · base 1500 m · vert Vent NE dans l'axe du déco ; orange Vent irrégulier (rafales 20 km/h) · vents 8/20 7/22 3/18
-sthilaire 2026-10-11 19h vert   · base 1412 m · vert Vent météo faible : la brise de pente devrait s'installer · vents 8/19 6/18 1/16
-sthilaire 2026-10-11 20h vert   · base 1362 m · vert Vent météo faible : la brise de pente devrait s'installer · vents 7/17 6/15 2/14
+sthilaire 2026-10-11 19h orange · base 1412 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 8/19 6/18 1/16
+sthilaire 2026-10-11 20h rouge  · base 1362 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Après le coucher du soleil (19 h 05) · vents 7/17 6/15 2/14
 sthilaire 2026-10-12 JOUR orange À surveiller · 12–13 h · vent irrégulier, vent travers · MF:orange ICON:orange ECMWF:orange · accord
 sthilaire 2026-10-12 07h rouge  · base 1425 m · rouge Vent N hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 21 km/h) · vents 9/11 8/27 2/21
 sthilaire 2026-10-12 08h rouge  · base 1425 m · rouge Vent N hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 21 km/h) · vents 10/11 8/27 2/22
@@ -161,8 +161,8 @@ sthilaire 2026-10-12 15h orange · base 1675 m · vert Vent ENE dans l'axe du d�
 sthilaire 2026-10-12 16h orange · base 1725 m · vert Vent ENE dans l'axe du déco ; orange Vent irrégulier (rafales 19 km/h) · vents 9/25 8/23 6/20
 sthilaire 2026-10-12 17h orange · base 1750 m · vert Vent ENE dans l'axe du déco ; orange Vent irrégulier (rafales 19 km/h) · vents 9/24 8/23 5/20
 sthilaire 2026-10-12 18h orange · base 1675 m · vert Vent NE dans l'axe du déco ; orange Vent irrégulier (rafales 18 km/h) · vents 8/22 7/22 4/20
-sthilaire 2026-10-12 19h orange · base 1550 m · orange Vent NNE travers au déco ; orange Vent irrégulier (rafales 17 km/h) · vents 8/21 6/20 2/19
-sthilaire 2026-10-12 20h rouge  · base 1512 m · rouge Vent N hors secteur : déco sous le vent possible · vents 8/18 7/19 2/18
+sthilaire 2026-10-12 19h orange · base 1550 m · orange Vent NNE travers au déco ; orange Vent irrégulier (rafales 17 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 8/21 6/20 2/19
+sthilaire 2026-10-12 20h rouge  · base 1512 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Après le coucher du soleil (19 h 05) · vents 8/18 7/19 2/18
 sthilaire 2026-10-13 JOUR orange À surveiller · 11–12 h · vent hors secteur, rafales, vent irrégulier · MF:– ICON:orange ECMWF:vert · désaccord (2 modèles)
 sthilaire 2026-10-13 07h rouge  · base 1688 m · rouge Vent N hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 18 km/h) · vents - 8/24 1/9
 sthilaire 2026-10-13 08h rouge  · base 1650 m · rouge Vent N hors secteur : déco sous le vent possible ; orange Vent irrégulier (rafales 18 km/h) · vents - 8/24 1/12
@@ -176,8 +176,8 @@ sthilaire 2026-10-13 15h rouge  · base 1550 m · rouge Vent N hors secteur : d�
 sthilaire 2026-10-13 16h rouge  · base 1475 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 30 km/h ; orange Nuages bas vers 1500 m · vents - 7/20 5/19
 sthilaire 2026-10-13 17h rouge  · base 1400 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 30 km/h ; orange Nuages bas vers 1400 m · vents - 7/20 5/19
 sthilaire 2026-10-13 18h rouge  · base 1338 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 29 km/h ; orange Nuages bas vers 1350 m · vents - 6/19 3/22
-sthilaire 2026-10-13 19h rouge  · base 1288 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 28 km/h ; orange Nuages bas vers 1300 m · vents - 5/17 2/25
-sthilaire 2026-10-13 20h rouge  · base 1262 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 28 km/h ; orange Nuages bas vers 1250 m · vents - 5/16 2/27
+sthilaire 2026-10-13 19h rouge  · base 1288 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 28 km/h ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; orange Nuages bas vers 1300 m · vents - 5/17 2/25
+sthilaire 2026-10-13 20h rouge  · base 1262 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 28 km/h ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1250 m · vents - 5/16 2/27
 aiguebelette 2026-10-08 JOUR rouge  Défavorable · pas de créneau · pluie, rafales, vent fort en altitude · MF:rouge ICON:rouge ECMWF:rouge · accord
 aiguebelette 2026-10-08 07h rouge  passée · base 1120 m · rouge Pluie probable (100 %) ; vert Vent OSO dans l'axe du déco ; orange Vent moyen 18 km/h, proche de ta limite ; rouge Rafales 52 km/h ; rouge Vent fort vers 1500 m (44 km/h OSO) ; rouge Nuages bas vers 1100 m · vents 5/45 18/52 8/20
 aiguebelette 2026-10-08 08h rouge  passée · base 1120 m · rouge Pluie probable (100 %) ; vert Vent O dans l'axe du déco ; orange Vent moyen 19 km/h, proche de ta limite ; rouge Rafales 57 km/h ; rouge Vent fort vers 1500 m (35 km/h O) ; rouge Nuages bas vers 1100 m · vents 6/31 19/57 7/18
@@ -191,8 +191,8 @@ aiguebelette 2026-10-08 15h rouge  · base 1120 m · rouge Pluie probable (100 %
 aiguebelette 2026-10-08 16h rouge  · base 1158 m · rouge Pluie probable (100 %) ; orange Vent NO travers au déco ; rouge Rafales 49 km/h ; rouge Vent fort vers 1500 m (30 km/h NNE) ; rouge Nuages bas vers 1150 m · vents 11/38 14/49 13/34
 aiguebelette 2026-10-08 17h rouge  · base 1120 m · rouge Pluie probable (98 %) ; orange Vent NNO travers au déco ; rouge Rafales 44 km/h ; rouge Vent fort vers 1500 m (25 km/h N) ; rouge Nuages bas vers 1100 m · vents 16/33 12/44 13/34
 aiguebelette 2026-10-08 18h rouge  · base 1182 m · rouge Pluie probable (100 %) ; orange Vent NNO travers au déco ; rouge Rafales 45 km/h ; rouge Vent fort vers 1500 m (31 km/h N) ; rouge Nuages bas vers 1200 m · vents 12/25 15/45 14/35
-aiguebelette 2026-10-08 19h rouge  · base 1158 m · rouge Pluie probable (98 %) ; rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 39 km/h ; rouge Vent fort vers 1500 m (32 km/h N) ; rouge Nuages bas vers 1150 m · vents 12/17 11/39 14/37
-aiguebelette 2026-10-08 20h rouge  · base 1195 m · rouge Pluie probable (95 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 43 km/h ; rouge Vent fort vers 1500 m (30 km/h NNE) ; rouge Nuages bas vers 1200 m · vents 12/23 5/43 14/37
+aiguebelette 2026-10-08 19h rouge  · base 1158 m · rouge Pluie probable (98 %) ; rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 39 km/h ; rouge Vent fort vers 1500 m (32 km/h N) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; rouge Nuages bas vers 1150 m · vents 12/17 11/39 14/37
+aiguebelette 2026-10-08 20h rouge  · base 1195 m · rouge Pluie probable (95 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 43 km/h ; rouge Vent fort vers 1500 m (30 km/h NNE) ; rouge Après le coucher du soleil (19 h 05) ; rouge Nuages bas vers 1200 m · vents 12/23 5/43 14/37
 aiguebelette 2026-10-09 JOUR orange À surveiller · pas de créneau · nuages bas, vent hors secteur, rafales · MF:orange ICON:orange ECMWF:orange · accord
 aiguebelette 2026-10-09 07h rouge  · base 1358 m · rouge Vent NNE hors secteur : déco sous le vent possible ; rouge Rafales 37 km/h ; rouge Vent fort vers 1500 m (33 km/h NNE) ; orange Nuages bas vers 1350 m · vents 4/17 6/37 4/16
 aiguebelette 2026-10-09 08h rouge  · base 1432 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 37 km/h ; rouge Vent fort vers 1500 m (31 km/h NNE) ; orange Nuages bas vers 1450 m · vents 4/12 6/37 4/15
@@ -206,8 +206,8 @@ aiguebelette 2026-10-09 15h orange · base 1508 m · vert Vent météo faible : 
 aiguebelette 2026-10-09 16h orange · base 1482 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) ; orange Nuages bas vers 1500 m · vents 6/16 1/18 9/24
 aiguebelette 2026-10-09 17h rouge  · base 1295 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 20 km/h) ; rouge Nuages bas vers 1300 m · vents 9/21 4/20 9/24
 aiguebelette 2026-10-09 18h rouge  · base 1295 m · vert Vent OSO dans l'axe du déco ; orange Vent irrégulier (rafales 25 km/h) ; rouge Nuages bas vers 1300 m · vents 6/20 6/24 6/19
-aiguebelette 2026-10-09 19h orange · base 1245 m · vert Vent OSO dans l'axe du déco ; orange Vent irrégulier (rafales 25 km/h) · vents 3/14 6/24 3/12
-aiguebelette 2026-10-09 20h orange · base 1282 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 23 km/h) · vents 3/6 4/23 1/7
+aiguebelette 2026-10-09 19h orange · base 1245 m · vert Vent OSO dans l'axe du déco ; orange Vent irrégulier (rafales 25 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 3/14 6/24 3/12
+aiguebelette 2026-10-09 20h rouge  · base 1282 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 23 km/h) ; rouge Après le coucher du soleil (19 h 05) · vents 3/6 4/23 1/7
 aiguebelette 2026-10-10 JOUR orange À surveiller · pas de créneau · nuages bas, rafales, pluie · MF:orange ICON:orange ECMWF:orange · accord
 aiguebelette 2026-10-10 07h rouge  · base 1295 m · rouge Pluie probable (53 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 22 km/h) ; rouge Nuages bas vers 1300 m · vents 4/15 2/22 5/11
 aiguebelette 2026-10-10 08h rouge  · base 1195 m · rouge Pluie probable (60 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 27 km/h ; orange Vent soutenu vers 1500 m (20 km/h) ; rouge Nuages bas vers 1200 m · vents 5/13 2/27 5/10
@@ -221,8 +221,8 @@ aiguebelette 2026-10-10 15h orange · base 1432 m · orange Risque d'averse (40 
 aiguebelette 2026-10-10 16h rouge  · base 1320 m · orange Risque d'averse (46 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 26 km/h ; orange Nuages bas vers 1300 m · vents 7/19 1/26 6/18
 aiguebelette 2026-10-10 17h orange · base 1320 m · orange Risque d'averse (48 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 21 km/h) ; orange Nuages bas vers 1300 m · vents 5/26 1/20 6/18
 aiguebelette 2026-10-10 18h rouge  · base 1245 m · orange Risque d'averse (41 %) ; vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 25 km/h) ; rouge Nuages bas vers 1250 m · vents 6/15 2/25 4/15
-aiguebelette 2026-10-10 19h rouge  · base 1182 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 27 km/h ; rouge Nuages bas vers 1200 m · vents 5/14 2/27 2/10
-aiguebelette 2026-10-10 20h rouge  · base 1220 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 17 km/h) ; rouge Nuages bas vers 1200 m · vents 5/10 1/17 2/7
+aiguebelette 2026-10-10 19h rouge  · base 1182 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Rafales 27 km/h ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; rouge Nuages bas vers 1200 m · vents 5/14 2/27 2/10
+aiguebelette 2026-10-10 20h rouge  · base 1220 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 17 km/h) ; rouge Après le coucher du soleil (19 h 05) ; rouge Nuages bas vers 1200 m · vents 5/10 1/17 2/7
 aiguebelette 2026-10-11 JOUR orange À surveiller · pas de créneau · rafales, vent hors secteur, vent irrégulier · MF:vert ICON:orange ECMWF:vert · désaccord (3 modèles)
 aiguebelette 2026-10-11 07h orange · base 1320 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 13 km/h) · vents 4/7 2/13 2/6
 aiguebelette 2026-10-11 08h orange · base 1245 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 14 km/h) · vents 4/6 3/15 1/6
@@ -236,8 +236,8 @@ aiguebelette 2026-10-11 15h rouge  · base 1745 m · rouge Vent NNO hors secteur
 aiguebelette 2026-10-11 16h rouge  · base 1795 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 26 km/h · vents 5/16 7/26 8/23
 aiguebelette 2026-10-11 17h orange · base 1858 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 21 km/h) · vents 6/17 6/21 8/22
 aiguebelette 2026-10-11 18h orange · base 1795 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 17 km/h) · vents 7/18 6/17 5/18
-aiguebelette 2026-10-11 19h orange · base 1582 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) · vents 8/18 4/16 2/12
-aiguebelette 2026-10-11 20h vert   · base 1458 m · vert Vent météo faible : la brise de pente devrait s'installer · vents 7/17 4/11 3/8
+aiguebelette 2026-10-11 19h orange · base 1582 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 16 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 8/18 4/16 2/12
+aiguebelette 2026-10-11 20h rouge  · base 1458 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Après le coucher du soleil (19 h 05) · vents 7/17 4/11 3/8
 aiguebelette 2026-10-12 JOUR orange À surveiller · pas de créneau · rafales, vent hors secteur, vent travers · MF:orange ICON:orange ECMWF:vert · désaccord (3 modèles)
 aiguebelette 2026-10-12 07h orange · base 1308 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 22 km/h) · vents 4/11 3/22 0/6
 aiguebelette 2026-10-12 08h orange · base 1320 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 23 km/h) · vents 4/14 3/23 0/8
@@ -251,8 +251,8 @@ aiguebelette 2026-10-12 15h rouge  · base 1945 m · rouge Vent NNO hors secteur
 aiguebelette 2026-10-12 16h rouge  · base 1995 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 27 km/h · vents 4/18 7/27 7/22
 aiguebelette 2026-10-12 17h rouge  · base 2008 m · rouge Vent N hors secteur : déco sous le vent possible ; rouge Rafales 25 km/h · vents 4/16 6/25 7/23
 aiguebelette 2026-10-12 18h orange · base 1882 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 22 km/h) · vents 4/14 4/22 5/22
-aiguebelette 2026-10-12 19h orange · base 1695 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) · vents 3/12 2/19 2/22
-aiguebelette 2026-10-12 20h orange · base 1570 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 15 km/h) · vents 2/9 2/16 1/20
+aiguebelette 2026-10-12 19h orange · base 1695 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant · vents 3/12 2/19 2/22
+aiguebelette 2026-10-12 20h rouge  · base 1570 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 15 km/h) ; rouge Après le coucher du soleil (19 h 05) · vents 2/9 2/16 1/20
 aiguebelette 2026-10-13 JOUR vert   Favorable · 14–19 h · vent irrégulier, flux de sud · MF:– ICON:vert ECMWF:orange · désaccord (2 modèles)
 aiguebelette 2026-10-13 07h orange · base 1670 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) · vents - 3/18 3/8
 aiguebelette 2026-10-13 08h orange · base 1695 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Vent irrégulier (rafales 18 km/h) · vents - 2/18 2/9
@@ -266,8 +266,8 @@ aiguebelette 2026-10-13 15h vert   · base 1758 m · vert Vent météo faible : 
 aiguebelette 2026-10-13 16h vert   · base 1782 m · vert Vent météo faible : la brise de pente devrait s'installer · vents - 4/7 7/20
 aiguebelette 2026-10-13 17h vert   · base 1782 m · vert Vent météo faible : la brise de pente devrait s'installer · vents - 3/7 6/20
 aiguebelette 2026-10-13 18h vert   · base 1708 m · vert Vent météo faible : la brise de pente devrait s'installer · vents - 3/7 4/21
-aiguebelette 2026-10-13 19h orange · base 1558 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Nuages bas vers 1550 m · vents - 4/8 2/23
-aiguebelette 2026-10-13 20h orange · base 1470 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Nuages bas vers 1450 m · vents - 4/8 1/23
+aiguebelette 2026-10-13 19h orange · base 1558 m · vert Vent météo faible : la brise de pente devrait s'installer ; orange Coucher du soleil à 19 h 05 : prévois d'être posé avant ; orange Nuages bas vers 1550 m · vents - 4/8 2/23
+aiguebelette 2026-10-13 20h rouge  · base 1470 m · vert Vent météo faible : la brise de pente devrait s'installer ; rouge Après le coucher du soleil (19 h 05) ; orange Nuages bas vers 1450 m · vents - 4/8 1/23
 marennes 2026-10-08 JOUR orange À surveiller · pas de créneau · pluie, rafales, vent trop fort · MF:rouge ICON:orange ECMWF:rouge · désaccord (3 modèles)
 marennes 2026-10-08 07h rouge  passée · rouge Pluie probable (100 %) ; vert Vent 16 km/h : bonne plage pour le face voile ; orange Vent ONO de travers sur le terrain ; rouge Rafales 28 km/h · vents 11/26 14/27 7/25
 marennes 2026-10-08 08h rouge  passée · rouge Pluie probable (100 %) ; vert Vent 10 km/h : bonne plage pour le face voile ; orange Vent ONO de travers sur le terrain ; orange Vent irrégulier (rafales 25 km/h) ; orange Vent fort vers 1500 m (40 km/h) : rafales possibles au sol · vents 8/20 8/21 10/26

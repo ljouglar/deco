@@ -70,7 +70,9 @@ Sans site enregistré, l'appli propose :
 - **Décos autour de moi** : les 12 décos connus les plus proches, à moins de 60 km ;
 - **Chercher un déco par son nom** (accents et majuscules ignorés) ;
 - **Saisir un site à la main**, notamment pour un terrain de gonflage, absent de la
-  base des décos ;
+  base des décos. Des coordonnées copiées de Google Maps (« 45.7936, 4.9578 », ou en
+  degrés-minutes-secondes) se collent d'un bloc dans le champ latitude ou longitude ;
+  l'altitude suit, d'après le relief ;
 - **Importer des sites exportés** depuis un autre téléphone.
 
 Dans les résultats, « Ajouter » enregistre le déco tout de suite ; toucher son nom
@@ -139,11 +141,16 @@ comptent.
 | Base des nuages (nuages bas ≥ 50 %) | sous le minimum | à moins de 200 m du déco |
 | Vent moyen à l'atterro (s'il est connu) | > 80 % de la limite | > limite |
 | Rafales à l'atterro | | > limite |
+| Coucher du soleil | dans l'heure | heure entière après |
 
 À l'atterro, la direction n'est pas jugée : on s'y pose face au vent, d'où qu'il
 vienne. Son vent vient d'une seconde requête, plus légère ; son altitude, du relief
 d'Open-Meteo. Le déco et l'atterro sont souvent à quelques kilomètres : Météo-France
 (AROME) et ICON les distinguent, ECMWF (maille de 9 km) beaucoup moins.
+
+L'heure du coucher du soleil, demandée avec la prévision, s'affiche sous le créneau ;
+pour un déco, l'heure où il se couche passe à surveiller (« prévois d'être posé
+avant ») et les suivantes en défavorable. Le gonflage, au sol, n'est pas concerné.
 
 Sous 6 km/h de vent météo, la direction n'est pas jugée : la brise de pente devrait
 s'installer.
@@ -222,7 +229,7 @@ elle peut ne pas représenter tout le site.
 - **Hors ligne** : l'appli s'ouvre depuis le cache de son service worker, et chaque
   site affiche sa dernière prévision enregistrée.
 - **Réseau faible** : chaque appel à Open-Meteo ou à une balise abandonne au bout de
-  8 s ; l'appli affiche alors « Réseau trop lent » et les prévisions enregistrées.
+  12 s ; l'appli affiche alors « Réseau trop lent » et les prévisions enregistrées.
   La page elle-même est servie depuis le cache si le réseau ne répond pas en 3 s.
   Mesuré avec 10 s par réponse : l'appli installée s'ouvre en 3 s, contre 40 s sans
   service worker.

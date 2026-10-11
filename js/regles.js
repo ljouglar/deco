@@ -35,6 +35,7 @@ function evaluate(h, s, L) {
 
   flagCape(h, L, flag, "thermiques musclés", "masse d'air instable");
   flagLand(h, L, flag);
+  flagSunset(h, flag);
 
   // Base des nuages (estimation par l'écart température / point de rosée)
   let base = null;
@@ -74,6 +75,14 @@ function flagLand(h, L, flag) {
   else if (a.ws > L.maxWindLand * 0.8) flag(1, `Vent soutenu à l'atterro (${where})`, "vent soutenu à l'atterro");
   else flag(0, `Atterro : ${where}`);
   if (a.wg != null && a.wg > L.maxGustLand) flag(2, `Rafales à l'atterro (${r0(a.wg)} km/h)`, "rafales à l'atterro");
+}
+
+// Le coucher du soleil (en minutes depuis minuit) : on prévoit d'être posé avant ; le gonflage, au sol, n'est pas concerné
+export const hhmm = (min) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
+function flagSunset(h, flag) {
+  if (h.sunset == null) return;
+  if (h.hour * 60 >= h.sunset) flag(2, `Après le coucher du soleil (${hhmm(h.sunset)})`, "après le coucher du soleil");
+  else if ((h.hour + 1) * 60 > h.sunset) flag(1, `Coucher du soleil à ${hhmm(h.sunset)} : prévois d'être posé avant`, "coucher du soleil");
 }
 
 // Le vent d'une direction donnée, rapporté au secteur du site (prévision comme mesure)
@@ -155,8 +164,9 @@ export function buildAll(json, s) {
   if (!main) return [];
   // Chaque modèle juge l'atterro avec son propre vent, comme le déco
   const land = (m) => (s.land ? modelJson(json.land, m, HOURLY_LAND) : null);
-  const days = buildDays(main, s, land(state.limits.model));
-  const ens = ENSEMBLE.map((m) => { const j = modelJson(json, m); return { m, days: j ? buildDays(j, s, land(m)) : [] }; });
+  const sun = sunsets(json);
+  const days = buildDays(main, s, land(state.limits.model), sun);
+  const ens = ENSEMBLE.map((m) => { const j = modelJson(json, m); return { m, days: j ? buildDays(j, s, land(m), sun) : [] }; });
   for (const d of days) {
     d.models = ens.map(({ m, days: md }) => {
       const x = md.find((y) => y.date === d.date);
@@ -171,8 +181,14 @@ export function buildAll(json, s) {
   return days;
 }
 
+// Coucher du soleil par date, en minutes : une réponse sans « daily » (ancien cache) n'en a pas
+function sunsets(json) {
+  const D = json && json.daily, key = D && Object.keys(D).find((k) => k.startsWith("sunset"));
+  return new Map(key ? D.time.map((d, i) => [d, D[key][i] ? +D[key][i].slice(11, 13) * 60 + +D[key][i].slice(14, 16) : null]) : []);
+}
+
 // Jours évalués d'un site, à partir d'une réponse Open-Meteo à un modèle
-function buildDays(json, s, land) {
+function buildDays(json, s, land, sun = new Map()) {
   const H = json.hourly, K = kind(s), L = limitsOf(s), now = parisParts(Date.now());
   const pick = (k, i) => (H[k] ? H[k][i] : null);
   const LH = land && land.hourly, at = LH ? new Map(LH.time.map((t, i) => [t, i])) : null;
@@ -190,7 +206,8 @@ function buildDays(json, s, land) {
       w850: pick("wind_speed_850hPa", i), d850: pick("wind_direction_850hPa", i),
       w700: pick("wind_speed_700hPa", i), d700: pick("wind_direction_700hPa", i),
       cape: pick("cape", i), blh: pick("boundary_layer_height", i),
-      land: K.id === "deco" ? landAt(t) : null
+      land: K.id === "deco" ? landAt(t) : null,
+      sunset: K.id === "deco" ? sun.get(t.slice(0, 10)) ?? null : null
     };
     h.ev = EVALUATE[K.id](h, s, L);
     if (!byDate.has(h.date)) byDate.set(h.date, []);
@@ -199,7 +216,7 @@ function buildDays(json, s, land) {
   // Sans vent prévu, l'heure est hors de portée du modèle (Météo-France s'arrête vers J+4) : on l'écarte
   // plutôt que de la noter verte faute de règle déclenchée
   return [...byDate.entries()].slice(0, FORECAST_DAYS).map(([date, hours]) => {
-    const day = { date, hours: hours.filter((h) => h.hour >= 7 && h.hour <= 20 && h.ws != null) };
+    const day = { date, hours: hours.filter((h) => h.hour >= 7 && h.hour <= 20 && h.ws != null), sunset: sun.get(date) ?? null };
     day.verdict = dayVerdict(day, L, K);
     return day;
   }).filter((d) => d.hours.length);

@@ -395,6 +395,15 @@ $("siteForm").addEventListener("submit", (e) => {
   if (state.view === "overview") loadOverview(); else openSite(s.id);
 });
 
+// L'altitude d'un point, d'après le relief d'Open-Meteo
+async function fillAlt(lat, lon) {
+  try {
+    const r = await fetchT(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`);
+    const j = await r.json();
+    if (j.elevation) el($("siteForm"), "alt").value = Math.round(j.elevation[0]);
+  } catch {}
+}
+
 $("geoBtn").addEventListener("click", () => {
   const b = $("geoBtn"), f = $("siteForm");
   if (!navigator.geolocation) { b.textContent = "Indisponible"; return; }
@@ -402,13 +411,38 @@ $("geoBtn").addEventListener("click", () => {
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const { latitude, longitude } = pos.coords;
     el(f, "lat").value = latitude.toFixed(4); el(f, "lon").value = longitude.toFixed(4);
-    try {
-      const r = await fetchT(`https://api.open-meteo.com/v1/elevation?latitude=${latitude}&longitude=${longitude}`);
-      const j = await r.json();
-      if (j.elevation) el(f, "alt").value = Math.round(j.elevation[0]);
-    } catch {}
+    await fillAlt(latitude, longitude);
     b.textContent = "Ma position";
   }, () => { b.textContent = "Position refusée"; }, { enableHighAccuracy: true, timeout: 10000 });
+});
+
+// Des coordonnées collées d'un bloc, telles que les copient Google Maps ou Géoportail :
+// « 45.7936, 4.9578 », « 45,7936 4,9578 » ou « 45°47'37.0"N 4°57'28.1"E »
+export function parseCoords(text) {
+  const t = String(text).trim();
+  const dms = [...t.matchAll(/(\d+(?:[.,]\d+)?)\s*°\s*(?:(\d+(?:[.,]\d+)?)\s*['′’]\s*)?(?:(\d+(?:[.,]\d+)?)\s*(?:["″”]|'')\s*)?([NSEOW])/gi)];
+  let ll = null;
+  if (dms.length === 2) {
+    const deg = (m) => { const n = (x) => (x ? +x.replace(",", ".") : 0); const v = n(m[1]) + n(m[2]) / 60 + n(m[3]) / 3600;
+      return /[SOW]/i.test(m[4]) ? -v : v; };
+    const [a, b] = dms, aLat = /[NS]/i.test(a[4]);
+    ll = aLat ? [deg(a), deg(b)] : [deg(b), deg(a)];
+  } else {
+    const m = t.match(/^(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)$/);
+    if (m) ll = [+m[1].replace(",", "."), +m[2].replace(",", ".")];
+  }
+  return ll && Math.abs(ll[0]) <= 90 && Math.abs(ll[1]) <= 180 ? ll.map((v) => Math.round(v * 1e5) / 1e5) : null;
+}
+
+// Coller dans un champ de latitude ou de longitude remplit les deux ; pour le site, l'altitude suit si elle est vide
+$("siteForm").addEventListener("paste", (e) => {
+  const name = e.target.name, pair = { lat: ["lat", "lon"], lon: ["lat", "lon"], landLat: ["landLat", "landLon"], landLon: ["landLat", "landLon"] }[name];
+  const ll = pair && parseCoords(e.clipboardData && e.clipboardData.getData("text"));
+  if (!ll) return; // un nombre seul se colle normalement
+  e.preventDefault();
+  const f = $("siteForm");
+  el(f, pair[0]).value = ll[0]; el(f, pair[1]).value = ll[1];
+  if (pair[0] === "lat" && !el(f, "alt").value) fillAlt(ll[0], ll[1]);
 });
 
 $("siteCancel").addEventListener("click", () => $("sitesDlg").close());

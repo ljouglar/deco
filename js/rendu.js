@@ -2,7 +2,7 @@
 import { $, arrowSvg, cap, cardinal, esc, kmText, parisParts, r0, reasonsHtml } from "./outils.js";
 import { FORECAST_DAYS, kind, KINDS, MODEL_SHORT, MODELS } from "./config.js";
 import { byHome, homeKm, limitsOf, site, state } from "./etat.js";
-import { inPlay } from "./regles.js";
+import { hhmm, inPlay } from "./regles.js";
 import { liveCard, PIOU_STALE } from "./balise.js";
 import { flyWelcome } from "./vol.js";
 
@@ -241,6 +241,7 @@ function verdictHtml(s, K, L, day, sel) {
           <p class="kind">${WING_SVG}${K.kicker}</p>
           <h1>${v.title}</h1>
           <p class="window">${winTxt}</p>
+          ${day.sunset != null ? `<p class="sun">Coucher du soleil ${hhmm(day.sunset)}</p>` : ""}
         </div>
         ${s.land ? "" : `<div class="rose">${decoRose}${legend}</div>`}
       </div>

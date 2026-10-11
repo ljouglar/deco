@@ -207,6 +207,7 @@ button { cursor: pointer; }
 .verdict h1 { margin: 0; font: italic 800 2.9rem/0.95 var(--cond); letter-spacing: -.005em; padding-right: .1em; }
 .verdict.l0 h1 { color: var(--go-ink); }
 .verdict .window { margin: 6px 0 0; font: 500 1.25rem/1.2 var(--cond); }
+.verdict .sun { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
 .verdict .why { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
 .verdict .models { margin: 8px 0 0; font-size: .85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .verdict .models.split span { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; white-space: nowrap; }
