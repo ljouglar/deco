@@ -320,5 +320,12 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .pge-pick { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 9px 2px; }
 .pge-pick small { display: block; color: var(--muted); font-size: .8rem; }
 .pge-done { flex: none; padding: 0 6px; font-size: .85rem; font-weight: 600; color: var(--go-ink); }
+/* Chez moi : une ligne quand la commune est choisie, la recherche sinon */
+.home { padding: 4px 0 10px; border-bottom: 1px solid var(--line); }
+.home-now { display: flex; align-items: center; gap: 8px; margin: 0; }
+.home-now span { flex: 1; min-width: 0; }
+.home-now small { color: var(--muted); }
+.near { display: flex; gap: 8px; }
+.near .btn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { .icon-btn.spin svg, .live h2 .pulse, .unfold .band, .wing.soar { animation: none; } }

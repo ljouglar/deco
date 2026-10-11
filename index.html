@@ -7,7 +7,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B1532">
 <!-- Politique de sécurité : scripts, styles et polices du site seul ; appels réseau limités à Open-Meteo et Pioupiou.
      Les noms venus de ParaglidingEarth ou des balises sont déjà échappés ; c'est un second verrou. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://api.pioupiou.fr; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.pioupiou.fr; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
 <meta name="description" content="Conditions de vol et de gonflage parapente jusqu'à J+5 pour vos sites">
 <title>Déco</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -95,6 +95,15 @@
 
 <dialog id="sitesDlg">
   <h2 tabindex="-1" autofocus>Mes sites</h2>
+  <div id="home" class="home">
+    <p id="homeNow" class="home-now" hidden></p>
+    <div id="homeSearch" class="stack">
+      <label for="home-q">J'habite à</label>
+      <input id="home-q" type="search" placeholder="Ta commune, ex. Annecy" autocomplete="off" enterkeyhint="search">
+      <div id="homeResults" class="pge-results"></div>
+      <p class="hint">Pour classer tes sites du plus proche au plus loin, à vol d'oiseau. La commune choisie reste sur ce téléphone.</p>
+    </div>
+  </div>
   <div id="sitesList"></div>
   <div class="backup">
     <p class="hint" id="backupHint"></p>
@@ -106,7 +115,10 @@
   </div>
   <h3 id="siteFormTitle">Ajouter un site</h3>
   <div id="pgeSearch" class="stack">
-    <button type="button" class="btn block" id="pgeNear">Décos autour de moi</button>
+    <div class="near">
+      <button type="button" class="btn block" id="pgeNear">Décos autour de moi</button>
+      <button type="button" class="btn block" id="pgeHome" hidden></button>
+    </div>
     <label for="pge-q">ou chercher un déco par son nom</label>
     <input id="pge-q" type="search" placeholder="Ex. Planfait, Sapenay…" autocomplete="off" enterkeyhint="search">
     <div id="pgeResults" class="pge-results"></div>

@@ -79,6 +79,9 @@ remplit le formulaire pour vérifier l'altitude et le secteur avant d'enregistre
 ### Le tableau « Où voler ? »
 
 L'écran d'accueil : un bloc par site (vol, puis gonflage), une colonne par jour.
+Avec votre commune réglée dans « Mes sites », chaque groupe est classé du plus proche
+au plus loin, la distance à vol d'oiseau à côté du nom (« ≈ 38 km » : ce n'est pas
+la route, un massif peut la doubler).
 
 - **Bande horaire** : la journée heure par heure, de votre première à votre dernière
   heure. La clarté porte le verdict : **foncé et plein** favorable, **hachuré** à
@@ -106,7 +109,9 @@ orientée sous le vent, elle se gonfle d'un anneau par tranche d'environ 5,5 km/
 
 ### Réglages
 
-- **Mes sites** : ajouter, modifier, supprimer ; exporter et importer.
+- **Mes sites** : votre commune (« J'habite à »), pour classer les sites par distance
+  et chercher les décos autour de chez vous ; ajouter, modifier, supprimer ; exporter
+  et importer.
 - **Mes limites** (ou « Lim. vol » / « Lim. gonflage » depuis le tableau) : un
   niveau en un geste, puis chaque seuil à la main.
 - **Modèle météo** (« changer », en pied de page) : le modèle du verdict principal,
@@ -230,7 +235,8 @@ Déco n'a ni serveur ni compte, et ne collecte rien. Vos sites, notes et limites
 restent dans le stockage du navigateur ; l'appli demande qu'il ne soit pas effacé
 quand le téléphone manque de place. **Mes sites > Exporter** produit un fichier
 `deco-sites-AAAA-MM-JJ.json` à réimporter sur un autre appareil. Les seuls appels
-réseau vont vers Open-Meteo (les coordonnées de vos sites) et Pioupiou. La position
+réseau vont vers Open-Meteo (les coordonnées de vos sites, et le nom tapé dans « J'habite
+à » pour trouver la commune) et Pioupiou. La position
 n'est demandée que sur action : « Décos autour de moi » la garde sur le téléphone,
 « Ma position » l'envoie à Open-Meteo pour obtenir l'altitude.
 

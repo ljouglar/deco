@@ -1,5 +1,5 @@
 // L'état de l'appli, chargé depuis le téléphone au démarrage
-import { store } from "./outils.js";
+import { km, store } from "./outils.js";
 import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, DEFAULT_SITES, kind } from "./config.js";
 
 // Un nouveau téléphone démarre sans site. Les préréglages ne vont qu'aux téléphones qui avaient déjà
@@ -19,6 +19,7 @@ export const state = {
   siteId: store.get("siteId", "sapenay"),
   dayIdx: 1, hourSel: null, days: [], fcJson: null, fetchedAt: null, fromCache: false, error: null,
   loadingSite: false, loadingOv: false, live: null, liveLand: null,
+  home: store.get("home", null), // commune de résidence : { name, area, lat, lon }, pour classer les sites
   view: "overview", ov: null, wantDate: null // l'appli s'ouvre sur le tableau « Où voler ? »
 };
 
@@ -32,3 +33,7 @@ export const storageProtected = () => (navigator.storage && navigator.storage.pe
 export const site = () => state.sites.find((s) => s.id === state.siteId) || state.sites[0];
 
 export const limitsOf = (s) => state[kind(s).key];
+
+// Distance depuis chez soi, et sites classés du plus proche au plus loin (sans commune, l'ordre d'ajout)
+export const homeKm = (s) => (state.home ? km(state.home.lat, state.home.lon, s.lat, s.lon) : null);
+export const byHome = (list, at = (x) => x) => (state.home ? list.slice().sort((a, b) => homeKm(at(a)) - homeKm(at(b))) : list);

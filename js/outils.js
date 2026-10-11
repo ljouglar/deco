@@ -28,6 +28,9 @@ export const angleGap = (x, y) => { const t = Math.abs(x - y) % 360; return t > 
 // Distance en km, à plat : assez juste à l'échelle de quelques dizaines de km
 export const km = (la1, lo1, la2, lo2) => 111.2 * Math.hypot(la2 - la1, (lo2 - lo1) * Math.cos(la1 * Math.PI / 180));
 
+// Distance à vol d'oiseau : le « ≈ » rappelle que ce n'est pas un kilométrage routier
+export const kmText = (d) => (d < 1 ? "<\u00a01\u00a0km" : `≈\u00a0${Math.round(d)}\u00a0km`); // insécables : jamais coupé
+
 export function sectorGap(d, a, b) {
   if (inSector(d, a, b)) return 0;
   return Math.min(angleGap(d, a), angleGap(d, b));

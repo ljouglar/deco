@@ -1,7 +1,7 @@
 // Rendu : en-tête, tableau « Où voler ? », écran d'un site, pied de page
-import { $, arrowSvg, cap, cardinal, esc, parisParts, r0, reasonsHtml } from "./outils.js";
+import { $, arrowSvg, cap, cardinal, esc, kmText, parisParts, r0, reasonsHtml } from "./outils.js";
 import { FORECAST_DAYS, kind, KINDS, MODEL_SHORT, MODELS } from "./config.js";
-import { limitsOf, site, state } from "./etat.js";
+import { byHome, homeKm, limitsOf, site, state } from "./etat.js";
 import { inPlay } from "./regles.js";
 import { liveCard, PIOU_STALE } from "./balise.js";
 import { flyWelcome } from "./vol.js";
@@ -132,10 +132,10 @@ function renderOverview() {
   const head = dates.map((date) => { const l = dayLabel(date); return `<div class="hd">${l.short} <small>${l.num}</small><em>${dayOffset(date) >= 3 ? "tendance" : ""}</em></div>`; }).join("");
 
   const groups = [KINDS.deco, KINDS.gonflage].map((K) => {
-    const rows = ov.rows.filter((r) => kind(r.s) === K);
+    const rows = byHome(ov.rows.filter((r) => kind(r.s) === K), (r) => r.s);
     if (!rows.length) return "";
     return `<h2 class="grp">${K.kicker}</h2>` + rows.map((r) =>
-      `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${esc(r.s.name)}</b> <small>${r.s.alt} m</small></button>`
+      `<button class="nm" data-ov-site="${esc(r.s.id)}"><b>${esc(r.s.name)}</b> <small>${r.s.alt} m${state.home ? ` · ${kmText(homeKm(r.s))}` : ""}</small></button>`
       + dates.map((date) => overviewCell(r, date)).join("")).join("");
   }).join("");
 

@@ -1,7 +1,7 @@
 // Feuilles : limites, modèle météo, mes sites et recherche ParaglidingEarth
-import { $, cardinal, el, esc, fetchT, fold, km, parisParts, store } from "./outils.js";
+import { $, cardinal, el, esc, fetchT, fold, km, kmText, parisParts, store } from "./outils.js";
 import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, DEFAULT_SITES, kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
-import { protectStorage, site, state, storageProtected } from "./etat.js";
+import { byHome, homeKm, protectStorage, site, state, storageProtected } from "./etat.js";
 import { nearestPiou } from "./balise.js";
 import { render } from "./rendu.js";
 import { loadOverview, openSite, reevaluate, refresh } from "./chargement.js";
@@ -66,7 +66,55 @@ $("modelForm").addEventListener("submit", () => {
   refresh();
 });
 
-export function openSites() { renderSitesList(); resetSiteForm(); backupHint(); $("sitesDlg").showModal(); }
+export function openSites() { renderHome(); renderSitesList(); resetSiteForm(); backupHint(); $("sitesDlg").showModal(); }
+
+// ---------- Chez moi : la commune de résidence, pour classer les sites par distance ----------
+// Le service de recherche de communes d'Open-Meteo : gratuit, sans clé, et l'appli lui parle déjà
+let homeHits = [], homeGen = 0, homeTimer = null;
+
+function renderHome(editing = false) {
+  const h = state.home, now = $("homeNow");
+  now.hidden = !h || editing;
+  $("homeSearch").hidden = !!h && !editing;
+  if (h) now.innerHTML = `<span>Chez toi : <b>${esc(h.name)}</b>${h.area ? ` <small>${esc(h.area)}</small>` : ""}</span>
+    <button type="button" class="btn" data-home-edit>Changer</button><button type="button" class="btn" data-home-clear>Retirer</button>`;
+  $("home-q").value = ""; $("homeResults").innerHTML = "";
+  // Deux boutons côte à côte : on raccourcit pour que les deux se lisent en entier
+  $("pgeHome").hidden = !h;
+  $("pgeNear").textContent = h ? "Autour de moi" : "Décos autour de moi";
+  if (h) $("pgeHome").textContent = `Autour de ${h.name}`;
+}
+
+async function homeSearch() {
+  const q = $("home-q").value.trim(), out = $("homeResults"), gen = ++homeGen;
+  if (q.length < 2) { out.innerHTML = ""; return; }
+  try {
+    const r = await fetchT(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=fr&format=json`);
+    const j = await r.json();
+    if (gen !== homeGen) return; // une frappe plus récente a pris le relais
+    homeHits = (j.results || []).map((x) => ({ name: x.name, lat: x.latitude, lon: x.longitude,
+      area: [x.admin2 || x.admin1, x.country_code !== "FR" ? x.country : null].filter(Boolean).join(", ") }));
+    out.innerHTML = homeHits.length ? homeHits.map((x, i) => `<div class="pge-item"><button type="button" class="pge-pick" data-home="${i}">
+      <b>${esc(x.name)}</b><small>${esc(x.area)}</small></button></div>`).join("") : `<p class="hint">Aucune commune trouvée.</p>`;
+  } catch {
+    if (gen === homeGen) out.innerHTML = `<p class="hint">Recherche impossible pour l'instant : vérifie ta connexion.</p>`;
+  }
+}
+
+function setHome(h) {
+  state.home = h;
+  store.set("home", h);
+  renderHome(); renderSitesList();
+  if (state.view === "overview") render(); // le tableau se reclasse derrière la feuille, sans rien recharger
+}
+
+$("home-q").addEventListener("input", () => { clearTimeout(homeTimer); homeTimer = setTimeout(homeSearch, 300); });
+$("home").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.home) setHome(homeHits[+b.dataset.home]);
+  if (b.hasAttribute("data-home-edit")) { renderHome(true); $("home-q").focus(); }
+  if (b.hasAttribute("data-home-clear")) setHome(null);
+});
 
 // ---------- Sauvegarde : exporter et importer ses sites ----------
 // Le fichier garde aussi les limites : c'est ce qui sert à retrouver son appli sur un autre téléphone
@@ -83,7 +131,7 @@ async function backupHint(msg) {
 }
 
 function exportSites() {
-  const data = { app: "deco", version: 1, date: new Date().toISOString(), sites: state.sites, limits: state.limits, limitsG: state.limitsG };
+  const data = { app: "deco", version: 1, date: new Date().toISOString(), sites: state.sites, limits: state.limits, limitsG: state.limitsG, home: state.home };
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
   a.download = `deco-sites-${parisParts(Date.now()).date}.json`;
@@ -108,6 +156,8 @@ function cleanSite(s) {
 // L'atterro d'un déco : une position, et le numéro de sa balise s'il y en a une
 const cleanLand = (l, type) => (type === "deco" && l && Number.isFinite(l.lat) && Number.isFinite(l.lon)
   ? { lat: l.lat, lon: l.lon, piou: Number.isFinite(l.piou) ? l.piou : null } : null);
+const cleanHome = (h) => (h && typeof h.name === "string" && Number.isFinite(h.lat) && Number.isFinite(h.lon)
+  ? { name: h.name, area: typeof h.area === "string" ? h.area : "", lat: h.lat, lon: h.lon } : null);
 const cleanLimits = (l, defaults) => ({ ...defaults, ...Object.fromEntries(Object.entries(l && typeof l === "object" ? l : {})
   .filter(([k, v]) => k in defaults && (k === "model" ? v in MODELS : Number.isFinite(v)))) });
 
@@ -121,6 +171,8 @@ async function importSites(file) {
   state.sites = clean; store.set("sites", state.sites);
   if (data.limits) { state.limits = cleanLimits(data.limits, DEFAULT_LIMITS); store.set("limits", state.limits); }
   if (data.limitsG) { state.limitsG = cleanLimits(data.limitsG, DEFAULT_LIMITS_G); store.set("limitsG", state.limitsG); }
+  const home = cleanHome(data.home);
+  if (home) { state.home = home; store.set("home", home); renderHome(); }
   protectStorage();
   renderSitesList(); backupHint(`${clean.length} site${clean.length > 1 ? "s" : ""} importé${clean.length > 1 ? "s" : ""}.`);
   loadOverview();
@@ -131,9 +183,9 @@ $("importBtn").addEventListener("click", () => $("importFile").click());
 $("importFile").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) importSites(f); });
 
 function renderSitesList() {
-  $("sitesList").innerHTML = state.sites.map((s) => `
+  $("sitesList").innerHTML = byHome(state.sites).map((s) => `
     <div class="site-row">
-      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}${s.land ? " · atterro" : ""}</small></button>
+      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}${s.land ? " · atterro" : ""}${state.home ? ` · ${kmText(homeKm(s))}` : ""}</small></button>
       <button class="btn" data-edit="${esc(s.id)}">Modifier</button>
       <button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>
     </div>`).join("");
@@ -199,7 +251,8 @@ async function pgeSearch() {
   if (fold($("pge-q").value.trim()) !== q) return; // une frappe plus récente a pris le relais
   const words = q.split(/\s+/);
   const hits = rows.filter((x) => words.every((w) => x.key.includes(w)))
-    .sort((a, b) => b.key.startsWith(words[0]) - a.key.startsWith(words[0]) || a.key.localeCompare(b.key)).slice(0, 8);
+    .sort((a, b) => b.key.startsWith(words[0]) - a.key.startsWith(words[0]) || a.key.localeCompare(b.key)).slice(0, 8)
+    .map(({ r }) => ({ r, d: state.home ? km(state.home.lat, state.home.lon, r[1], r[2]) : null })); // distance depuis chez toi
   pgeRender(hits, "Aucun déco trouvé.");
 }
 
@@ -240,19 +293,21 @@ async function pgeQuickAdd(id, btn) {
 
 const NEAR_KM = 60;
 
+async function pgeAround(la, lo) {
+  const out = $("pgeResults");
+  let rows;
+  try { rows = await pgeLoad(); } catch { out.innerHTML = `<p class="hint">Liste des sites indisponible.</p>`; return; }
+  const hits = rows.map((x) => ({ r: x.r, d: km(la, lo, x.r[1], x.r[2]) })).filter((x) => x.d <= NEAR_KM)
+    .sort((a, b) => a.d - b.d).slice(0, 12);
+  pgeRender(hits, `Aucun déco connu à moins de ${NEAR_KM} km.`);
+}
+
 export function pgeNear() {
   const out = $("pgeResults");
   $("pge-q").value = "";
   if (!navigator.geolocation) { out.innerHTML = `<p class="hint">Position indisponible sur cet appareil : cherche par nom.</p>`; return; }
   out.innerHTML = `<p class="hint">Recherche de ta position…</p>`;
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    const { latitude: la, longitude: lo } = pos.coords;
-    let rows;
-    try { rows = await pgeLoad(); } catch { out.innerHTML = `<p class="hint">Liste des sites indisponible.</p>`; return; }
-    const hits = rows.map((x) => ({ r: x.r, d: km(la, lo, x.r[1], x.r[2]) })).filter((x) => x.d <= NEAR_KM)
-      .sort((a, b) => a.d - b.d).slice(0, 12);
-    pgeRender(hits, `Aucun déco connu à moins de ${NEAR_KM} km.`);
-  }, () => {
+  navigator.geolocation.getCurrentPosition((pos) => pgeAround(pos.coords.latitude, pos.coords.longitude), () => {
     out.innerHTML = `<p class="hint">Position refusée ou introuvable : autorise la localisation, ou cherche par nom.</p>`;
   }, { timeout: 10000, maximumAge: 10 * 60 * 1000 });
 }
@@ -298,6 +353,7 @@ $("pgeResults").addEventListener("click", (e) => {
 });
 
 $("pgeNear").addEventListener("click", pgeNear);
+$("pgeHome").addEventListener("click", () => { $("pge-q").value = ""; pgeAround(state.home.lat, state.home.lon); });
 
 $("sitesList").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;

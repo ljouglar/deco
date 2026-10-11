@@ -76,6 +76,9 @@ const mock = (fx) => `<base href="${new URL("..", location.href)}"><script>
       [new Date(NOON - (24 - i) * 300000).toISOString(), 0, 0, 0, 6 + i * 0.4, 12 + i * 0.5, 250 + i]) });
     if (url.pathname.startsWith("/v1/live-with-meta")) return json({ data: [] });
     if (url.hostname === "api.open-meteo.com") return json({ elevation: [500] });
+    if (url.hostname === "geocoding-api.open-meteo.com") return json({ results: [
+      { name: "Grenoble", latitude: 45.1885, longitude: 5.7245, country_code: "FR", country: "France", admin1: "Auvergne-Rhône-Alpes", admin2: "Isère" },
+      { name: "Grenoble", latitude: 47.0, longitude: -71.0, country_code: "CA", country: "Canada", admin1: "Québec" }] });
     return real(u, o);
   };
 <\/script>`;
@@ -140,6 +143,17 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(deco.state.days[deco.state.dayIdx].date === day(1), "à 20 h, il s'ouvre sur demain", t('.day[aria-selected="true"] .d1').join());
       W.Date.now = () => midi;
       D.getElementById("backBtn").click(); await wait(800);
+      // Chez moi : les sites se classent du plus proche au plus loin, dans le tableau comme dans la liste
+      D.getElementById("sitesBtn").click();
+      const hq = D.getElementById("home-q"); hq.value = "grenoble"; hq.dispatchEvent(new Event("input")); await wait(800);
+      check(t("#homeResults .pge-pick small").join(" / ") === "Isère / Québec, Canada", "recherche de commune", t("#homeResults .pge-pick").join(" / "));
+      D.querySelector('#homeResults [data-home="0"]').click(); await wait(300);
+      check(t("#homeNow span")[0] === "Chez toi : Grenoble Isère" && D.getElementById("homeSearch").hidden && JSON.parse(localStorage.getItem("home")).name === "Grenoble", "commune enregistrée", t("#homeNow span").join());
+      check(t("#sitesList .info b").slice(0, 3).join() === "Saint-Hilaire,Aiguebelette,Sapenay", "liste classée par distance", t("#sitesList .info small").join(" / "));
+      check(t("#pgeHome")[0] === "Autour de Grenoble", "décos autour de chez moi", t("#pgeHome").join());
+      D.getElementById("sitesDlg").close();
+      check(t(".ov .nm b").join() === "Saint-Hilaire,Aiguebelette,Sapenay,Marennes,Miribel-Jonage,Le Rebat" && t(".ov .nm small")[0] === "1000 m · ≈ 18 km",
+        "tableau classé par distance", t(".ov .nm").join(" / "));
       D.querySelector("[data-model]").click(); D.querySelector('#modelForm input[value="icon_seamless"]').checked = true;
       D.querySelector("#modelForm [type=submit]").click(); await wait(800);
       const last = W.__requetes.filter((u) => u.includes("/v1/forecast")).at(-1);
@@ -171,7 +185,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       W.HTMLAnchorElement.prototype.click = function () {};
       D.getElementById("sitesBtn").click(); D.getElementById("exportBtn").click(); await wait(300);
       const saved = exported && JSON.parse(await exported.text());
-      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG, "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
+      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG && saved.home && saved.home.name === "Grenoble", "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
       D.getElementById("sitesDlg").close();
       W.confirm = () => true; D.getElementById("sitesBtn").click();
       for (const id of deco.state.sites.map((s) => s.id)) { D.querySelector(`#sitesList [data-del="${id}"]`).click(); await wait(150); }
