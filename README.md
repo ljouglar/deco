@@ -37,8 +37,8 @@ sur le téléphone.
   créneau favorable se voit d'un coup d'œil.
 - **Vol et gonflage** : chaque site est un déco ou un terrain de gonflage face
   voile, jugé avec ses propres règles et ses propres limites.
-- **Trois modèles comparés** : Météo-France (AROME/ARPEGE), ICON et ECMWF ; un vert
-  qu'un seul modèle annonce se repère d'un coup d'œil.
+- **Trois modèles comparés** : Météo-France (AROME/ARPEGE), ICON et ECMWF ; un créneau
+  favorable qu'un seul modèle annonce se repère d'un coup d'œil.
 - **Déco et atterro** : quand l'atterro est connu, son vent compte dans le verdict et
   l'écran du site montre sa rose, à côté de celle du déco.
 - **Balise en direct** : la mesure du moment face à la prévision, et la tendance des

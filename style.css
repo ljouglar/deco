@@ -13,12 +13,12 @@
 :root {
   --bg: #EEF3F6; --surface: #FFFFFF; --ink: #15303F; --muted: #556A77; --line: #D3DEE5;
   --action: #2459C6; --on-action: #FFFFFF; --wing: #F0B429;
-  --go: #2E9D6A; --warn: #DE9418; --stop: #CF4436;
-  --go-soft: #E2F1E9; --sky-soft: #E1EEFB; --warn-soft: #FBF0DC; --stop-soft: #F5E8E6;
-  --go-ink: #1D6F51; --stop-ink: #B23A2E; /* vert et rouge pour du texte : contraste ≥ 4,5:1 sur les fonds */
-  /* Bandes horaires : favorable foncé et plein, à surveiller moyen et hachuré, défavorable pâle.
+  --go: #0E9B85; --warn: #FF6B57; --stop: #C62B3F;
+  --go-soft: #DEF2EE; --sky-soft: #E1EEFB; --warn-soft: #FFE9E4; --stop-soft: #ECE6E8;
+  --go-ink: #00705F; --stop-ink: #B3243A; /* jade et rouge pour du texte : contraste ≥ 4,5:1 sur les fonds */
+  /* Bandes horaires (palette « corail ») : favorable jade foncé et plein, à surveiller corail moyen et hachuré, défavorable pâle.
      L'écart de clarté suffit à les distinguer, même sans voir les couleurs. */
-  --band-go: #1F9461; --band-warn: #E9AE3F; --band-hatch: rgba(110, 66, 0, .38); --band-stop: #E1D6D3; --band-none: #E6ECF0;
+  --band-go: #00836F; --band-warn: #FF6B57; --band-hatch: rgba(120, 20, 10, .32); --band-stop: #F6E1E6; --band-none: #E6ECF0;
   /* Couleurs de voile : décor et touches de joie, jamais porteuses d'un verdict */
   --sail-m: #E5337A; --sail-y: #FFC93C; --sail-c: #2BB8D6; --sock: #E8452E;
   --sky: linear-gradient(180deg, #1B56C2 0%, #3B83DF 58%, #86C1F2 100%);
@@ -32,11 +32,11 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0F1E27; --surface: #172A35; --ink: #E6EEF2; --muted: #8FA6B2; --line: #26404D;
-    --action: #7BA4F5; --on-action: #0F1E27; --go-soft: #173A2C; --sky-soft: #182A4A; --warn-soft: #3D3018; --stop-soft: #43211E;
-    --go-ink: #55C792; --stop-ink: #EE7A6E;
+    --action: #7BA4F5; --on-action: #0F1E27; --go-soft: #123A35; --sky-soft: #182A4A; --warn-soft: #3A2624; --stop-soft: #33262B;
+    --go-ink: #3FD0B4; --stop-ink: #F07A86;
     --sky: linear-gradient(180deg, #0B1532 0%, #1E2F66 60%, #5A4B8A 100%);
     --pop: #F0548F; --on-pop: #1A0B12; --sky-end: #5A4B8A; --dial-face: #0A1620; --dial-sector: .45;
-    --band-go: #4CC28C; --band-warn: #B98326; --band-hatch: rgba(15, 30, 39, .45); --band-stop: #3A3438; --band-none: #1B2F3A;
+    --band-go: #2FD1B5; --band-warn: #E0574A; --band-hatch: rgba(15, 30, 39, .45); --band-stop: #3D2E35; --band-none: #1B2F3A;
   }
 }
 
