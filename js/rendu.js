@@ -4,6 +4,7 @@ import { FORECAST_DAYS, kind, KINDS, MODEL_SHORT, MODELS } from "./config.js";
 import { byHome, homeKm, limitsOf, site, state } from "./etat.js";
 import { hhmm, inPlay } from "./regles.js";
 import { liveCard, PIOU_STALE } from "./balise.js";
+import { terrainCard } from "./terrains.js";
 import { flyWelcome } from "./vol.js";
 
 const DAY_SHORT = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
@@ -191,7 +192,7 @@ export function render() {
   const sel = day.hours.find((h) => h.hour === state.hourSel) || day.hours[0];
   // La balise dit ce qui se passe maintenant : elle n'a sa place qu'aujourd'hui, juste sous le verdict
   const live = dayOffset(day.date) === 0 ? liveCard() : "";
-  $("main").innerHTML = verdictHtml(s, K, L, day, sel) + (live ? `<div id="live">${live}</div>` : "") + detailHtml(s, K, sel) + hoursHtml(K, L, day, sel);
+  $("main").innerHTML = verdictHtml(s, K, L, day, sel) + (live ? `<div id="live">${live}</div>` : "") + terrainCard() + detailHtml(s, K, sel) + hoursHtml(K, L, day, sel);
   renderStatus();
 }
 

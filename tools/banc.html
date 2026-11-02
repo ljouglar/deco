@@ -162,6 +162,27 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(t("#live .reasons li").some((x) => x.includes("axe")) && !t("#live .reasons li").some((x) => x.includes("stable")), "lecture de la mesure FFVL", t("#live .reasons li").join(" / "));
       check(t("#status").some((x) => x.includes("source FFVL")) && !t("#status").some((x) => x.includes("OpenWindMap")), "source FFVL citée");
       check(W.__requetes.filter((u) => u.includes("data.gouv.fr")).length === 1, "relevés FFVL lus une seule fois");
+      // Consignes FFVL : le fichier se lit en vrai temps, alors que les attentes du banc sont en temps virtuel
+      for (let i = 0; i < 100 && !D.querySelector(".terrain"); i++) await new Promise((ok) => setTimeout(ok, 50));
+      deco.openSite("sapenay"); await wait(800);
+      const noms = t('.terrain [data-terrain^="site:"] b');
+      check(noms.length === 2 && noms.join().includes("SAPENAY NORD") && t('.terrain [data-terrain^="land:"] b').join().includes("CHINDRIEUX"), "le pilote choisit le terrain du déco et de l'atterro", noms.join(" / "));
+      D.querySelector('[data-terrain="site:13086"]').click(); await wait(100);
+      const sap = () => JSON.parse(localStorage.getItem("sites")).find((s) => s.id === "sapenay");
+      check(sap().terrain === 13086 && t(".terrain h3")[0] === "Déco : SAPENAY NORD - PEILLAT DUCRET" && t(".terrain .facts-line")[0].includes("IPPI 3"), "terrain associé", t(".terrain .facts-line").join(" / "));
+      const regles = () => D.querySelector('[data-note="site:air"]');
+      check(!!regles() && !regles().open, "consignes repliées", t(".terrain summary").join(", "));
+      regles().open = true; await new Promise((ok) => setTimeout(ok, 50));
+      D.querySelector(".hour[data-hour='15']").click();
+      check(regles().open, "les consignes dépliées restent ouvertes");
+      D.querySelector('[data-terrain="land:0"]').click(); await wait(100);
+      check(sap().land.terrain === 0 && t('.terrain [data-terrain-change="land"]')[0] === "choisir", "« aucun de ceux-là » pour l'atterro");
+      D.querySelector('[data-terrain-change="land"]').click(); await wait(100);
+      check(sap().land.terrain === undefined && t('.terrain [data-terrain^="land:"] b').length > 0, "rechoisir l'atterro");
+      D.querySelector('[data-terrain="land:1203"]').click(); await wait(100);
+      deco.openSite("sthilaire"); await wait(800);
+      D.querySelector('.terrain [data-terrain^="site:"]').click(); await wait(100);
+      D.getElementById("backBtn").click(); await wait(800);
       D.getElementById("backBtn").click(); await wait(800);
       // Chez moi : les sites se classent du plus proche au plus loin, dans le tableau comme dans la liste
       D.getElementById("sitesBtn").click();
@@ -198,13 +219,15 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       D.querySelector("#pgeResults [data-pge-add]").click(); await wait(800);
       const crolles = deco.state.sites.at(-1);
       check(crolles.ffvl === 61 && !crolles.piou, "balise FFVL la plus proche trouvée", `piou ${crolles.piou}, ffvl ${crolles.ffvl}`);
+      q.value = "aurel"; q.dispatchEvent(new Event("input")); await wait(500);
+      check(t("#pgeResults .pge-ban").join().includes("terrain interdit (FFVL)"), "un déco interdit par la FFVL est signalé", t("#pgeResults .pge-pick").join(" / "));
       W.confirm = () => true; D.querySelector(`#sitesList [data-del="${crolles.id}"]`).click(); await wait(300);
       if (!D.getElementById("sitesDlg").open) D.getElementById("sitesBtn").click();
       D.querySelector('#sitesList [data-edit="sthilaire"]').click(); await wait(300);
       const fb = (k) => D.getElementById("siteForm").elements.namedItem(k).value;
       check(fb("net") === "ffvl" && fb("beacon") === "61", "le formulaire montre la balise FFVL", `${fb("net")} ${fb("beacon")}`);
       D.getElementById("siteSubmit").click(); await wait(800);
-      check(deco.state.sites.find((s) => s.id === "sthilaire").ffvl === 61, "enregistrer le formulaire garde la balise FFVL");
+      check(deco.state.sites.find((s) => s.id === "sthilaire").ffvl === 61 && deco.state.sites.find((s) => s.id === "sthilaire").terrain > 0, "enregistrer le formulaire garde la balise FFVL et le terrain");
       D.getElementById("sitesBtn").click();
       q.value = "sapenay pass"; q.dispatchEvent(new Event("input")); await wait(500);
       D.querySelector("#pgeResults .pge-pick").click(); await wait(800);
@@ -226,7 +249,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       W.HTMLAnchorElement.prototype.click = function () {};
       D.getElementById("sitesBtn").click(); D.getElementById("exportBtn").click(); await wait(300);
       const saved = exported && JSON.parse(await exported.text());
-      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG && saved.home && saved.home.name === "Grenoble" && saved.sites.find((s) => s.id === "sthilaire").ffvl === 61, "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
+      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG && saved.home && saved.home.name === "Grenoble" && saved.sites.find((s) => s.id === "sthilaire").ffvl === 61 && saved.sites.find((s) => s.id === "sapenay").land.terrain === 1203, "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
       D.getElementById("sitesDlg").close();
       W.confirm = () => true; D.getElementById("sitesBtn").click();
       for (const id of deco.state.sites.map((s) => s.id)) { D.querySelector(`#sitesList [data-del="${id}"]`).click(); await wait(150); }
@@ -247,7 +270,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(t("#backupHint")[0] === "Ce fichier ne contient pas de sites Déco." && deco.state.sites.length === 0, "fichier invalide refusé", t("#backupHint").join());
       D.getElementById("sitesDlg").close();
       await importer(JSON.stringify(saved)); D.getElementById("sitesDlg").close(); await wait(500);
-      check(deco.state.sites.length === 8 && t(".ov .nm b").length === 8 && deco.state.limitsG.minWind === saved.limitsG.minWind && deco.state.sites.find((s) => s.id === "sthilaire").ffvl === 61, "importer des sites", t(".ov .nm b").join(", "));
+      check(deco.state.sites.length === 8 && t(".ov .nm b").length === 8 && deco.state.limitsG.minWind === saved.limitsG.minWind && deco.state.sites.find((s) => s.id === "sthilaire").ffvl === 61 && deco.state.sites.find((s) => s.id === "sapenay").land.terrain === 1203, "importer des sites", t(".ov .nm b").join(", "));
     } catch (e) { check(false, "parcours interrompu", e.message); }
     check(!errors.length, "aucune erreur JS", errors.join(" | "));
     out.textContent = lines.join("\n");

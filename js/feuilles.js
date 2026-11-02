@@ -3,6 +3,7 @@ import { $, cardinal, el, esc, fetchT, fold, km, kmText, parisParts, store } fro
 import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, DEFAULT_SITES, kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
 import { byHome, homeKm, protectStorage, site, state, storageProtected } from "./etat.js";
 import { nearestBeacon } from "./balise.js";
+import { banAt, loadTerrains } from "./terrains.js";
 import { render } from "./rendu.js";
 import { loadOverview, openSite, reevaluate, refresh } from "./chargement.js";
 
@@ -141,17 +142,20 @@ function exportSites() {
 }
 
 // Un fichier venu d'ailleurs : on ne garde que les champs connus, et des nombres là où il en faut
-const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "ffvl", "note", "land"];
+const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "ffvl", "terrain", "note", "land"];
 const NUM = ["lat", "lon", "alt", "secMin", "secMax"];
 function cleanSite(s) {
   if (!s || typeof s.id !== "string" || typeof s.name !== "string" || !NUM.every((k) => Number.isFinite(s[k]))) return null;
   const out = Object.fromEntries(SITE_FIELDS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
   out.type = s.type === "gonflage" ? "gonflage" : "deco";
-  Object.assign(out, cleanBeacon(s));
+  Object.assign(out, cleanBeacon(s), cleanTerrain(s));
   out.note = typeof s.note === "string" ? s.note : "";
   if (s.land !== undefined) out.land = cleanLand(s.land, out.type); // absent : addKnownLandings le cherchera
   return out;
 }
+
+// Le terrain FFVL associé : son numéro, 0 si le pilote n'en veut aucun, rien tant qu'il n'a pas choisi
+const cleanTerrain = (s) => (Number.isFinite(s.terrain) ? { terrain: s.terrain } : {});
 
 // Une seule balise, sur l'un des deux réseaux
 function cleanBeacon(s) {
@@ -164,7 +168,7 @@ const sameBeacon = (a, b) => a && b && a.net === b.net && a.id === b.id;
 
 // L'atterro d'un déco : une position, et le numéro de sa balise s'il y en a une
 const cleanLand = (l, type) => (type === "deco" && l && Number.isFinite(l.lat) && Number.isFinite(l.lon)
-  ? { lat: l.lat, lon: l.lon, ...cleanBeacon(l) } : null);
+  ? { lat: l.lat, lon: l.lon, ...cleanBeacon(l), ...cleanTerrain(l) } : null);
 const cleanHome = (h) => (h && typeof h.name === "string" && Number.isFinite(h.lat) && Number.isFinite(h.lon)
   ? { name: h.name, area: typeof h.area === "string" ? h.area : "", lat: h.lat, lon: h.lon } : null);
 const cleanLimits = (l, defaults) => ({ ...defaults, ...Object.fromEntries(Object.entries(l && typeof l === "object" ? l : {})
@@ -258,6 +262,7 @@ async function pgeSearch() {
   if (q.length < 2) { out.innerHTML = ""; return; }
   let rows;
   try { rows = await pgeLoad(); } catch { out.innerHTML = `<p class="hint">Liste des sites indisponible.</p>`; return; }
+  await loadTerrains().catch(() => {}); // pour signaler les décos interdits ; la recherche marche sans
   if (fold($("pge-q").value.trim()) !== q) return; // une frappe plus récente a pris le relais
   const words = q.split(/\s+/);
   const hits = rows.filter((x) => words.every((w) => x.key.includes(w)))
@@ -273,7 +278,7 @@ const pgeHave = (r) => state.sites.some((s) => s.id === `pge${r[5]}` || (kind(s)
 function pgeRender(hits, none) {
   $("pgeResults").innerHTML = hits.length ? hits.map(({ r, d }) => `<div class="pge-item">
       <button type="button" class="pge-pick" data-pge="${r[5]}"><b>${esc(r[0])}</b>
-        <small>${r[3] != null ? `${r[3]} m · ` : ""}${esc(orientText(r[4]))}${d != null ? ` · ${d.toFixed(d < 10 ? 1 : 0).replace(".", ",")} km` : ""}</small></button>
+        <small>${r[3] != null ? `${r[3]} m · ` : ""}${esc(orientText(r[4]))}${d != null ? ` · ${d.toFixed(d < 10 ? 1 : 0).replace(".", ",")} km` : ""}${banAt(r[1], r[2]) ? ` · <em class="pge-ban">${banAt(r[1], r[2]).toLowerCase()} (FFVL)</em>` : ""}</small></button>
       ${pgeHave(r) ? `<span class="pge-done">Ajouté</span>`
         : pgeSector(r[4]) ? `<button type="button" class="btn pge-add" data-pge-add="${r[5]}" aria-label="Ajouter ${esc(r[0])}">Ajouter</button>` : ""}
     </div>`).join("") : `<p class="hint">${esc(none)}</p>`;
@@ -308,6 +313,7 @@ async function pgeAround(la, lo) {
   const out = $("pgeResults");
   let rows;
   try { rows = await pgeLoad(); } catch { out.innerHTML = `<p class="hint">Liste des sites indisponible.</p>`; return; }
+  await loadTerrains().catch(() => {}); // pour signaler les décos interdits ; la recherche marche sans
   const hits = rows.map((x) => ({ r: x.r, d: km(la, lo, x.r[1], x.r[2]) })).filter((x) => x.d <= NEAR_KM)
     .sort((a, b) => a.d - b.d).slice(0, 12);
   pgeRender(hits, `Aucun déco connu à moins de ${NEAR_KM} km.`);
@@ -400,6 +406,10 @@ $("siteForm").addEventListener("submit", (e) => {
   const ll = el(f, "landLat").value.trim(), lo = el(f, "landLon").value.trim();
   s.land = cleanLand({ lat: ll ? +ll : NaN, lon: lo ? +lo : NaN, ...beaconFields(el(f, "landNet").value, el(f, "landBeacon").value) }, s.type);
   const i = state.sites.findIndex((x) => x.id === s.id);
+  // Le terrain FFVL se choisit sur l'écran du site : le formulaire le garde tant que le point ne bouge pas
+  const was = state.sites[i];
+  if (was && was.lat === s.lat && was.lon === s.lon && was.terrain !== undefined) s.terrain = was.terrain;
+  if (was && was.land && s.land && was.land.lat === s.land.lat && was.land.lon === s.land.lon && was.land.terrain !== undefined) s.land.terrain = was.land.terrain;
   if (i >= 0) state.sites[i] = s; else state.sites.push(s);
   store.set("sites", state.sites); protectStorage();
   $("sitesDlg").close();

@@ -25,6 +25,7 @@ sur le téléphone.
 - [Installer et utiliser](#installer-et-utiliser)
 - [Comment Déco juge les conditions](#comment-déco-juge-les-conditions)
 - [La balise en direct](#la-balise-en-direct)
+- [Les consignes FFVL](#les-consignes-ffvl)
 - [Hors ligne et réseau faible](#hors-ligne-et-réseau-faible)
 - [Données, confidentialité et licences](#données-confidentialité-et-licences)
 - [Développement](#développement)
@@ -230,6 +231,15 @@ signalée trop ancienne au-delà de 45 minutes. Sous 3 km/h, la direction n'est 
 interprétée. Une balise reste un point : abritée ou prise dans une brise locale,
 elle peut ne pas représenter tout le site.
 
+## Les consignes FFVL
+
+L'écran d'un site montre les consignes de son terrain FFVL : statut (interdit,
+autorisation requise), niveau conseillé, vents favorables, restrictions, dangers et
+règles de vol. C'est le pilote qui associe le site à son terrain, parmi ceux à moins de
+2 km, séparément pour le déco et l'atterro : le plus proche n'est pas toujours le bon.
+La recherche de décos signale aussi ceux où la FFVL interdit le décollage. Ces
+consignes ne changent pas le verdict, et ne remplacent ni le panneau du site ni le club.
+
 ## Hors ligne et réseau faible
 
 - **Hors ligne** : l'appli s'ouvre depuis le cache de son service worker, et chaque
@@ -259,7 +269,7 @@ n'est demandée que sur action : « Décos autour de moi » la garde sur le tél
 | --- | --- | --- |
 | Prévisions | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0, usage non commercial gratuit |
 | Mesures des balises | [OpenWindMap / Pioupiou](https://www.openwindmap.org/) | © contributeurs du réseau OpenWindMap, [conditions](https://developers.pioupiou.fr/data-licensing) |
-| Mesures et liste des balises FFVL | [FFVL sur data.gouv.fr](https://www.data.gouv.fr/organizations/federation-francaise-de-vol-libre/datasets) | Licence Ouverte Etalab, source à citer |
+| Mesures et liste des balises, terrains et consignes FFVL | [FFVL sur data.gouv.fr](https://www.data.gouv.fr/organizations/federation-francaise-de-vol-libre/datasets) | Licence Ouverte Etalab, source à citer |
 | Liste des décos | [ParaglidingEarth](https://www.paraglidingearth.com/) | CC BY-SA 3.0 |
 | Polices Barlow et Barlow Condensed | [The Barlow Project](https://github.com/jpt/barlow) | SIL Open Font License 1.1 (`fonts/OFL.txt`) |
 
@@ -288,13 +298,14 @@ manifest.webmanifest  installation (icônes dans icons/, captures dans screensho
 fonts/                polices Barlow, servies par le site
 sites-fr.json         instantané des décos ParaglidingEarth et de leurs atterros (recherche par nom)
 balises-ffvl.json     instantané des balises FFVL : numéro, nom, position (sans les contacts)
+terrains-ffvl.json    instantané des terrains FFVL de parapente et de leurs consignes
 tools/                vérificateur, banc d'essai, mise à jour des deux instantanés
 ```
 
 Les modules dépendent les uns des autres dans un seul sens, sans boucle :
 
 ```
-outils → config → etat → regles → donnees → balise → vol → rendu → chargement → feuilles → maj → main
+outils → config → etat → regles → donnees → balise → terrains → vol → rendu → chargement → feuilles → maj → main
 ```
 
 | Module | Rôle |
@@ -305,6 +316,7 @@ outils → config → etat → regles → donnees → balise → vol → rendu �
 | `regles.js` | évaluation heure par heure, verdict du jour, accord des modèles ; ni DOM ni réseau |
 | `donnees.js` | prévisions Open-Meteo (sites, et vent de leurs atterros) et cache local |
 | `balise.js` | balises Pioupiou et FFVL : mesure, historique, tendance, bloc « En direct » |
+| `terrains.js` | terrains FFVL : statut, consignes, bloc « Consignes FFVL » |
 | `vol.js` | la voile qui arrive en vol dans le ciel de l'en-tête : trajectoire, balancier, vol de pente |
 | `rendu.js` | en-tête, tableau, écran d'un site (roses du déco et de l'atterro), pied de page |
 | `chargement.js` | chargements et navigation : seul le chargement le plus récent s'applique |
@@ -382,9 +394,11 @@ puis incrémenter `CACHE`. Le secteur d'un déco ajouté est tiré de ses orient
 **principales** seulement (les orientations « possibles » sont souvent très larges) ;
 les autres sont reprises dans sa note.
 
-La liste des balises FFVL (`balises-ffvl.json`, 9 Ko) se régénère avec
-`python3 tools/ffvl_snapshot.py`. Les balises OpenWindMap en sont écartées : l'appli les
-lit chez Pioupiou. Incrémenter `CACHE` là aussi.
+Les listes FFVL (`balises-ffvl.json`, 9 Ko, et `terrains-ffvl.json`, environ 600 Ko, soit
+200 Ko compressés) se régénèrent avec `python3 tools/ffvl_snapshot.py`. Les balises
+OpenWindMap en sont écartées : l'appli les lit chez Pioupiou. Incrémenter `CACHE` là
+aussi. La date du relevé s'affiche avec les consignes : relancer le script régulièrement,
+une interdiction récente n'y figure qu'après cela.
 
 ## Sites préréglés
 

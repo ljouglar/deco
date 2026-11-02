@@ -4,6 +4,7 @@ import { limitsOf, site, state } from "./etat.js";
 import { buildAll, inPlay } from "./regles.js";
 import { fcKey, fetchError, fetchForecasts, loadForecast } from "./donnees.js";
 import { loadLive } from "./balise.js";
+import { loadTerrains, terrainsReady } from "./terrains.js";
 import { render, renderChrome } from "./rendu.js";
 
 // Chaque chargement porte un numéro : seul le plus récent s'applique, une réponse lente d'un site
@@ -15,6 +16,7 @@ export async function load(force = false) {
   if (!s) return;
   const gen = ++siteGen;
   state.loadingSite = true; state.error = null; state.live = null; state.liveLand = null; renderChrome();
+  if (!terrainsReady()) loadTerrains().then(() => { if (state.view === "site" && state.days.length) render(); }).catch(() => {});
   // L'atterro a sa balise à lui (loadLive lit son numéro dans s.land)
   const [fc, live, liveLand] = await Promise.all([loadForecast(s, force), loadLive(s, force), loadLive(s.land, force)]);
   if (gen !== siteGen) return;

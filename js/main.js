@@ -1,5 +1,5 @@
 // Point d'entrée : événements de l'écran principal, rafraîchissements, démarrage
-import { $ } from "./outils.js";
+import { $, store } from "./outils.js";
 import { kind, KINDS } from "./config.js";
 import { protectStorage, site, state } from "./etat.js";
 import { pruneCache } from "./donnees.js";
@@ -8,6 +8,7 @@ import { load, loadOverview, openSite, refresh, refreshLive } from "./chargement
 import { addKnownLandings, openLimits, openModel, openSites, pgeNear } from "./feuilles.js";
 import { initUpdates } from "./maj.js";
 import { flyHeader } from "./vol.js";
+import { noteToggled } from "./terrains.js";
 
 flyHeader(document.querySelector(".sky .wing"));
 pruneCache();
@@ -17,6 +18,9 @@ $("days").addEventListener("click", (e) => {
   const b = e.target.closest("[data-day]"); if (!b) return;
   state.dayIdx = +b.dataset.day; state.hourSel = null; render();
 });
+
+// « toggle » ne remonte pas : on l'écoute à la descente, pour garder ouvertes les consignes dépliées
+$("main").addEventListener("toggle", (e) => { if (e.target.matches?.("[data-note]")) noteToggled(e.target); }, true);
 
 $("main").addEventListener("click", (e) => {
   const w = e.target.closest("[data-start]");
@@ -30,6 +34,13 @@ $("main").addEventListener("click", (e) => {
   }
   const o = e.target.closest("[data-ov-site]");
   if (o) { openSite(o.dataset.ovSite, o.dataset.ovDate || null); return; }
+  const tp = e.target.closest("[data-terrain]"), tc = e.target.closest("[data-terrain-change]");
+  if (tp || tc) {
+    const [part, id] = (tp ? tp.dataset.terrain : `${tc.dataset.terrainChange}:`).split(":"), s = site(), at = part === "land" ? s.land : s;
+    if (tp) at.terrain = +id; else delete at.terrain;
+    store.set("sites", state.sites); render();
+    return;
+  }
   const b = e.target.closest("[data-hour]"); if (!b) return;
   state.hourSel = +b.dataset.hour; render();
   // Choisie dans la liste du bas, l'heure remonte au verdict ; choisie dans la bande, on y est déjà

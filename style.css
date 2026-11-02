@@ -41,6 +41,7 @@
 }
 
 /* ---------- Base ---------- */
+a { color: var(--action); }
 *, *::before, *::after { box-sizing: inherit; }
 [hidden] { display: none !important; }
 html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
@@ -330,3 +331,23 @@ dialog h3 { margin: 18px 0 8px; font: 700 1.1rem var(--cond); }
 .near .btn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { .icon-btn.spin svg, .live h2 .pulse, .unfold .band, .wing.soar { animation: none; } }
+
+/* ---------- Consignes FFVL ---------- */
+.terrain { margin: 12px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 13px 16px 14px; }
+.terrain h2 { margin: 0; }
+.terrain h3 { margin: 0 0 4px; font: 700 1rem/1.2 var(--cond); }
+.terrain-part { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.terrain .ban { margin: 4px 0; padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+.terrain .ban.l1 { background: var(--warn-soft); }
+.terrain .ban.l2 { background: var(--stop-soft); color: var(--stop-ink); }
+.terrain .facts-line { margin: 2px 0 6px; font-size: .88rem; color: var(--muted); }
+.terrain details { border-top: 1px solid var(--line); }
+.terrain summary { padding: 9px 0; font-weight: 600; font-size: .92rem; cursor: pointer; }
+.terrain details p { margin: 0 0 10px; font-size: .9rem; white-space: pre-line; overflow-wrap: anywhere; }
+.terrain-foot { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0 0; font-size: .85rem; }
+.terrain-src { margin: 10px 0 0; font-size: .78rem; color: var(--muted); }
+.terrain-picks { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.terrain-pick { display: block; width: 100%; padding: 9px 11px; text-align: left; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; font: inherit; cursor: pointer; }
+.terrain-pick b { display: block; font-size: .92rem; }
+.terrain-pick small { color: var(--muted); }
+.terrain-pick em, .pge-ban { font-style: normal; font-weight: 600; color: var(--stop-ink); }
