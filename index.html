@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#1B56C2">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B1532">
-<!-- Politique de sécurité : scripts, styles et polices du site seul ; appels réseau limités à Open-Meteo et Pioupiou.
+<!-- Politique de sécurité : scripts, styles et polices du site seul ; appels réseau limités à Open-Meteo, Pioupiou et aux relevés FFVL de data.gouv.fr.
      Les noms venus de ParaglidingEarth ou des balises sont déjà échappés ; c'est un second verrou. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.pioupiou.fr; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.pioupiou.fr https://www.data.gouv.fr https://static.data.gouv.fr; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
 <meta name="description" content="Conditions de vol et de gonflage parapente jusqu'à J+5 pour vos sites">
 <title>Déco</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -144,17 +144,21 @@
       <div><label for="sf-max">à (°)</label><input id="sf-max" name="secMax" type="number" min="0" max="359" required></div>
     </div>
     <p class="hint">Direction d'où vient le vent, sens horaire : 270 = ouest. Un déco ouest se règle par exemple de 225 à 315. Pour un terrain de gonflage : les directions où le vent arrive sans passer par des haies ou des arbres.</p>
-    <label for="sf-piou">Balise Pioupiou (numéro, facultatif)</label>
-    <input id="sf-piou" name="piou" type="number" inputmode="numeric" min="1" step="1" placeholder="Ex. 1446">
-    <p class="hint">Numéro de la station sur <a href="https://www.openwindmap.org/" target="_blank" rel="noopener">openwindmap.org</a> : il apparaît dans l'adresse de la balise (PIOU_1446).</p>
+    <div class="grid2">
+      <div><label for="sf-net">Réseau de la balise</label><select id="sf-net" name="net"><option value="piou">Pioupiou</option><option value="ffvl">FFVL</option></select></div>
+      <div><label for="sf-beacon">Numéro (facultatif)</label><input id="sf-beacon" name="beacon" type="number" inputmode="numeric" min="1" step="1"></div>
+    </div>
+    <p class="hint">Le numéro est dans l'adresse de la balise : PIOU_1446 sur <a href="https://www.openwindmap.org/" target="_blank" rel="noopener">openwindmap.org</a>, idBalise=61 sur <a href="https://www.balisemeteo.com/" target="_blank" rel="noopener">balisemeteo.com</a>. Les balises FFVL donnent la dernière mesure, sans courbe ni tendance.</p>
     <fieldset class="land-fields" id="sf-land">
       <legend>Atterro (facultatif)</legend>
       <div class="grid2">
         <div><label for="sf-llat">Latitude</label><input id="sf-llat" name="landLat" type="number" step="any"></div>
         <div><label for="sf-llon">Longitude</label><input id="sf-llon" name="landLon" type="number" step="any"></div>
       </div>
-      <label for="sf-lpiou">Balise de l'atterro (numéro, facultatif)</label>
-      <input id="sf-lpiou" name="landPiou" type="number" inputmode="numeric" min="1" step="1">
+      <div class="grid2">
+        <div><label for="sf-lnet">Réseau de sa balise</label><select id="sf-lnet" name="landNet"><option value="piou">Pioupiou</option><option value="ffvl">FFVL</option></select></div>
+        <div><label for="sf-lbeacon">Numéro (facultatif)</label><input id="sf-lbeacon" name="landBeacon" type="number" inputmode="numeric" min="1" step="1"></div>
+      </div>
       <p class="hint">Avec l'atterro, le verdict tient compte du vent en bas et l'écran du site montre sa rose. Pas d'altitude à saisir : elle vient du relief.</p>
     </fieldset>
     <label for="sf-note">Note (règles du site, plafond…)</label>

@@ -26,6 +26,7 @@ export const inSector = (d, a, b) => (a <= b ? d >= a && d <= b : d >= a || d <=
 export const angleGap = (x, y) => { const t = Math.abs(x - y) % 360; return t > 180 ? 360 - t : t; };
 
 // Distance en km, à plat : assez juste à l'échelle de quelques dizaines de km
+export const hasBeacon = (s) => !!(s && (s.piou || s.ffvl)); // un site ou un atterro : une balise Pioupiou ou FFVL
 export const km = (la1, lo1, la2, lo2) => 111.2 * Math.hypot(la2 - la1, (lo2 - lo1) * Math.cos(la1 * Math.PI / 180));
 
 // Distance à vol d'oiseau : le « ≈ » rappelle que ce n'est pas un kilométrage routier

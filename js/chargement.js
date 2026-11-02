@@ -1,5 +1,5 @@
 // Chargements et navigation : seul le chargement le plus récent s'applique
-import { parisParts, store } from "./outils.js";
+import { hasBeacon, parisParts, store } from "./outils.js";
 import { limitsOf, site, state } from "./etat.js";
 import { buildAll, inPlay } from "./regles.js";
 import { fcKey, fetchError, fetchForecasts, loadForecast } from "./donnees.js";
@@ -15,7 +15,7 @@ export async function load(force = false) {
   if (!s) return;
   const gen = ++siteGen;
   state.loadingSite = true; state.error = null; state.live = null; state.liveLand = null; renderChrome();
-  // L'atterro a sa balise à lui (loadLive lit son numéro dans s.land.piou)
+  // L'atterro a sa balise à lui (loadLive lit son numéro dans s.land)
   const [fc, live, liveLand] = await Promise.all([loadForecast(s, force), loadLive(s, force), loadLive(s.land, force)]);
   if (gen !== siteGen) return;
   state.error = fc.error;
@@ -61,7 +61,7 @@ export const refresh = (force = false) => (state.view === "overview" ? loadOverv
 
 export async function refreshLive(force = false) {
   const s = site();
-  if (!s || !(s.piou || (s.land && s.land.piou))) return;
+  if (!s || !(hasBeacon(s) || hasBeacon(s.land))) return;
   const [live, liveLand] = await Promise.all([loadLive(s, force), loadLive(s.land, force)]);
   if (state.view !== "site" || site() !== s) return; // on a changé d'écran entre-temps
   state.live = live; state.liveLand = liveLand;

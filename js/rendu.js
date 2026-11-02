@@ -288,12 +288,19 @@ function hoursHtml(K, L, day, sel) {
 }
 
 // Appelée en fin de chaque rendu : c'est aussi elle qui découvre la barre et le pied de page au premier
+// Mentions dues aux deux réseaux, pour la balise du site et celle de son atterro
+function beaconCredits(s) {
+  const all = s ? [s, s.land].filter(Boolean) : [], piou = all.find((x) => x.piou), ffvl = all.find((x) => x.ffvl);
+  return (piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(piou.piou)}">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : "")
+    + (ffvl ? `<p>Mesures de la balise <a href="https://www.balisemeteo.com/balise.php?idBalise=${esc(ffvl.ffvl)}">FFVL</a> (source FFVL sur <a href="https://www.data.gouv.fr/organizations/federation-francaise-de-vol-libre/datasets">data.gouv.fr</a>, Licence Ouverte).</p>` : "");
+}
+
 function renderStatus() {
   delete $("app").dataset.loading;
   const ov = state.view === "overview", at = ov ? state.ov && state.ov.fetchedAt : state.fetchedAt;
   const t = at ? new Date(at).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : null;
   $("status").innerHTML = `
     <p>Données <a href="https://open-meteo.com/">Open-Meteo</a>${t ? `, mises à jour ${t}` : ""}. Verdict principal : modèle ${esc(MODELS[state.limits.model] || state.limits.model)} <button type="button" class="link" data-model>changer</button>. Vent en km/h, flèches dans le sens où souffle le vent.</p>
-    ${!ov && site() && site().piou ? `<p>Mesures de la balise <a href="https://www.openwindmap.org/PIOU_${esc(site().piou)}">OpenWindMap</a> (© contributeurs du réseau OpenWindMap).</p>` : ""}
+    ${!ov ? beaconCredits(site()) : ""}
     <p>Aide à la préparation : la décision se prend ${ov ? "sur place" : kind(site()).here}, avec la balise et la manche à air sous les yeux.</p>`;
 }

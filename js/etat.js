@@ -4,9 +4,13 @@ import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, DEFAULT_SITES, kind } from "./config.
 
 // Un nouveau téléphone démarre sans site. Les préréglages ne vont qu'aux téléphones qui avaient déjà
 // des sites, une seule fois chacun : un site supprimé ne revient plus, les réglages ne sont jamais écrasés.
+// La balise Pioupiou 1333 de Saint-Hilaire n'émet plus depuis le 7 octobre 2026 : la balise FFVL 61 prend le relais.
+// Seulement si le site a encore le numéro du préréglage : un numéro choisi par le pilote n'est pas touché.
+const moveDeadBeacon = (s) => (s.id === "sthilaire" && s.piou === 1333 ? { ...s, piou: null, ffvl: 61 } : { ...s });
+
 function withPresets(saved) {
   const seen = store.get("presets", []);
-  const out = Array.isArray(saved) ? saved.map((s) => ({ ...s })) : [];
+  const out = Array.isArray(saved) ? saved.map(moveDeadBeacon) : [];
   if (out.length) for (const d of DEFAULT_SITES) if (!seen.includes(d.id) && !out.some((s) => s.id === d.id)) out.push({ ...d });
   store.set("presets", DEFAULT_SITES.map((d) => d.id));
   return out;

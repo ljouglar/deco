@@ -208,7 +208,9 @@ probabilité de pluie : il ne voit la pluie qu'à sa quantité prévue.
 
 Un site peut être associé à une balise **Pioupiou / OpenWindMap** (son numéro figure
 dans l'adresse de la station sur [openwindmap.org](https://www.openwindmap.org/),
-par exemple `PIOU_1446`). L'écran du site affiche alors :
+par exemple `PIOU_1446`) ou **FFVL** (sur [balisemeteo.com](https://www.balisemeteo.com/),
+par exemple `idBalise=61`). À l'ajout d'un déco, l'appli propose la balise en service
+la plus proche à moins de 3 km, tous réseaux confondus. L'écran du site affiche alors :
 
 - la mesure du moment face à la prévision de la même heure, et ce que l'écart dit du
   modèle (« le modèle sous-estime le vent de 8 km/h à cette heure ») ;
@@ -218,6 +220,10 @@ par exemple `PIOU_1446`). L'écran du site affiche alors :
   tôt : le vent forcit (avec alerte si la limite peut être atteinte dans l'heure),
   faiblit ou reste stable ; la direction tourne, vers l'axe ou hors de l'axe ; les
   rafales deviennent plus irrégulières.
+
+La FFVL ne publie que le dernier relevé de chaque balise, toutes les 5 minutes : avec
+une balise FFVL, l'écran montre la mesure et la compare à la prévision, sans courbe ni
+tendance.
 
 La mesure est rafraîchie toutes les 4 minutes tant que l'appli est ouverte, et
 signalée trop ancienne au-delà de 45 minutes. Sous 3 km/h, la direction n'est pas
@@ -253,6 +259,7 @@ n'est demandée que sur action : « Décos autour de moi » la garde sur le tél
 | --- | --- | --- |
 | Prévisions | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0, usage non commercial gratuit |
 | Mesures des balises | [OpenWindMap / Pioupiou](https://www.openwindmap.org/) | © contributeurs du réseau OpenWindMap, [conditions](https://developers.pioupiou.fr/data-licensing) |
+| Mesures et liste des balises FFVL | [FFVL sur data.gouv.fr](https://www.data.gouv.fr/organizations/federation-francaise-de-vol-libre/datasets) | Licence Ouverte Etalab, source à citer |
 | Liste des décos | [ParaglidingEarth](https://www.paraglidingearth.com/) | CC BY-SA 3.0 |
 | Polices Barlow et Barlow Condensed | [The Barlow Project](https://github.com/jpt/barlow) | SIL Open Font License 1.1 (`fonts/OFL.txt`) |
 
@@ -280,7 +287,8 @@ sw.js                 service worker : cache de l'appli, ouverture hors ligne
 manifest.webmanifest  installation (icônes dans icons/, captures dans screenshots/)
 fonts/                polices Barlow, servies par le site
 sites-fr.json         instantané des décos ParaglidingEarth et de leurs atterros (recherche par nom)
-tools/                vérificateur, banc d'essai, mise à jour de sites-fr.json
+balises-ffvl.json     instantané des balises FFVL : numéro, nom, position (sans les contacts)
+tools/                vérificateur, banc d'essai, mise à jour des deux instantanés
 ```
 
 Les modules dépendent les uns des autres dans un seul sens, sans boucle :
@@ -296,7 +304,7 @@ outils → config → etat → regles → donnees → balise → vol → rendu �
 | `etat.js` | état de l'appli (`state`), préréglages, stockage persistant |
 | `regles.js` | évaluation heure par heure, verdict du jour, accord des modèles ; ni DOM ni réseau |
 | `donnees.js` | prévisions Open-Meteo (sites, et vent de leurs atterros) et cache local |
-| `balise.js` | balise Pioupiou : mesure, historique, tendance, bloc « En direct » |
+| `balise.js` | balises Pioupiou et FFVL : mesure, historique, tendance, bloc « En direct » |
 | `vol.js` | la voile qui arrive en vol dans le ciel de l'en-tête : trajectoire, balancier, vol de pente |
 | `rendu.js` | en-tête, tableau, écran d'un site (roses du déco et de l'atterro), pied de page |
 | `chargement.js` | chargements et navigation : seul le chargement le plus récent s'applique |
@@ -374,6 +382,10 @@ puis incrémenter `CACHE`. Le secteur d'un déco ajouté est tiré de ses orient
 **principales** seulement (les orientations « possibles » sont souvent très larges) ;
 les autres sont reprises dans sa note.
 
+La liste des balises FFVL (`balises-ffvl.json`, 9 Ko) se régénère avec
+`python3 tools/ffvl_snapshot.py`. Les balises OpenWindMap en sont écartées : l'appli les
+lit chez Pioupiou. Incrémenter `CACHE` là aussi.
+
 ## Sites préréglés
 
 Les sites de l'auteur, livrés aux seuls téléphones qui avaient déjà des sites
@@ -383,7 +395,7 @@ réglages ne sont jamais écrasés. Un nouveau téléphone démarre sans site.
 | Site | Type | Altitude | Secteur | Balise |
 | --- | --- | --- | --- | --- |
 | Sapenay | déco | 890 m | SO à NO (225–315°) | 1446 – Déco SAPENAY 901m |
-| Saint-Hilaire | déco | 1000 m | NE à SE (45–135°) | 1333 – Décollage A5 / déco Nord |
+| Saint-Hilaire | déco | 1000 m | NE à SE (45–135°) | FFVL 61 – St Hilaire du Touvet, 963 m |
 | Aiguebelette | déco | 1120 m | SSO à NO (200–315°) | 1722 – Déco Aiguebelette 1121m |
 | Marennes | gonflage | 230 m | NO à NE (315–45°), pente école face nord | 2229 – Pente Ecole MARENNES |
 | Miribel-Jonage | gonflage | 175 m | SE à SO (135–225°), champ plat | aucune à moins de 15 km |

@@ -1,12 +1,13 @@
 // Configuration : sites préréglés, limites et niveaux, modèles météo, ce qui distingue un déco d'un terrain
 // Préréglages de l'auteur, livrés aux seuls téléphones qui avaient déjà des sites (voir withPresets).
+// `piou` ou `ffvl` : le numéro de la balise, sur l'un des deux réseaux
 // `land` : l'atterro (position, balise facultative), d'après ParaglidingEarth
 export const DEFAULT_SITES = [{
   id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315, piou: 1446,
   land: { lat: 45.8283, lon: 5.82917, piou: null },
   note: "Déco ouest. Approche de Chambéry-Aix : ne pas monter à plus de 300 m au-dessus du déco. Vent d'est = déco sous le vent."
 }, {
-  id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, piou: 1333,
+  id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, ffvl: 61,
   land: { lat: 45.302, lon: 5.90612, piou: null },
   note: "Déco est au-dessus de Lumbin. Deux décos : le Nord (tapis, confortable) peut se retrouver sous le vent de la brise, le Sud (herbe) prend mieux la brise de face. Atterro officiel à Lumbin."
 }, {

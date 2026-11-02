@@ -24,7 +24,7 @@ if (!["localhost", "127.0.0.1"].includes(location.hostname)) {
 
 const SITES = [
   { id: "sapenay", name: "Sapenay", lat: 45.8109, lon: 5.8657, alt: 890, secMin: 225, secMax: 315, piou: 1446, note: "Déco ouest.", land: { lat: 45.8283, lon: 5.82917, piou: null } },
-  { id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, note: "", land: null },
+  { id: "sthilaire", name: "Saint-Hilaire", lat: 45.3069, lon: 5.8881, alt: 1000, secMin: 45, secMax: 135, piou: 1333, note: "", land: null },
   { id: "aiguebelette", name: "Aiguebelette", lat: 45.6016, lon: 5.8073, alt: 1120, secMin: 200, secMax: 315, note: "", land: null },
   { id: "marennes", type: "gonflage", name: "Marennes", lat: 45.6154, lon: 4.9038, alt: 230, secMin: 315, secMax: 45, note: "Pente école." },
   { id: "miribel", type: "gonflage", name: "Miribel-Jonage", lat: 45.7936, lon: 4.9578, alt: 175, secMin: 135, secMax: 225, note: "" },
@@ -77,7 +77,11 @@ const mock = (fx) => `<base href="${new URL("..", location.href)}"><script>
       measurements: { date: new Date(NOON).toISOString(), wind_speed_avg: 14, wind_speed_max: 22, wind_heading: 260 } } });
     if (url.pathname.startsWith("/v1/archive/")) return json({ data: Array.from({ length: 25 }, (_, i) =>
       [new Date(NOON - (24 - i) * 300000).toISOString(), 0, 0, 0, 6 + i * 0.4, 12 + i * 0.5, 250 + i]) });
-    if (url.pathname.startsWith("/v1/live-with-meta")) return json({ data: [] });
+    // Une balise Pioupiou tout près de Planfait, pour la recherche de la balise la plus proche
+    if (url.pathname.startsWith("/v1/live-with-meta")) return json({ data: [{ id: 999, meta: { name: "Planfait" }, status: { state: "on" },
+      location: { latitude: 45.8532, longitude: 6.23 }, measurements: { date: new Date(NOON).toISOString() } }] });
+    if (url.hostname === "www.data.gouv.fr") return json([{ idbalise: 61, date: new Date(NOON - 300000).toISOString(), vitesseVentMoy: 12, vitesseVentMax: 19, directVentMoy: 80, directVentInst: 90 },
+      { idbalise: 13, date: new Date(NOON - 300000).toISOString(), vitesseVentMoy: null, vitesseVentMax: null, directVentMoy: 0 }]);
     if (url.hostname === "api.open-meteo.com") return json({ elevation: [500] });
     if (url.hostname === "geocoding-api.open-meteo.com") return json({ results: [
       { name: "Grenoble", latitude: 45.1885, longitude: 5.7245, country_code: "FR", country: "France", admin1: "Auvergne-Rhône-Alpes", admin2: "Isère" },
@@ -149,6 +153,16 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(deco.state.days[deco.state.dayIdx].date === day(1), "à 20 h, il s'ouvre sur demain", t('.day[aria-selected="true"] .d1').join());
       W.Date.now = () => midi;
       D.getElementById("backBtn").click(); await wait(800);
+      // Balise FFVL : la balise morte de Saint-Hilaire est remplacée ; dernière mesure seule, sans courbe
+      const sth = deco.state.sites.find((s) => s.id === "sthilaire");
+      check(sth.ffvl === 61 && !sth.piou && JSON.parse(localStorage.getItem("sites")).find((s) => s.id === "sthilaire").ffvl === 61, "Saint-Hilaire passe sur la balise FFVL");
+      deco.openSite("sthilaire"); await wait(800);
+      check(t("#live .bname")[0] === "Balise St Hilaire du Touvet" && t("#live .meas .val")[0].startsWith("12 km/h") && t("#live .meas small")[0] === "rafales 19 km/h" && !D.querySelector("#live .trend"),
+        "balise FFVL en direct", `${t("#live .bname")} : ${t("#live .meas").join()}`);
+      check(t("#live .reasons li").some((x) => x.includes("axe")) && !t("#live .reasons li").some((x) => x.includes("stable")), "lecture de la mesure FFVL", t("#live .reasons li").join(" / "));
+      check(t("#status").some((x) => x.includes("source FFVL")) && !t("#status").some((x) => x.includes("OpenWindMap")), "source FFVL citée");
+      check(W.__requetes.filter((u) => u.includes("data.gouv.fr")).length === 1, "relevés FFVL lus une seule fois");
+      D.getElementById("backBtn").click(); await wait(800);
       // Chez moi : les sites se classent du plus proche au plus loin, dans le tableau comme dans la liste
       D.getElementById("sitesBtn").click();
       const hq = D.getElementById("home-q"); hq.value = "grenoble"; hq.dispatchEvent(new Event("input")); await wait(800);
@@ -178,6 +192,20 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(t("#pgeResults .pge-pick b").includes("Annecy - Planfait"), "recherche par nom", t("#pgeResults .pge-pick b").join());
       D.querySelector("#pgeResults [data-pge-add]").click(); await wait(800);
       check(deco.state.sites.length === 7 && t("#pgeResults .pge-done").length === 1, "ajout direct", deco.state.sites.map((s) => s.id).join());
+      const planfait = deco.state.sites.at(-1);
+      check(planfait.piou === 999 && !planfait.ffvl, "balise Pioupiou la plus proche trouvée", `piou ${planfait.piou}, ffvl ${planfait.ffvl}`);
+      q.value = "dent de crolles"; q.dispatchEvent(new Event("input")); await wait(500);
+      D.querySelector("#pgeResults [data-pge-add]").click(); await wait(800);
+      const crolles = deco.state.sites.at(-1);
+      check(crolles.ffvl === 61 && !crolles.piou, "balise FFVL la plus proche trouvée", `piou ${crolles.piou}, ffvl ${crolles.ffvl}`);
+      W.confirm = () => true; D.querySelector(`#sitesList [data-del="${crolles.id}"]`).click(); await wait(300);
+      if (!D.getElementById("sitesDlg").open) D.getElementById("sitesBtn").click();
+      D.querySelector('#sitesList [data-edit="sthilaire"]').click(); await wait(300);
+      const fb = (k) => D.getElementById("siteForm").elements.namedItem(k).value;
+      check(fb("net") === "ffvl" && fb("beacon") === "61", "le formulaire montre la balise FFVL", `${fb("net")} ${fb("beacon")}`);
+      D.getElementById("siteSubmit").click(); await wait(800);
+      check(deco.state.sites.find((s) => s.id === "sthilaire").ffvl === 61, "enregistrer le formulaire garde la balise FFVL");
+      D.getElementById("sitesBtn").click();
       q.value = "sapenay pass"; q.dispatchEvent(new Event("input")); await wait(500);
       D.querySelector("#pgeResults .pge-pick").click(); await wait(800);
       const fv = (k) => D.getElementById("siteForm").elements.namedItem(k).value;
@@ -198,7 +226,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       W.HTMLAnchorElement.prototype.click = function () {};
       D.getElementById("sitesBtn").click(); D.getElementById("exportBtn").click(); await wait(300);
       const saved = exported && JSON.parse(await exported.text());
-      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG && saved.home && saved.home.name === "Grenoble", "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
+      check(saved && saved.sites.length === 8 && saved.limits && saved.limitsG && saved.home && saved.home.name === "Grenoble" && saved.sites.find((s) => s.id === "sthilaire").ffvl === 61, "exporter mes sites", saved ? `${saved.sites.length} sites, ${t("#backupHint")}` : "rien");
       D.getElementById("sitesDlg").close();
       W.confirm = () => true; D.getElementById("sitesBtn").click();
       for (const id of deco.state.sites.map((s) => s.id)) { D.querySelector(`#sitesList [data-del="${id}"]`).click(); await wait(150); }
@@ -219,7 +247,7 @@ const check = (ok, name, detail = "") => lines.push(`${ok ? "OK" : "KO"} ${name}
       check(t("#backupHint")[0] === "Ce fichier ne contient pas de sites Déco." && deco.state.sites.length === 0, "fichier invalide refusé", t("#backupHint").join());
       D.getElementById("sitesDlg").close();
       await importer(JSON.stringify(saved)); D.getElementById("sitesDlg").close(); await wait(500);
-      check(deco.state.sites.length === 8 && t(".ov .nm b").length === 8 && deco.state.limitsG.minWind === saved.limitsG.minWind, "importer des sites", t(".ov .nm b").join(", "));
+      check(deco.state.sites.length === 8 && t(".ov .nm b").length === 8 && deco.state.limitsG.minWind === saved.limitsG.minWind && deco.state.sites.find((s) => s.id === "sthilaire").ffvl === 61, "importer des sites", t(".ov .nm b").join(", "));
     } catch (e) { check(false, "parcours interrompu", e.message); }
     check(!errors.length, "aucune erreur JS", errors.join(" | "));
     out.textContent = lines.join("\n");

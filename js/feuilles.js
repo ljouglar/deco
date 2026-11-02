@@ -2,7 +2,7 @@
 import { $, cardinal, el, esc, fetchT, fold, km, kmText, parisParts, store } from "./outils.js";
 import { DEFAULT_LIMITS, DEFAULT_LIMITS_G, DEFAULT_SITES, kind, KINDS, LEVEL_NAMES, MODEL_INFO, MODELS } from "./config.js";
 import { byHome, homeKm, protectStorage, site, state, storageProtected } from "./etat.js";
-import { nearestPiou } from "./balise.js";
+import { nearestBeacon } from "./balise.js";
 import { render } from "./rendu.js";
 import { loadOverview, openSite, reevaluate, refresh } from "./chargement.js";
 
@@ -141,21 +141,30 @@ function exportSites() {
 }
 
 // Un fichier venu d'ailleurs : on ne garde que les champs connus, et des nombres là où il en faut
-const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "note", "land"];
+const SITE_FIELDS = ["id", "name", "type", "lat", "lon", "alt", "secMin", "secMax", "piou", "ffvl", "note", "land"];
 const NUM = ["lat", "lon", "alt", "secMin", "secMax"];
 function cleanSite(s) {
   if (!s || typeof s.id !== "string" || typeof s.name !== "string" || !NUM.every((k) => Number.isFinite(s[k]))) return null;
   const out = Object.fromEntries(SITE_FIELDS.filter((k) => s[k] !== undefined).map((k) => [k, s[k]]));
   out.type = s.type === "gonflage" ? "gonflage" : "deco";
-  out.piou = Number.isFinite(s.piou) ? s.piou : null;
+  Object.assign(out, cleanBeacon(s));
   out.note = typeof s.note === "string" ? s.note : "";
   if (s.land !== undefined) out.land = cleanLand(s.land, out.type); // absent : addKnownLandings le cherchera
   return out;
 }
 
+// Une seule balise, sur l'un des deux réseaux
+function cleanBeacon(s) {
+  const piou = Number.isFinite(s.piou) ? s.piou : null;
+  return { piou, ffvl: !piou && Number.isFinite(s.ffvl) ? s.ffvl : null };
+}
+const beaconFields = (net, value) => { const id = value.trim() ? Math.round(+value) : null; return net === "ffvl" ? { piou: null, ffvl: id } : { piou: id, ffvl: null }; };
+const setBeacon = (x, b) => Object.assign(x, beaconFields(b.net, String(b.id)));
+const sameBeacon = (a, b) => a && b && a.net === b.net && a.id === b.id;
+
 // L'atterro d'un déco : une position, et le numéro de sa balise s'il y en a une
 const cleanLand = (l, type) => (type === "deco" && l && Number.isFinite(l.lat) && Number.isFinite(l.lon)
-  ? { lat: l.lat, lon: l.lon, piou: Number.isFinite(l.piou) ? l.piou : null } : null);
+  ? { lat: l.lat, lon: l.lon, ...cleanBeacon(l) } : null);
 const cleanHome = (h) => (h && typeof h.name === "string" && Number.isFinite(h.lat) && Number.isFinite(h.lon)
   ? { name: h.name, area: typeof h.area === "string" ? h.area : "", lat: h.lat, lon: h.lon } : null);
 const cleanLimits = (l, defaults) => ({ ...defaults, ...Object.fromEntries(Object.entries(l && typeof l === "object" ? l : {})
@@ -185,7 +194,7 @@ $("importFile").addEventListener("change", (e) => { const f = e.target.files[0];
 function renderSitesList() {
   $("sitesList").innerHTML = byHome(state.sites).map((s) => `
     <div class="site-row">
-      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : ""}${s.land ? " · atterro" : ""}${state.home ? ` · ${kmText(homeKm(s))}` : ""}</small></button>
+      <button class="info" data-use="${esc(s.id)}" aria-label="Ouvrir ${esc(s.name)}"><b>${esc(s.name)}</b><small>${kind(s).label} ${s.alt} m, ${cardinal(s.secMin)} à ${cardinal(s.secMax)}${s.piou ? ` · balise ${esc(s.piou)}` : s.ffvl ? ` · balise FFVL ${esc(s.ffvl)}` : ""}${s.land ? " · atterro" : ""}${state.home ? ` · ${kmText(homeKm(s))}` : ""}</small></button>
       <button class="btn" data-edit="${esc(s.id)}">Modifier</button>
       <button class="btn danger" data-del="${esc(s.id)}" aria-label="Supprimer ${esc(s.name)}">✕</button>
     </div>`).join("");
@@ -195,9 +204,10 @@ function resetSiteForm(s) {
   const f = $("siteForm");
   f.reset();
   el(f, "id").value = s ? s.id : "";
-  if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "piou", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
+  if (s) ["name", "lat", "lon", "alt", "secMin", "secMax", "note"].forEach((k) => { el(f, k).value = s[k] ?? ""; });
+  if (s) { el(f, "net").value = s.ffvl ? "ffvl" : "piou"; el(f, "beacon").value = s.ffvl || s.piou || ""; }
   el(f, "type").value = s && s.type === "gonflage" ? "gonflage" : "deco";
-  if (s && s.land) { el(f, "landLat").value = s.land.lat; el(f, "landLon").value = s.land.lon; el(f, "landPiou").value = s.land.piou ?? ""; }
+  if (s && s.land) { el(f, "landLat").value = s.land.lat; el(f, "landLon").value = s.land.lon; el(f, "landNet").value = s.land.ffvl ? "ffvl" : "piou"; el(f, "landBeacon").value = s.land.ffvl || s.land.piou || ""; }
   landFieldsShown();
   $("pgeSearch").hidden = !!s;
   $("pge-q").value = ""; $("pgeResults").innerHTML = ""; $("pgeStatus")?.remove();
@@ -273,9 +283,9 @@ function pgeRender(hits, none) {
 function pgeSite(r) {
   const [name, lat, lon, alt, o, id, llat, llon] = r, sec = pgeSector(o);
   return { sec, site: {
-    id: `pge${id}`, type: "deco", name, lat, lon, alt: alt ?? "", secMin: sec ? sec.min : "", secMax: sec ? sec.max : "", piou: null,
+    id: `pge${id}`, type: "deco", name, lat, lon, alt: alt ?? "", secMin: sec ? sec.min : "", secMax: sec ? sec.max : "", piou: null, ffvl: null,
     note: sec && sec.others.length ? `ParaglidingEarth donne aussi : ${sec.others.join(", ")}.` : "",
-    land: llat != null ? { lat: llat, lon: llon, piou: null } : null
+    land: llat != null ? { lat: llat, lon: llon, piou: null, ffvl: null } : null
   } };
 }
 
@@ -283,8 +293,9 @@ async function pgeQuickAdd(id, btn) {
   const { r } = (await pgeLoad()).find((x) => x.r[5] === id);
   const { site: s } = pgeSite(r);
   btn.disabled = true; btn.textContent = "…";
-  try { const b = await nearestPiou(s.lat, s.lon); if (b) s.piou = b.id; } catch {}
-  try { const b = s.land && await nearestPiou(s.land.lat, s.land.lon); if (b && b.id !== s.piou) s.land.piou = b.id; } catch {}
+  let near = null;
+  try { near = await nearestBeacon(s.lat, s.lon); if (near) setBeacon(s, near); } catch {}
+  try { const b = s.land && await nearestBeacon(s.land.lat, s.land.lon); if (b && !sameBeacon(b, near)) setBeacon(s.land, b); } catch {}
   state.sites.push(s); store.set("sites", state.sites); protectStorage();
   renderSitesList();
   if (state.view === "overview") loadOverview(); // le tableau se met à jour derrière la feuille
@@ -326,14 +337,14 @@ async function pgeFill(id) {
   $("pgeSearch").after(status);
   status.scrollIntoView({ block: "start" });
   try {
-    const b = await nearestPiou(lat, lon);
+    const b = await nearestBeacon(lat, lon);
     if (pick !== pgePick) return;
-    if (b) el(f, "piou").value = b.id;
-    const bl = s.land && await nearestPiou(s.land.lat, s.land.lon).catch(() => null);
+    if (b) { el(f, "net").value = b.net; el(f, "beacon").value = b.id; }
+    const bl = s.land && await nearestBeacon(s.land.lat, s.land.lon).catch(() => null);
     if (pick !== pgePick) return;
-    if (bl && (!b || bl.id !== b.id)) el(f, "landPiou").value = bl.id;
+    if (bl && !sameBeacon(bl, b)) { el(f, "landNet").value = bl.net; el(f, "landBeacon").value = bl.id; }
     status.textContent = status.textContent.replace("Recherche d'une balise…",
-      b ? `Balise n° ${b.id}${b.name ? ` « ${b.name.trim()} »` : ""} à ${b.d.toFixed(1).replace(".", ",")} km.` : "Aucune balise en service à moins de 3 km.");
+      b ? `Balise ${b.net === "ffvl" ? "FFVL " : ""}n° ${b.id}${b.name ? ` « ${b.name.trim()} »` : ""} à ${b.d.toFixed(1).replace(".", ",")} km.` : "Aucune balise en service à moins de 3 km.");
   } catch {
     if (pick === pgePick) status.textContent = status.textContent.replace("Recherche d'une balise…", "Balises injoignables, numéro à saisir si besoin.");
   }
@@ -383,11 +394,11 @@ $("siteForm").addEventListener("submit", (e) => {
     id: el(f, "id").value || `s${Date.now()}`, name: el(f, "name").value.trim(), type: el(f, "type").value,
     lat: +el(f, "lat").value, lon: +el(f, "lon").value, alt: Math.round(+el(f, "alt").value),
     secMin: ((+el(f, "secMin").value % 360) + 360) % 360, secMax: ((+el(f, "secMax").value % 360) + 360) % 360,
-    piou: el(f, "piou").value.trim() ? Math.round(+el(f, "piou").value) : null,
+    ...beaconFields(el(f, "net").value, el(f, "beacon").value),
     note: el(f, "note").value.trim()
   };
-  const ll = el(f, "landLat").value.trim(), lo = el(f, "landLon").value.trim(), lp = el(f, "landPiou").value.trim();
-  s.land = cleanLand({ lat: ll ? +ll : NaN, lon: lo ? +lo : NaN, piou: lp ? Math.round(+lp) : null }, s.type);
+  const ll = el(f, "landLat").value.trim(), lo = el(f, "landLon").value.trim();
+  s.land = cleanLand({ lat: ll ? +ll : NaN, lon: lo ? +lo : NaN, ...beaconFields(el(f, "landNet").value, el(f, "landBeacon").value) }, s.type);
   const i = state.sites.findIndex((x) => x.id === s.id);
   if (i >= 0) state.sites[i] = s; else state.sites.push(s);
   store.set("sites", state.sites); protectStorage();

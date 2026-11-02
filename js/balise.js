@@ -1,10 +1,14 @@
-// Balise Pioupiou / OpenWindMap : mesure, historique, tendance, et le bloc « En direct »
-import { ago, angleGap, arrowSvg, cardinal, esc, fetchT, inSector, km, parisParts, r0, reasonsHtml, store } from "./outils.js";
+// Balises Pioupiou / OpenWindMap et FFVL : mesure, historique, tendance, et le bloc « En direct »
+import { ago, angleGap, arrowSvg, cardinal, esc, fetchT, hasBeacon, inSector, km, parisParts, r0, reasonsHtml, store } from "./outils.js";
 import { kind, KINDS } from "./config.js";
 import { limitsOf, site, state } from "./etat.js";
 import { dirNote } from "./regles.js";
 
 const PIOU_TTL = 3 * 60 * 1000;    // on ne redemande pas plus souvent (la balise émet toutes les ~4 min)
+
+// Dernier relevé de chaque balise FFVL, publié toutes les 5 min sur data.gouv.fr (cette adresse redirige vers le
+// fichier du moment). Unité km/h, direction d'où vient le vent. Pas d'historique : ni courbe ni tendance pour elles.
+const FFVL_READINGS = "https://www.data.gouv.fr/api/1/datasets/r/047b2ab9-627f-4e5f-9d68-5b948433c61d";
 
 export const PIOU_STALE = 45 * 60 * 1000; // au-delà, la mesure ne reflète plus les conditions du moment
 
@@ -78,9 +82,44 @@ function trendSvg(lv, L) {
   </div>`;
 }
 
-// Mesure de la balise d'un site (null sans balise), sans toucher à l'état
+// Le déco et son atterro partagent le même fichier : un seul appel, gardé une minute
+let ffvlNow = null;
+function ffvlReadings() {
+  if (!ffvlNow || Date.now() - ffvlNow.at > 60 * 1000) {
+    const p = fetchT(FFVL_READINGS, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error("relevés injoignables"); return r.json(); })
+      .then((rows) => new Map(rows.map((x) => [x.idbalise, x])));
+    ffvlNow = { at: Date.now(), p };
+    p.catch(() => { ffvlNow = null; });
+  }
+  return ffvlNow.p;
+}
+
+// Noms et positions des balises FFVL : la liste embarquée (tools/ffvl_snapshot.py), [n°, nom, lat, lon, altitude]
+let ffvlRows = null;
+const ffvlCatalog = () => (ffvlRows ??= fetch("balises-ffvl.json").then((r) => r.json()).catch((e) => { ffvlRows = null; throw e; }));
+
+async function loadFfvl(id, force) {
+  const key = `ffvl:${id}`;
+  const cached = store.get(key, null);
+  if (cached && !force && Date.now() - cached.at < PIOU_TTL) return cached;
+  let readings;
+  try { readings = await ffvlReadings(); } catch { return cached ? { ...cached, offline: true } : { id, failed: true }; }
+  const m = readings.get(id);
+  // Fichier reçu, mais rien d'exploitable pour cette balise : la dernière mesure connue, son âge fait foi
+  if (!m || m.vitesseVentMoy == null || m.vitesseVentMax == null) return cached || { id, failed: true };
+  const row = await ffvlCatalog().then((rows) => rows.find((b) => b[0] === id)).catch(() => null);
+  const live = {
+    at: Date.now(), id, name: row ? row[1] : `FFVL ${id}`, date: Date.parse(m.date),
+    ws: m.vitesseVentMoy, wg: m.vitesseVentMax, wd: m.directVentMoy ?? m.directVentInst, on: true, hist: null
+  };
+  store.set(key, live);
+  return live;
+}
+
+// Mesure de la balise d'un site ou d'un atterro (null sans balise), sans toucher à l'état
 export async function loadLive(s, force = false) {
-  if (!s || !s.piou) return null;
+  if (!hasBeacon(s)) return null;
+  if (s.ffvl) return loadFfvl(s.ffvl, force);
   const key = `piou:${s.piou}`;
   const cached = store.get(key, null);
   if (cached && !force && Date.now() - cached.at < PIOU_TTL) return cached;
@@ -142,10 +181,10 @@ function liveNotes(lv, fc, s, L) {
 
 export function liveCard() {
   const s = site(), K = kind(s), L = limitsOf(s), lv = state.live;
-  if (!s || !s.piou) return "";
+  if (!hasBeacon(s)) return "";
   if (!lv || lv.failed) {
     return `<section class="live"><h2 class="kicker"><span class="pulse off"></span>En direct ${K.here}<span class="age">balise injoignable</span></h2>
-      <p class="stale">Aucune mesure reçue de la balise n° ${esc(s.piou)}. Vérifie ta connexion, ou le numéro dans « Mes sites ».</p></section>`;
+      <p class="stale">Aucune mesure reçue de la balise n° ${esc(s.piou || s.ffvl)}. Vérifie ta connexion, ou le numéro dans « Mes sites ».</p></section>`;
   }
   const age = Date.now() - (lv.date || lv.at);
   const fresh = age <= PIOU_STALE;
@@ -182,19 +221,24 @@ let piouAll = null;
 
 function piouList() {
   if (!piouAll || Date.now() - piouAll.at > 10 * 60 * 1000) {
-    const p = fetchT("https://api.pioupiou.fr/v1/live-with-meta/all", {}, 20000) // ~650 Ko.then((r) => r.json()).then((j) => j.data);
+    const p = fetchT("https://api.pioupiou.fr/v1/live-with-meta/all", {}, 20000).then((r) => r.json()).then((j) => j.data);
     piouAll = { at: Date.now(), p };
     p.catch(() => { piouAll = null; });
   }
   return piouAll.p;
 }
 
-// Balise en service la plus proche, si elle est assez près pour parler du même site
-export async function nearestPiou(lat, lon) {
-  const data = await piouList();
+// Balise en service la plus proche, tous réseaux confondus, si elle est assez près pour parler du même site.
+// Échoue seulement si aucun des deux réseaux ne répond.
+export async function nearestBeacon(lat, lon) {
   const day = Date.now() - 24 * 3600 * 1000;
-  return data.filter((b) => b.location && b.location.latitude != null && (!b.status || b.status.state === "on")
+  const piou = piouList().then((data) => data.filter((b) => b.location && b.location.latitude != null && (!b.status || b.status.state === "on")
       && b.measurements && Date.parse(b.measurements.date) > day)
-    .map((b) => ({ id: b.id, name: b.meta && b.meta.name, d: km(lat, lon, b.location.latitude, b.location.longitude) }))
-    .filter((b) => b.d <= 3).sort((a, b) => a.d - b.d)[0] || null;
+    .map((b) => ({ net: "piou", id: b.id, name: b.meta && b.meta.name, d: km(lat, lon, b.location.latitude, b.location.longitude) })));
+  const ffvl = Promise.all([ffvlCatalog(), ffvlReadings()]).then(([rows, readings]) => rows
+    .filter((b) => { const m = readings.get(b[0]); return m && m.vitesseVentMoy != null && Date.parse(m.date) > day; })
+    .map((b) => ({ net: "ffvl", id: b[0], name: b[1], d: km(lat, lon, b[2], b[3]) })));
+  const found = await Promise.allSettled([piou, ffvl]);
+  if (found.every((x) => x.status === "rejected")) throw found[0].reason;
+  return found.flatMap((x) => x.value || []).filter((b) => b.d <= 3).sort((a, b) => a.d - b.d)[0] || null;
 }

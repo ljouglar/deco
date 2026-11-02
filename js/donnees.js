@@ -9,9 +9,10 @@ const requestedModels = () => [...new Set([state.limits.model, ...ENSEMBLE])];
 // Le reste (sites supprimés, autre modèle, anciennes clés « fc: ») s'accumulerait à ~40 Ko la prévision.
 export function pruneCache() {
   const fc = new Set(state.sites.map((s) => `fcm:${s.id}:${state.limits.model}`));
-  const piou = new Set(state.sites.flatMap((s) => [s.piou, s.land && s.land.piou]).filter(Boolean).map((p) => `piou:${p}`));
+  const beacons = new Set(state.sites.flatMap((s) => [s, s.land]).filter(Boolean)
+    .flatMap((x) => [x.piou && `piou:${x.piou}`, x.ffvl && `ffvl:${x.ffvl}`]).filter(Boolean));
   try {
-    Object.keys(localStorage).filter((k) => (/^fcm?:/.test(k) && !fc.has(k)) || (k.startsWith("piou:") && !piou.has(k)))
+    Object.keys(localStorage).filter((k) => (/^fcm?:/.test(k) && !fc.has(k)) || (/^(piou|ffvl):/.test(k) && !beacons.has(k)))
       .forEach((k) => localStorage.removeItem(k));
   } catch {}
 }
