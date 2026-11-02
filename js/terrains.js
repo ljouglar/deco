@@ -86,5 +86,5 @@ export function terrainCard() {
   if (!parts) return "";
   const date = new Date(loaded.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   return `<section class="terrain"><h2 class="kicker">Consignes FFVL</h2>${parts}
-    <p class="terrain-src">Source FFVL sur <a href="https://www.data.gouv.fr/organizations/federation-francaise-de-vol-libre/datasets">data.gouv.fr</a>, Licence Ouverte, relevé du ${date}. Vérifie sur place : panneau du site, club ou école.</p></section>`;
+    <p class="terrain-src">Source FFVL sur <a href="https://www.data.gouv.fr/organizations/federation-francaise-de-vol-libre/datasets">data.gouv.fr</a>, Licence Ouverte, dernière évolution le ${date}. Vérifie sur place : panneau du site, club ou école.</p></section>`;
 }

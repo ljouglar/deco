@@ -395,10 +395,12 @@ puis incrémenter `CACHE`. Le secteur d'un déco ajouté est tiré de ses orient
 les autres sont reprises dans sa note.
 
 Les listes FFVL (`balises-ffvl.json`, 9 Ko, et `terrains-ffvl.json`, environ 600 Ko, soit
-200 Ko compressés) se régénèrent avec `python3 tools/ffvl_snapshot.py`. Les balises
-OpenWindMap en sont écartées : l'appli les lit chez Pioupiou. Incrémenter `CACHE` là
-aussi. La date du relevé s'affiche avec les consignes : relancer le script régulièrement,
-une interdiction récente n'y figure qu'après cela.
+200 Ko compressés) se régénèrent chaque nuit avec `tools/ffvl_snapshot.py`
+(`.github/workflows/listes-ffvl.yml`) : une nouvelle version de l'appli ne part que si
+elles ont changé, et la date affichée avec les consignes est celle du dernier changement.
+Une liste qui fond de plus de 20 % est refusée, et l'échec envoie un e-mail. Les balises
+OpenWindMap en sont écartées : l'appli les lit chez Pioupiou. Comme le robot pousse sur
+`main`, faire `git pull --rebase` avant de pousser.
 
 ## Sites préréglés
 

@@ -3,7 +3,7 @@
 
 Le téléphone lit les relevés en direct, mais ils ne donnent ni le nom ni la position
 d'une balise ; le fichier des terrains pèse près de 4 Mo. On embarque donc les deux
-listes, réduites au nécessaire, et on relance ce script de temps en temps :
+listes, réduites au nécessaire, et on relance ce script chaque nuit (.github/workflows/listes-ffvl.yml), ou à la main :
 
     python3 tools/ffvl_snapshot.py
 
@@ -23,6 +23,7 @@ API_TERRAINS = "https://www.data.gouv.fr/api/1/datasets/r/4375c95d-cf26-4e71-b72
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "balises-ffvl.json"
 OUT_TERRAINS = ROOT / "terrains-ffvl.json"
+MARGE = 0.8  # une liste qui fond de plus de 20 % : fichier cassé plutôt que terrains disparus, on n'écrit rien
 VIDE = {"", ".", "ras", "r.a.s", "r.a.s.", "aucun", "aucune", "néant", "neant", "sans objet", "non", "rien"}
 
 
@@ -30,6 +31,11 @@ def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "deco-pwa (instantané perso)"})
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.load(r)
+
+
+def garde_fou(rows, ancien):
+    if len(rows) < MARGE * len(ancien):
+        raise SystemExit(f"{len(rows)} lignes au lieu de {len(ancien)} : liste refusée")
 
 
 def texte(v):
@@ -45,6 +51,12 @@ def terrains():
              texte(t.get("restrictions")), texte(t.get("warnings")), texte(t.get("flying_rules_description"))]
             for t in fetch(API_TERRAINS) if "parapente" in (t.get("possible_usages_text") or "") and t.get("latitude") and t.get("longitude")]
     rows.sort(key=lambda r: r[0])
+    avant = json.loads(OUT_TERRAINS.read_text(encoding="utf-8")) if OUT_TERRAINS.exists() else {"rows": []}
+    garde_fou(rows, avant["rows"])
+    # La date est celle du dernier changement : sans changement, le fichier ne bouge pas et aucune version ne part
+    if rows == avant["rows"]:
+        print(f"{len(rows)} terrains, inchangés")
+        return
     data = {"date": datetime.date.today().isoformat(), "rows": rows}
     OUT_TERRAINS.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(rows)} terrains → {OUT_TERRAINS.name} ({OUT_TERRAINS.stat().st_size // 1024} Ko)")
@@ -56,6 +68,7 @@ def main():
     rows = [[b["idBalise"], b["nom"].strip(), round(float(b["latitude"]), 5), round(float(b["longitude"]), 5), b.get("altitude")]
             for b in data if b.get("station_type") != "OPENWINDMAP" and b.get("latitude") and b.get("longitude")]
     rows.sort(key=lambda r: r[0])
+    garde_fou(rows, json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else [])
     OUT.write_text(json.dumps(rows, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(rows)} balises → {OUT.name} ({OUT.stat().st_size // 1024} Ko)")
     terrains()
